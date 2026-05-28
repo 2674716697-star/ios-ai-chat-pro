@@ -1,9 +1,10 @@
 /* ============================================================
-   OmniChat — Service Worker v3
-   Network-first HTML, cache-first assets, NEVER caches sw.js.
+   OmniChat — Service Worker
+   Network-first app shell, offline fallback, NEVER caches sw.js.
    ============================================================ */
 
-const CACHE_NAME = 'omnichat-v4';
+const CACHE_NAME = 'omnichat-runtime';
+const CORE_ASSET_RE = /\.(?:html|css|js|json)$/i;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(self.skipWaiting());
@@ -34,12 +35,17 @@ self.addEventListener('fetch', (event) => {
   // Never intercept API calls
   if (url.pathname.includes('/v1/') || url.pathname.includes('/chat/completions') || url.pathname.includes('/models')) return;
 
-  // HTML: network-first (always get latest)
-  const isHTML = event.request.destination === 'document' || url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname.endsWith('/omnichat/');
+  const isCoreAsset =
+    event.request.destination === 'document' ||
+    url.pathname === '/' ||
+    url.pathname.endsWith('/omnichat/') ||
+    CORE_ASSET_RE.test(url.pathname);
 
-  if (isHTML) {
+  // Core app files are network-first so deploys are picked up without manual
+  // service worker version bumps. Cached fallback is only for offline use.
+  if (isCoreAsset) {
     event.respondWith(
-      fetch(event.request).then((response) => {
+      fetch(event.request, { cache: 'no-store' }).then((response) => {
         if (response.ok) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
@@ -47,17 +53,17 @@ self.addEventListener('fetch', (event) => {
         return response;
       }).catch(() => caches.match(event.request))
     );
-  } else {
-    // Assets: cache-first, update in background
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        fetch(event.request).then((response) => {
-          if (response.ok) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, response));
-          }
-        }).catch(() => {});
-        return cached || fetch(event.request);
-      })
-    );
+    return;
   }
+
+  // Other assets are also network-first, with cache fallback for offline use.
+  event.respondWith(
+    fetch(event.request).then((response) => {
+      if (response.ok) {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+      }
+      return response;
+    }).catch(() => caches.match(event.request))
+  );
 });

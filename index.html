@@ -402,7 +402,8 @@
   <script>
   if ('serviceWorker' in navigator) {
     var restartPending = false;
-    navigator.serviceWorker.register('sw.js?v=4').then(function(reg) {
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function(reg) {
+      reg.update().catch(function(){});
       // Check for updates on navigation
       reg.addEventListener('updatefound', function() {
         var newWorker = reg.installing;
@@ -423,6 +424,13 @@
         restartPending = true;
         window.location.reload();
       }
+    });
+
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState !== 'visible') return;
+      navigator.serviceWorker.getRegistration().then(function(reg) {
+        if (reg) reg.update().catch(function(){});
+      }).catch(function(){});
     });
   }
   </script>

@@ -97,6 +97,116 @@ a {
   text-decoration: none;
 }
 
+/* --- Splash Screen --- */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  transition: opacity 400ms ease, visibility 400ms ease;
+}
+
+.splash.dismissed {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.splash-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 40%, rgba(74, 158, 255, 0.08) 0%, transparent 70%),
+    radial-gradient(circle at 50% 50%, rgba(74, 158, 255, 0.03) 0%, transparent 50%);
+  animation: splashBgPulse 2s ease-in-out infinite;
+}
+
+@keyframes splashBgPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.splash-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.splash-logo {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.splash-orb {
+  position: relative;
+  z-index: 2;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, rgba(106, 180, 255, 0.3) 0%, rgba(74, 158, 255, 0.12) 40%, rgba(74, 158, 255, 0.02) 70%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-bright);
+  animation: orbPulse 2.5s ease-in-out infinite;
+  box-shadow: 0 0 40px rgba(74, 158, 255, 0.15), 0 0 80px rgba(74, 158, 255, 0.06);
+}
+
+@keyframes orbPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(74, 158, 255, 0.15), 0 0 80px rgba(74, 158, 255, 0.06); }
+  50% { transform: scale(1.06); box-shadow: 0 0 55px rgba(74, 158, 255, 0.22), 0 0 100px rgba(74, 158, 255, 0.1); }
+}
+
+.splash-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(74, 158, 255, 0.12);
+  animation: ringExpand 2.5s ease-out infinite;
+}
+
+@keyframes ringExpand {
+  0% { transform: scale(0.8); opacity: 0.6; }
+  50% { transform: scale(1.15); opacity: 0.15; }
+  100% { transform: scale(0.8); opacity: 0.6; }
+}
+
+.splash-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+  animation: titleFadeIn 0.8s ease-out 0.2s both;
+}
+
+@keyframes titleFadeIn {
+  from { opacity: 0; transform: translateY(12px); filter: blur(4px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+.splash-tagline {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  margin-top: 6px;
+  letter-spacing: 1px;
+  animation: tagFadeIn 0.8s ease-out 0.5s both;
+}
+
+@keyframes tagFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* --- App Container --- */
 .app-container {
   display: flex;
@@ -1205,6 +1315,24 @@ a {
   </style>
 </head>
 <body>
+
+  <!-- Splash Screen -->
+  <div class="splash" id="splash">
+    <div class="splash-bg"></div>
+    <div class="splash-content">
+      <div class="splash-logo">
+        <div class="splash-orb">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </div>
+        <div class="splash-ring"></div>
+      </div>
+      <h1 class="splash-title">OmniChat</h1>
+      <p class="splash-tagline">Multi-Model AI Chat</p>
+    </div>
+  </div>
+
   <div class="app-container" id="appContainer">
 
     <!-- Top Bar -->
@@ -1271,31 +1399,27 @@ a {
         <div class="setting-group">
           <label class="setting-label">服务商</label>
           <select class="select" id="selectProvider">
+            <option value="openai">OpenAI</option>
             <option value="xai">xAI / Grok</option>
             <option value="deepseek">DeepSeek</option>
+            <option value="openrouter">OpenRouter</option>
+            <option value="groq">Groq</option>
+            <option value="moonshot">Moonshot (Kimi)</option>
+            <option value="zhipu">智谱 (GLM)</option>
+            <option value="siliconflow">SiliconFlow</option>
           </select>
         </div>
 
-        <!-- xAI API Key -->
-        <div class="setting-group" id="groupXaiKey">
-          <label class="setting-label">xAI API Key</label>
+        <!-- Dynamic API Key (adapts to selected provider) -->
+        <div class="setting-group" id="groupApiKey">
+          <label class="setting-label" id="labelApiKey">API Key</label>
           <div class="input-with-toggle">
-            <input type="password" class="input" id="inputXaiKey" placeholder="xai-..." autocomplete="off">
-            <button class="btn-icon btn-toggle-vis" data-target="inputXaiKey" aria-label="显示/隐藏">
+            <input type="password" class="input" id="inputApiKey" placeholder="sk-..." autocomplete="off">
+            <button class="btn-icon btn-toggle-vis" data-target="inputApiKey" aria-label="显示/隐藏">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             </button>
           </div>
-        </div>
-
-        <!-- DeepSeek API Key -->
-        <div class="setting-group" id="groupDeepseekKey">
-          <label class="setting-label">DeepSeek API Key</label>
-          <div class="input-with-toggle">
-            <input type="password" class="input" id="inputDeepseekKey" placeholder="sk-..." autocomplete="off">
-            <button class="btn-icon btn-toggle-vis" data-target="inputDeepseekKey" aria-label="显示/隐藏">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-            </button>
-          </div>
+          <div class="setting-hint" id="apiKeyHint"></div>
         </div>
 
         <!-- Model -->
@@ -1452,6 +1576,12 @@ a {
   const STORAGE_VERSION = 1;
 
   const PROVIDERS = {
+    openai: {
+      name: 'OpenAI',
+      apiUrl: 'https://api.openai.com/v1/chat/completions',
+      modelsUrl: 'https://api.openai.com/v1/models',
+      keyHint: 'sk-...',
+    },
     xai: {
       name: 'xAI / Grok',
       apiUrl: 'https://api.x.ai/v1/chat/completions',
@@ -1462,6 +1592,36 @@ a {
       name: 'DeepSeek',
       apiUrl: 'https://api.deepseek.com/chat/completions',
       modelsUrl: 'https://api.deepseek.com/models',
+      keyHint: 'sk-...',
+    },
+    openrouter: {
+      name: 'OpenRouter',
+      apiUrl: 'https://openrouter.ai/api/v1/chat/completions',
+      modelsUrl: 'https://openrouter.ai/api/v1/models',
+      keyHint: 'sk-or-...',
+    },
+    groq: {
+      name: 'Groq',
+      apiUrl: 'https://api.groq.com/openai/v1/chat/completions',
+      modelsUrl: 'https://api.groq.com/openai/v1/models',
+      keyHint: 'gsk_...',
+    },
+    moonshot: {
+      name: 'Moonshot',
+      apiUrl: 'https://api.moonshot.cn/v1/chat/completions',
+      modelsUrl: 'https://api.moonshot.cn/v1/models',
+      keyHint: 'sk-...',
+    },
+    zhipu: {
+      name: '智谱 GLM',
+      apiUrl: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+      modelsUrl: 'https://open.bigmodel.cn/api/paas/v4/models',
+      keyHint: 'xxx.xxx',
+    },
+    siliconflow: {
+      name: 'SiliconFlow',
+      apiUrl: 'https://api.siliconflow.cn/v1/chat/completions',
+      modelsUrl: 'https://api.siliconflow.cn/v1/models',
       keyHint: 'sk-...',
     },
   };
@@ -1501,9 +1661,8 @@ a {
   const state = {
     conversations: [],
     currentConversationId: null,
-    xaiApiKey: '',
-    deepseekApiKey: '',
-    models: { xai: [], deepseek: [] },
+    apiKeys: {},
+    models: { xai: [], deepseek: [], openai: [], openrouter: [], groq: [], moonshot: [], zhipu: [], siliconflow: [] },
     abortController: null,
     isStreaming: false,
     pendingRenameId: null,
@@ -1523,6 +1682,7 @@ a {
 
   const dom = {};
   function cacheDom() {
+    dom.splash = $('#splash');
     dom.appContainer = $('#appContainer');
     dom.topBar = $('#topBar');
     dom.btnToggleHistory = $('#btnToggleHistory');
@@ -1547,8 +1707,9 @@ a {
     dom.settingsDrawer = $('#settingsDrawer');
     dom.btnCloseSettings = $('#btnCloseSettings');
     dom.selectProvider = $('#selectProvider');
-    dom.inputXaiKey = $('#inputXaiKey');
-    dom.inputDeepseekKey = $('#inputDeepseekKey');
+    dom.inputApiKey = $('#inputApiKey');
+    dom.labelApiKey = $('#labelApiKey');
+    dom.apiKeyHint = $('#apiKeyHint');
     dom.selectModel = $('#selectModel');
     dom.modelHint = $('#modelHint');
     dom.btnRefreshModels = $('#btnRefreshModels');
@@ -1629,8 +1790,7 @@ a {
         version: STORAGE_VERSION,
         conversations: state.conversations,
         currentConversationId: state.currentConversationId,
-        xaiApiKey: state.xaiApiKey,
-        deepseekApiKey: state.deepseekApiKey,
+        apiKeys: state.apiKeys,
         models: state.models,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -1650,9 +1810,15 @@ a {
       const data = JSON.parse(raw);
       state.conversations = data.conversations || [];
       state.currentConversationId = data.currentConversationId || null;
-      state.xaiApiKey = data.xaiApiKey || '';
-      state.deepseekApiKey = data.deepseekApiKey || '';
-      state.models = data.models || { xai: [], deepseek: [] };
+      if (data.apiKeys) {
+        state.apiKeys = data.apiKeys;
+      } else {
+        // Migrate old format
+        state.apiKeys = {};
+        if (data.xaiApiKey) state.apiKeys.xai = data.xaiApiKey;
+        if (data.deepseekApiKey) state.apiKeys.deepseek = data.deepseekApiKey;
+      }
+      state.models = data.models || { xai: [], deepseek: [], openai: [], openrouter: [], groq: [], moonshot: [], zhipu: [], siliconflow: [] };
       return true;
     } catch (e) {
       showToast('数据加载失败，将使用全新状态。', 'warning');
@@ -1754,7 +1920,7 @@ a {
   }
 
   function getApiKey(provider) {
-    return provider === 'xai' ? state.xaiApiKey : state.deepseekApiKey;
+    return state.apiKeys[provider] || '';
   }
 
   function getProviderConfig(provider) {
@@ -2111,8 +2277,6 @@ a {
     if (!conv) return;
 
     dom.selectProvider.value = conv.provider;
-    dom.inputXaiKey.value = state.xaiApiKey;
-    dom.inputDeepseekKey.value = state.deepseekApiKey;
     dom.inputCustomModel.value = conv.customModel || '';
     dom.inputSystemPrompt.value = conv.systemPrompt || '';
     dom.inputTemperature.value = conv.temperature;
@@ -2123,9 +2287,9 @@ a {
     dom.inputStream.checked = conv.stream;
     dom.selectToolCallLimit.value = String(conv.toolCallLimit);
     updateToolWarning();
+    updateApiKeyField();
 
     populateModelSelect();
-    updateProviderVisibility();
   }
 
   function syncSettingsFromUI() {
@@ -2146,28 +2310,29 @@ a {
     conv.toolCallLimitMode =
       conv.toolCallLimit === 0 ? 'disabled' : conv.toolCallLimit === -1 ? 'unlimited' : 'limited';
 
-    state.xaiApiKey = dom.inputXaiKey.value.trim();
-    state.deepseekApiKey = dom.inputDeepseekKey.value.trim();
+    state.apiKeys[conv.provider] = dom.inputApiKey.value.trim();
 
-    // If provider changed, reset model
     if (providerChanged) {
       conv.model = '';
       conv.customModel = '';
       dom.selectModel.value = '';
       dom.inputCustomModel.value = '';
+      updateApiKeyField();
     }
 
     updateTimestamp(conv);
     updateToolWarning();
-    updateProviderVisibility();
     updateTopBar();
     debouncedSave();
   }
 
-  function updateProviderVisibility() {
+  function updateApiKeyField() {
     const provider = dom.selectProvider.value;
-    document.getElementById('groupXaiKey').style.display = provider === 'xai' ? '' : 'none';
-    document.getElementById('groupDeepseekKey').style.display = provider === 'deepseek' ? '' : 'none';
+    const pConf = getProviderConfig(provider);
+    dom.labelApiKey.textContent = pConf.name + ' API Key';
+    dom.inputApiKey.placeholder = pConf.keyHint;
+    dom.inputApiKey.value = state.apiKeys[provider] || '';
+    dom.apiKeyHint.textContent = '在 ' + pConf.name + ' 平台获取，仅保存在本地浏览器';
   }
 
   function updateToolWarning() {
@@ -2853,8 +3018,11 @@ a {
 
     // Settings changes - auto save
     dom.selectProvider.addEventListener('change', () => syncSettingsFromUI());
-    dom.inputXaiKey.addEventListener('input', () => { state.xaiApiKey = dom.inputXaiKey.value.trim(); debouncedSave(); });
-    dom.inputDeepseekKey.addEventListener('input', () => { state.deepseekApiKey = dom.inputDeepseekKey.value.trim(); debouncedSave(); });
+    dom.inputApiKey.addEventListener('input', () => {
+      const provider = dom.selectProvider.value;
+      state.apiKeys[provider] = dom.inputApiKey.value.trim();
+      debouncedSave();
+    });
     dom.selectModel.addEventListener('change', () => {
       const conv = getCurrentConv();
       if (conv) {
@@ -3019,12 +3187,20 @@ a {
     renderAll();
     updateSendUI();
 
-    // Focus input on load
-    setTimeout(() => dom.inputMessage.focus(), 300);
+    // Focus input after splash
+    setTimeout(() => dom.inputMessage.focus(), 2000);
 
-    // Restore API key inputs
-    dom.inputXaiKey.value = state.xaiApiKey;
-    dom.inputDeepseekKey.value = state.deepseekApiKey;
+    // Splash screen - dismiss after animation
+    const splashDismissed = sessionStorage.getItem('omnichat_splash');
+    if (splashDismissed) {
+      // Quick dismiss on revisit
+      dom.splash.style.transition = 'opacity 150ms ease, visibility 150ms ease';
+      setTimeout(() => dom.splash.classList.add('dismissed'), 50);
+    } else {
+      // Full splash on first visit
+      setTimeout(() => dom.splash.classList.add('dismissed'), 2200);
+      sessionStorage.setItem('omnichat_splash', '1');
+    }
 
     saveToStorage();
   }

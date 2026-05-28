@@ -14,6 +14,12 @@
   const STORAGE_VERSION = 1;
 
   const PROVIDERS = {
+    openai: {
+      name: 'OpenAI',
+      apiUrl: 'https://api.openai.com/v1/chat/completions',
+      modelsUrl: 'https://api.openai.com/v1/models',
+      keyHint: 'sk-...',
+    },
     xai: {
       name: 'xAI / Grok',
       apiUrl: 'https://api.x.ai/v1/chat/completions',
@@ -24,6 +30,36 @@
       name: 'DeepSeek',
       apiUrl: 'https://api.deepseek.com/chat/completions',
       modelsUrl: 'https://api.deepseek.com/models',
+      keyHint: 'sk-...',
+    },
+    openrouter: {
+      name: 'OpenRouter',
+      apiUrl: 'https://openrouter.ai/api/v1/chat/completions',
+      modelsUrl: 'https://openrouter.ai/api/v1/models',
+      keyHint: 'sk-or-...',
+    },
+    groq: {
+      name: 'Groq',
+      apiUrl: 'https://api.groq.com/openai/v1/chat/completions',
+      modelsUrl: 'https://api.groq.com/openai/v1/models',
+      keyHint: 'gsk_...',
+    },
+    moonshot: {
+      name: 'Moonshot',
+      apiUrl: 'https://api.moonshot.cn/v1/chat/completions',
+      modelsUrl: 'https://api.moonshot.cn/v1/models',
+      keyHint: 'sk-...',
+    },
+    zhipu: {
+      name: '智谱 GLM',
+      apiUrl: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+      modelsUrl: 'https://open.bigmodel.cn/api/paas/v4/models',
+      keyHint: 'xxx.xxx',
+    },
+    siliconflow: {
+      name: 'SiliconFlow',
+      apiUrl: 'https://api.siliconflow.cn/v1/chat/completions',
+      modelsUrl: 'https://api.siliconflow.cn/v1/models',
       keyHint: 'sk-...',
     },
   };
@@ -63,9 +99,8 @@
   const state = {
     conversations: [],
     currentConversationId: null,
-    xaiApiKey: '',
-    deepseekApiKey: '',
-    models: { xai: [], deepseek: [] },
+    apiKeys: {},
+    models: { xai: [], deepseek: [], openai: [], openrouter: [], groq: [], moonshot: [], zhipu: [], siliconflow: [] },
     abortController: null,
     isStreaming: false,
     pendingRenameId: null,
@@ -85,6 +120,7 @@
 
   const dom = {};
   function cacheDom() {
+    dom.splash = $('#splash');
     dom.appContainer = $('#appContainer');
     dom.topBar = $('#topBar');
     dom.btnToggleHistory = $('#btnToggleHistory');
@@ -109,8 +145,9 @@
     dom.settingsDrawer = $('#settingsDrawer');
     dom.btnCloseSettings = $('#btnCloseSettings');
     dom.selectProvider = $('#selectProvider');
-    dom.inputXaiKey = $('#inputXaiKey');
-    dom.inputDeepseekKey = $('#inputDeepseekKey');
+    dom.inputApiKey = $('#inputApiKey');
+    dom.labelApiKey = $('#labelApiKey');
+    dom.apiKeyHint = $('#apiKeyHint');
     dom.selectModel = $('#selectModel');
     dom.modelHint = $('#modelHint');
     dom.btnRefreshModels = $('#btnRefreshModels');
@@ -191,8 +228,7 @@
         version: STORAGE_VERSION,
         conversations: state.conversations,
         currentConversationId: state.currentConversationId,
-        xaiApiKey: state.xaiApiKey,
-        deepseekApiKey: state.deepseekApiKey,
+        apiKeys: state.apiKeys,
         models: state.models,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -212,9 +248,15 @@
       const data = JSON.parse(raw);
       state.conversations = data.conversations || [];
       state.currentConversationId = data.currentConversationId || null;
-      state.xaiApiKey = data.xaiApiKey || '';
-      state.deepseekApiKey = data.deepseekApiKey || '';
-      state.models = data.models || { xai: [], deepseek: [] };
+      if (data.apiKeys) {
+        state.apiKeys = data.apiKeys;
+      } else {
+        // Migrate old format
+        state.apiKeys = {};
+        if (data.xaiApiKey) state.apiKeys.xai = data.xaiApiKey;
+        if (data.deepseekApiKey) state.apiKeys.deepseek = data.deepseekApiKey;
+      }
+      state.models = data.models || { xai: [], deepseek: [], openai: [], openrouter: [], groq: [], moonshot: [], zhipu: [], siliconflow: [] };
       return true;
     } catch (e) {
       showToast('数据加载失败，将使用全新状态。', 'warning');
@@ -316,7 +358,7 @@
   }
 
   function getApiKey(provider) {
-    return provider === 'xai' ? state.xaiApiKey : state.deepseekApiKey;
+    return state.apiKeys[provider] || '';
   }
 
   function getProviderConfig(provider) {
@@ -673,8 +715,6 @@
     if (!conv) return;
 
     dom.selectProvider.value = conv.provider;
-    dom.inputXaiKey.value = state.xaiApiKey;
-    dom.inputDeepseekKey.value = state.deepseekApiKey;
     dom.inputCustomModel.value = conv.customModel || '';
     dom.inputSystemPrompt.value = conv.systemPrompt || '';
     dom.inputTemperature.value = conv.temperature;
@@ -685,9 +725,9 @@
     dom.inputStream.checked = conv.stream;
     dom.selectToolCallLimit.value = String(conv.toolCallLimit);
     updateToolWarning();
+    updateApiKeyField();
 
     populateModelSelect();
-    updateProviderVisibility();
   }
 
   function syncSettingsFromUI() {
@@ -708,28 +748,29 @@
     conv.toolCallLimitMode =
       conv.toolCallLimit === 0 ? 'disabled' : conv.toolCallLimit === -1 ? 'unlimited' : 'limited';
 
-    state.xaiApiKey = dom.inputXaiKey.value.trim();
-    state.deepseekApiKey = dom.inputDeepseekKey.value.trim();
+    state.apiKeys[conv.provider] = dom.inputApiKey.value.trim();
 
-    // If provider changed, reset model
     if (providerChanged) {
       conv.model = '';
       conv.customModel = '';
       dom.selectModel.value = '';
       dom.inputCustomModel.value = '';
+      updateApiKeyField();
     }
 
     updateTimestamp(conv);
     updateToolWarning();
-    updateProviderVisibility();
     updateTopBar();
     debouncedSave();
   }
 
-  function updateProviderVisibility() {
+  function updateApiKeyField() {
     const provider = dom.selectProvider.value;
-    document.getElementById('groupXaiKey').style.display = provider === 'xai' ? '' : 'none';
-    document.getElementById('groupDeepseekKey').style.display = provider === 'deepseek' ? '' : 'none';
+    const pConf = getProviderConfig(provider);
+    dom.labelApiKey.textContent = pConf.name + ' API Key';
+    dom.inputApiKey.placeholder = pConf.keyHint;
+    dom.inputApiKey.value = state.apiKeys[provider] || '';
+    dom.apiKeyHint.textContent = '在 ' + pConf.name + ' 平台获取，仅保存在本地浏览器';
   }
 
   function updateToolWarning() {
@@ -1415,8 +1456,11 @@
 
     // Settings changes - auto save
     dom.selectProvider.addEventListener('change', () => syncSettingsFromUI());
-    dom.inputXaiKey.addEventListener('input', () => { state.xaiApiKey = dom.inputXaiKey.value.trim(); debouncedSave(); });
-    dom.inputDeepseekKey.addEventListener('input', () => { state.deepseekApiKey = dom.inputDeepseekKey.value.trim(); debouncedSave(); });
+    dom.inputApiKey.addEventListener('input', () => {
+      const provider = dom.selectProvider.value;
+      state.apiKeys[provider] = dom.inputApiKey.value.trim();
+      debouncedSave();
+    });
     dom.selectModel.addEventListener('change', () => {
       const conv = getCurrentConv();
       if (conv) {
@@ -1581,12 +1625,20 @@
     renderAll();
     updateSendUI();
 
-    // Focus input on load
-    setTimeout(() => dom.inputMessage.focus(), 300);
+    // Focus input after splash
+    setTimeout(() => dom.inputMessage.focus(), 2000);
 
-    // Restore API key inputs
-    dom.inputXaiKey.value = state.xaiApiKey;
-    dom.inputDeepseekKey.value = state.deepseekApiKey;
+    // Splash screen - dismiss after animation
+    const splashDismissed = sessionStorage.getItem('omnichat_splash');
+    if (splashDismissed) {
+      // Quick dismiss on revisit
+      dom.splash.style.transition = 'opacity 150ms ease, visibility 150ms ease';
+      setTimeout(() => dom.splash.classList.add('dismissed'), 50);
+    } else {
+      // Full splash on first visit
+      setTimeout(() => dom.splash.classList.add('dismissed'), 2200);
+      sessionStorage.setItem('omnichat_splash', '1');
+    }
 
     saveToStorage();
   }

@@ -10,6 +10,41 @@
   <link rel="manifest" href="manifest.json">
   <title>OmniChat</title>
   <link rel="stylesheet" href="style.css">
+  <style id="layoutEmergencyFix">
+    .drawer-overlay {
+      position: fixed !important;
+      inset: 0 !important;
+      z-index: 20 !important;
+      pointer-events: none;
+    }
+    .drawer-overlay.open {
+      pointer-events: auto;
+    }
+    .drawer {
+      position: fixed !important;
+      top: 0 !important;
+      bottom: 0 !important;
+      z-index: 30 !important;
+      display: flex;
+      flex-direction: column;
+    }
+    .drawer-left {
+      left: 0 !important;
+      right: auto !important;
+      transform: translateX(-100%) !important;
+    }
+    .drawer-left.open {
+      transform: translateX(0) !important;
+    }
+    .drawer-right {
+      right: 0 !important;
+      left: auto !important;
+      transform: translateX(100%) !important;
+    }
+    .drawer-right.open {
+      transform: translateX(0) !important;
+    }
+  </style>
 </head>
 <body>
 

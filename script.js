@@ -512,6 +512,13 @@
     if (state.ui.isSettingsOpen) closeDrawer('settings');
   }
 
+  function normalizeDrawerState() {
+    dom.historyDrawer.classList.toggle('open', !!state.ui.isHistoryOpen);
+    dom.historyOverlay.classList.toggle('open', !!state.ui.isHistoryOpen);
+    dom.settingsDrawer.classList.toggle('open', !!state.ui.isSettingsOpen);
+    dom.settingsOverlay.classList.toggle('open', !!state.ui.isSettingsOpen);
+  }
+
   // =========================================================================
   // RENDER: CONVERSATION LIST
   // =========================================================================
@@ -2364,6 +2371,7 @@
 
     setupEvents();
     renderAll();
+    normalizeDrawerState();
     updateSendUI();
 
     // Self-healing: if ?update param, force clean reset

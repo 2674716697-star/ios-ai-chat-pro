@@ -107,6 +107,7 @@
     currentConversationId: null,
     apiKeys: {},
     models: { xai: [], deepseek: [], openai: [], openrouter: [], groq: [], moonshot: [], zhipu: [], siliconflow: [] },
+    chatBackground: { type: 'none', value: '', opacity: 35 },
     abortController: null,
     isStreaming: false,
     pendingRenameId: null,
@@ -171,6 +172,10 @@
     dom.inputCaching = $('#inputCaching');
     dom.inputPreciseMode = $('#inputPreciseMode');
     dom.selectToolCallLimit = $('#selectToolCallLimit');
+    dom.chatBgOverlay = $('#chatBgOverlay');
+    dom.bgPresets = $('#bgPresets');
+    dom.inputBgUrl = $('#inputBgUrl');
+    dom.inputBgOpacity = $('#inputBgOpacity');
     dom.toolWarning = $('#toolWarning');
 
     dom.mainContent = $('#mainContent');
@@ -241,6 +246,7 @@
         currentConversationId: state.currentConversationId,
         apiKeys: state.apiKeys,
         models: state.models,
+        chatBackground: state.chatBackground,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (e) {
@@ -268,6 +274,7 @@
         if (data.deepseekApiKey) state.apiKeys.deepseek = data.deepseekApiKey;
       }
       state.models = data.models || { xai: [], deepseek: [], openai: [], openrouter: [], groq: [], moonshot: [], zhipu: [], siliconflow: [] };
+      state.chatBackground = data.chatBackground || { type: 'none', value: '', opacity: 35 };
       return true;
     } catch (e) {
       showToast('数据加载失败，将使用全新状态。', 'warning');
@@ -887,6 +894,53 @@
     dom.inputApiKey.placeholder = pConf.keyHint;
     dom.inputApiKey.value = state.apiKeys[provider] || '';
     dom.apiKeyHint.textContent = '在 ' + pConf.name + ' 平台获取，仅保存在本地浏览器';
+  }
+
+  function applyChatBackground() {
+    const bg = state.chatBackground || { type: 'none', value: '', opacity: 35 };
+    const overlay = dom.chatBgOverlay;
+
+    // Set CSS variable for opacity
+    document.documentElement.style.setProperty('--bg-opacity', (bg.opacity / 100));
+
+    if (bg.type === 'none') {
+      overlay.style.backgroundImage = '';
+      overlay.style.display = 'none';
+    } else if (bg.type === 'gradient') {
+      overlay.style.backgroundImage = bg.value;
+      overlay.style.display = '';
+    } else if (bg.type === 'url' && bg.value) {
+      overlay.style.backgroundImage = 'url(' + bg.value + ')';
+      overlay.style.display = '';
+    }
+  }
+
+  function setChatBackground(type, value) {
+    state.chatBackground.type = type;
+    state.chatBackground.value = value || '';
+    applyChatBackground();
+    saveToStorage();
+    updateBgPresetUI();
+  }
+
+  function updateBgPresetUI() {
+    const bg = state.chatBackground;
+    dom.inputBgUrl.value = bg.type === 'url' ? bg.value : '';
+    dom.inputBgOpacity.value = bg.opacity;
+    // Update active preset button
+    const presets = dom.bgPresets.querySelectorAll('.bg-preset');
+    presets.forEach((btn) => {
+      const btnBg = btn.dataset.bg;
+      if (bg.type === 'none' && btnBg === 'none') {
+        btn.classList.add('active');
+      } else if (bg.type === 'gradient' && btnBg === bg.value) {
+        btn.classList.add('active');
+      } else if (bg.type === 'url' && btnBg === 'url') {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
   }
 
   function updateToolWarning() {
@@ -1741,6 +1795,33 @@
 
     dom.btnRefreshModels.addEventListener('click', () => refreshModels());
 
+    // Background presets
+    dom.bgPresets.addEventListener('click', (e) => {
+      const btn = e.target.closest('.bg-preset');
+      if (!btn) return;
+      const bg = btn.dataset.bg;
+      if (bg === 'none') {
+        setChatBackground('none', '');
+      } else if (bg.startsWith('gradient-')) {
+        const style = getComputedStyle(btn);
+        setChatBackground('gradient', style.backgroundImage || style.background);
+      }
+    });
+    dom.inputBgUrl.addEventListener('input', () => {
+      const url = dom.inputBgUrl.value.trim();
+      if (url) {
+        setChatBackground('url', url);
+      } else {
+        setChatBackground('none', '');
+      }
+    });
+    dom.inputBgOpacity.addEventListener('input', () => {
+      const val = parseInt(dom.inputBgOpacity.value, 10);
+      state.chatBackground.opacity = val;
+      applyChatBackground();
+      saveToStorage();
+    });
+
     // Send / Stop
     dom.btnSend.addEventListener('click', () => sendMessage());
     dom.btnStop.addEventListener('click', () => stopCurrentRequest());
@@ -1847,6 +1928,10 @@
       setTimeout(() => dom.splash.classList.add('dismissed'), 2200);
       sessionStorage.setItem('omnichat_splash', '1');
     }
+
+    // Apply chat background
+    applyChatBackground();
+    updateBgPresetUI();
 
     // Auto-archive stale barely-used conversations
     setTimeout(() => autoArchiveCheck(), 3000);

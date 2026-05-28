@@ -30,6 +30,9 @@
     </div>
   </div>
 
+  <!-- Chat Background Layer -->
+  <div class="chat-bg-overlay" id="chatBgOverlay"></div>
+
   <div class="app-container" id="appContainer">
 
     <!-- Top Bar -->
@@ -137,6 +140,26 @@
         <div class="setting-group">
           <label class="setting-label">自定义模型名（可选）</label>
           <input type="text" class="input" id="inputCustomModel" placeholder="留空使用上方选择的模型">
+        </div>
+
+        <!-- Chat Background -->
+        <div class="setting-group">
+          <label class="setting-label">聊天背景</label>
+          <div class="bg-presets" id="bgPresets">
+            <button class="bg-preset bg-preset-none active" data-bg="none" aria-label="默认"></button>
+            <button class="bg-preset" data-bg="gradient-ocean" style="background:linear-gradient(135deg,#0c1445,#1a2a6c,#1e3a5f)" aria-label="海洋"></button>
+            <button class="bg-preset" data-bg="gradient-sunset" style="background:linear-gradient(135deg,#2d0a1e,#5c1a3a,#3d1525)" aria-label="日落"></button>
+            <button class="bg-preset" data-bg="gradient-forest" style="background:linear-gradient(135deg,#0a1a0a,#1a3a1a,#0d2d0d)" aria-label="森林"></button>
+            <button class="bg-preset" data-bg="gradient-ink" style="background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)" aria-label="墨蓝"></button>
+            <button class="bg-preset" data-bg="gradient-charcoal" style="background:linear-gradient(135deg,#1a1a1a,#2d2d2d,#1a1a1a)" aria-label="炭灰"></button>
+          </div>
+          <div class="setting-hint" style="margin-top:8px">
+            <input type="text" class="input" id="inputBgUrl" placeholder="或输入图片 URL（留空使用纯色）" style="font-size:12px">
+          </div>
+          <div class="setting-group setting-row" style="margin-top:6px">
+            <label class="setting-label" style="font-size:11px">背景透明度</label>
+            <input type="range" class="range" id="inputBgOpacity" min="10" max="70" value="35" style="width:120px">
+          </div>
         </div>
 
         <!-- System Prompt -->

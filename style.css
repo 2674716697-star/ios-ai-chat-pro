@@ -41,7 +41,6 @@
   --safe-bottom: env(safe-area-inset-bottom, 16px);
   --safe-top: env(safe-area-inset-top, 0px);
   --top-bar-h: 52px;
-  --bottom-bar-min-h: 80px;
   --spring: cubic-bezier(0.25, 0.1, 0.25, 1);
   --spring-smooth: cubic-bezier(0.42, 0, 0.58, 1);
   --transition-fast: 180ms var(--spring);
@@ -1260,14 +1259,6 @@ a {
 .btn-stop:active {
   transform: scale(0.88);
   box-shadow: 0 1px 4px rgba(255,69,58,0.15);
-}
-
-.security-notice {
-  text-align: center;
-  font-size: 10px;
-  color: var(--text-tertiary);
-  margin-top: 6px;
-  line-height: 1.4;
 }
 
 /* Pull indicator for swipe-reveal */

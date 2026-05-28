@@ -28,7 +28,7 @@
   --code-border: rgba(255, 255, 255, 0.08);
   --overlay-bg: rgba(0, 0, 0, 0.55);
   --glass-bg: rgba(28, 28, 30, 0.72);
-  --glass-blur: saturate(140%) blur(8px);
+  --glass-blur: saturate(180%) blur(20px);
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
   --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
@@ -38,8 +38,8 @@
   --radius-xl: 26px;
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-mono: "SF Mono", "Cascadia Code", "Fira Code", "JetBrains Mono", Consolas, monospace;
-  --safe-bottom: env(safe-area-inset-bottom, 16px);
-  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 4px);
+  --safe-top: env(safe-area-inset-top, 47px);
   --top-bar-h: 52px;
   --spring: cubic-bezier(0.25, 0.1, 0.25, 1);
   --spring-smooth: cubic-bezier(0.42, 0, 0.58, 1);
@@ -356,12 +356,15 @@ a {
   bottom: 0;
   width: 85%;
   max-width: 360px;
-  background: rgba(28,28,30,0.97);
+  background: rgba(28,28,30,0.85);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   z-index: 30;
   display: flex;
   flex-direction: column;
   transform: translateX(0);
   transition: transform var(--transition-slow);
+  box-shadow: 8px 0 32px rgba(0,0,0,0.5);
 }
 
 .drawer-left {
@@ -386,9 +389,9 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
-  padding-top: calc(14px + var(--safe-top));
-  border-bottom: 1px solid var(--border-color);
+  padding: 8px 16px;
+  padding-top: calc(8px + var(--safe-top));
+  border-bottom: 0.5px solid var(--border-color);
   flex-shrink: 0;
 }
 
@@ -1059,15 +1062,17 @@ a {
 }
 
 .message.user .message-bubble {
-  background: #0A84FF;
+  background: linear-gradient(135deg, #0A84FF, #0066CC);
   border-bottom-right-radius: 6px;
   color: #ffffff;
+  box-shadow: 0 2px 12px rgba(10,132,255,0.25);
 }
 
 .message.assistant .message-bubble {
-  background: #1c1c1e;
-  border: 0.5px solid rgba(255,255,255,0.06);
+  background: linear-gradient(180deg, #2c2c2e, #1c1c1e);
+  border: 0.5px solid rgba(255,255,255,0.07);
   border-bottom-left-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
 .message.system-info .message-bubble {
@@ -1189,10 +1194,13 @@ a {
 /* --- Bottom Bar --- */
 .bottom-bar {
   flex-shrink: 0;
-  background: rgba(28,28,30,0.94);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border-top: 0.5px solid var(--border-color);
-  padding: 6px 14px;
-  padding-bottom: calc(6px + var(--safe-bottom));
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+  padding: 4px 14px;
+  padding-bottom: calc(4px + var(--safe-bottom));
   position: relative;
   z-index: 20;
 }
@@ -1240,7 +1248,9 @@ a {
   padding: 10px 16px;
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 22px;
-  background: rgba(44,44,46,0.6);
+  background: rgba(28,28,30,0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   color: var(--text-primary);
   font-size: 15px;
   resize: none;
@@ -1254,7 +1264,7 @@ a {
 
 .input-message:focus {
   border-color: var(--accent);
-  background: rgba(44,44,46,0.85);
+  background: rgba(28,28,30,0.7);
 }
 
 .input-message::placeholder {
@@ -1328,7 +1338,9 @@ a {
   transform: translateX(-50%) translateY(100%);
   width: 100%;
   max-width: 800px;
-  background: rgba(28,28,30,0.97);
+  background: rgba(28,28,30,0.88);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border-top: 0.5px solid var(--border-color);
   padding: 10px 20px;
   padding-bottom: calc(10px + var(--safe-bottom));

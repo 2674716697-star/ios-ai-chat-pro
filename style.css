@@ -365,6 +365,16 @@ a {
   box-shadow: 8px 0 32px rgba(0,0,0,0.5);
 }
 
+.drawer:not(.open) {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.drawer.open {
+  visibility: visible;
+  pointer-events: auto;
+}
+
 .drawer-left {
   left: 0;
   transform: translateX(-100%);

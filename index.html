@@ -28,6 +28,14 @@
       display: flex;
       flex-direction: column;
     }
+    .drawer:not(.open) {
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+    .drawer.open {
+      visibility: visible !important;
+      pointer-events: auto !important;
+    }
     .drawer-left {
       left: 0 !important;
       right: auto !important;
@@ -117,6 +125,7 @@
             <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
+      </div>
       </div>
       <div class="search-wrap">
         <input type="search" class="search-input" id="searchInput" placeholder="搜索会话标题或内容…" autocomplete="off">

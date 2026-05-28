@@ -38,8 +38,8 @@
   --radius-xl: 26px;
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-mono: "SF Mono", "Cascadia Code", "Fira Code", "JetBrains Mono", Consolas, monospace;
-  --safe-bottom: env(safe-area-inset-bottom, 4px);
-  --safe-top: env(safe-area-inset-top, 47px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
   --top-bar-h: 52px;
   --spring: cubic-bezier(0.25, 0.1, 0.25, 1);
   --spring-smooth: cubic-bezier(0.42, 0, 0.58, 1);
@@ -233,8 +233,6 @@ a {
   border-bottom: 0.5px solid var(--border-color);
   min-height: var(--top-bar-h);
   flex-shrink: 0;
-  position: relative;
-  z-index: 20;
 }
 
 .top-bar-info {
@@ -1199,10 +1197,10 @@ a {
   -webkit-backdrop-filter: var(--glass-blur);
   border-top: 0.5px solid var(--border-color);
   box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
-  padding: 4px 14px;
-  padding-bottom: calc(4px + var(--safe-bottom));
+  padding: 6px 14px;
+  padding-bottom: calc(6px + var(--safe-bottom));
   position: relative;
-  z-index: 20;
+  z-index: 10;
 }
 
 .quick-actions {
@@ -1344,7 +1342,7 @@ a {
   border-top: 0.5px solid var(--border-color);
   padding: 10px 20px;
   padding-bottom: calc(10px + var(--safe-bottom));
-  z-index: 15;
+  z-index: 8;
   transition: transform 400ms var(--spring);
 }
 

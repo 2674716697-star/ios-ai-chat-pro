@@ -174,8 +174,10 @@
     dom.selectToolCallLimit = $('#selectToolCallLimit');
     dom.chatBgOverlay = $('#chatBgOverlay');
     dom.bgPresets = $('#bgPresets');
-    dom.inputBgUrl = $('#inputBgUrl');
     dom.inputBgOpacity = $('#inputBgOpacity');
+    dom.btnPickBgImage = $('#btnPickBgImage');
+    dom.btnRemoveBgImage = $('#btnRemoveBgImage');
+    dom.inputBgFile = $('#inputBgFile');
     dom.toolWarning = $('#toolWarning');
 
     dom.mainContent = $('#mainContent');
@@ -900,7 +902,6 @@
     const bg = state.chatBackground || { type: 'none', value: '', opacity: 35 };
     const overlay = dom.chatBgOverlay;
 
-    // Set CSS variable for opacity
     document.documentElement.style.setProperty('--bg-opacity', (bg.opacity / 100));
 
     if (bg.type === 'none') {
@@ -909,7 +910,7 @@
     } else if (bg.type === 'gradient') {
       overlay.style.backgroundImage = bg.value;
       overlay.style.display = '';
-    } else if (bg.type === 'url' && bg.value) {
+    } else if ((bg.type === 'url' || bg.type === 'image') && bg.value) {
       overlay.style.backgroundImage = 'url(' + bg.value + ')';
       overlay.style.display = '';
     }
@@ -925,7 +926,6 @@
 
   function updateBgPresetUI() {
     const bg = state.chatBackground;
-    dom.inputBgUrl.value = bg.type === 'url' ? bg.value : '';
     dom.inputBgOpacity.value = bg.opacity;
     // Update active preset button
     const presets = dom.bgPresets.querySelectorAll('.bg-preset');
@@ -935,12 +935,56 @@
         btn.classList.add('active');
       } else if (bg.type === 'gradient' && btnBg === bg.value) {
         btn.classList.add('active');
-      } else if (bg.type === 'url' && btnBg === 'url') {
-        btn.classList.add('active');
       } else {
         btn.classList.remove('active');
       }
     });
+    // Show/hide remove button for custom images
+    const hasCustomImage = bg.type === 'image' && bg.value;
+    dom.btnRemoveBgImage.style.display = hasCustomImage ? '' : 'none';
+    dom.btnPickBgImage.textContent = hasCustomImage ? '更换图片' : '从相册选择';
+  }
+
+  function handleBgImagePick(file) {
+    if (!file || !file.type.startsWith('image/')) {
+      showToast('请选择图片文件', 'warning');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      // Resize and compress via canvas before storing
+      const img = new Image();
+      img.onload = function () {
+        const maxW = 800;
+        const maxH = 1200;
+        let w = img.width;
+        let h = img.height;
+
+        if (w > maxW || h > maxH) {
+          const ratio = Math.min(maxW / w, maxH / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.65);
+        setChatBackground('image', dataUrl);
+        showToast('背景已更新', 'success');
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeBgImage() {
+    setChatBackground('none', '');
+    showToast('背景已移除', 'info');
   }
 
   function updateToolWarning() {
@@ -1807,12 +1851,12 @@
         setChatBackground('gradient', style.backgroundImage || style.background);
       }
     });
-    dom.inputBgUrl.addEventListener('input', () => {
-      const url = dom.inputBgUrl.value.trim();
-      if (url) {
-        setChatBackground('url', url);
-      } else {
-        setChatBackground('none', '');
+    dom.btnPickBgImage.addEventListener('click', () => dom.inputBgFile.click());
+    dom.btnRemoveBgImage.addEventListener('click', () => removeBgImage());
+    dom.inputBgFile.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleBgImagePick(e.target.files[0]);
+        e.target.value = '';
       }
     });
     dom.inputBgOpacity.addEventListener('input', () => {

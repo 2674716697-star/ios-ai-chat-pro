@@ -1958,6 +1958,13 @@
     renderAll();
     updateSendUI();
 
+    // Listen for PWA updates
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        showToast('新版本已就绪，下次打开生效', 'success', 4000);
+      });
+    }
+
     // Focus input after splash
     setTimeout(() => dom.inputMessage.focus(), 2000);
 

@@ -1,25 +1,109 @@
-// Build standalone omnichat.html
+// Build standalone omnichat.html with minification
 const fs = require('fs');
 
 let html = fs.readFileSync('index.html', 'utf-8');
 const css = fs.readFileSync('style.css', 'utf-8');
 const js = fs.readFileSync('script.js', 'utf-8');
+const buildVersion = Date.now().toString(36);
 
-// Use replacer functions to avoid String.replace $ interpolation
-html = html.replace(
-  '<link rel="stylesheet" href="style.css">',
-  () => '<style>\n' + css + '\n  </style>'
-);
+// Minify CSS: remove comments, collapse whitespace, remove unnecessary semicolons
+function minifyCSS(css) {
+  return css
+    .replace(/\/\*[\s\S]*?\*\//g, '')           // Remove comments
+    .replace(/\s+/g, ' ')                        // Collapse whitespace
+    .replace(/\s*([{}:;,])\s*/g, '$1')           // Remove space around symbols
+    .replace(/;}/g, '}')                         // Remove trailing semicolons
+    .replace(/:\s*0\s*px/g, ':0')                // 0px -> 0
+    .replace(/^\s+|\s+$/gm, '')                  // Trim lines
+    .replace(/\n/g, '')                           // Remove newlines
+    .trim();
+}
 
-html = html.replace(
-  '<script src="script.js"></script>',
-  () => '<script>\n' + js + '\n  </script>'
-);
+// Minify JS: remove comments, collapse whitespace (safe for our codebase)
+function minifyJS(js) {
+  let out = '';
+  let inString = false, inTemplate = false, inSingleComment = false, inMultiComment = false;
+  let stringChar = '';
+  let prev = '', prev2 = '';
 
-// Add PWA manifest
+  for (let i = 0; i < js.length; i++) {
+    const ch = js[i];
+
+    // String tracking
+    if (!inSingleComment && !inMultiComment) {
+      if (!inString && !inTemplate && (ch === '"' || ch === "'" || ch === '`')) {
+        if (ch === '`') inTemplate = true;
+        else inString = true;
+        stringChar = ch;
+      } else if (inString && ch === stringChar && prev !== '\\') {
+        inString = false;
+      } else if (inTemplate && ch === '`' && prev !== '\\') {
+        inTemplate = false;
+      }
+    }
+
+    // Comment detection
+    if (!inString && !inTemplate && !inSingleComment && !inMultiComment) {
+      if (ch === '/' && js[i + 1] === '/') {
+        inSingleComment = true;
+        i++; continue;
+      }
+      if (ch === '/' && js[i + 1] === '*') {
+        inMultiComment = true;
+        i++; continue;
+      }
+    }
+
+    if (inSingleComment && ch === '\n') {
+      inSingleComment = false;
+      if (prev !== ';' && prev !== '{' && prev !== '}' && prev !== '\n') out += ';';
+      out += '\n';
+      continue;
+    }
+
+    if (inMultiComment && ch === '*' && js[i + 1] === '/') {
+      inMultiComment = false;
+      i++;
+      continue;
+    }
+
+    if (inSingleComment || inMultiComment) continue;
+
+    // Collapse whitespace
+    if (!inString && !inTemplate && ch === ' ' && (prev === ' ' || prev === '\n' || prev === '\t')) continue;
+    if (!inString && !inTemplate && ch === '\t') { out += ' '; continue; }
+
+    out += ch;
+    prev2 = prev; prev = ch;
+  }
+
+  // Remove blank lines
+  out = out.split('\n').filter(l => l.trim()).join('\n');
+  // Remove leading/trailing whitespace per line
+  out = out.split('\n').map(l => l.trim()).join('\n');
+
+  return out;
+}
+
+const cssMin = minifyCSS(css);
+const jsMin = minifyJS(js);
+
+// Add build version meta tag
 html = html.replace(
   '<meta name="theme-color" content="#0f0f0f">',
-  '<meta name="theme-color" content="#0f0f0f">\n  <link rel="manifest" href="manifest.json">'
+  '<meta name="theme-color" content="#0f0f0f">\n  <meta name="build-version" content="' + buildVersion + '">\n  <link rel="manifest" href="manifest.json">'
+);
+
+// Inline minified CSS
+html = html.replace(
+  '<link rel="stylesheet" href="style.css">',
+  () => '<style>' + cssMin + '</style>'
+);
+
+// Inline minified JS with version
+html = html.replace(
+  '<script src="script.js"></script>',
+  () => '<script>' + jsMin + '</script>'
 );
 
 // Add apple-touch-icon
@@ -29,8 +113,8 @@ html = html.replace(
   '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n  <link rel="apple-touch-icon" href="' + icon + '">'
 );
 
-// Add SW registration before closing body
-const swReg = '\n  <script>if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(function(){})}</script>\n</body>';
+// Add SW registration with version check
+const swReg = '\n  <script>if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").then(function(reg){reg.addEventListener("updatefound",function(){var w=reg.installing;w.addEventListener("statechange",function(){if(w.state==="installed"&&navigator.serviceWorker.controller){console.log("[OmniChat] Update available - refresh to apply")}})})}).catch(function(){})}</script>\n</body>';
 html = html.replace('</body>', swReg);
 
 fs.writeFileSync('omnichat.html', html, 'utf-8');
@@ -38,10 +122,14 @@ fs.writeFileSync('omnichat.html', html, 'utf-8');
 // Verify
 const verifyHtml = fs.readFileSync('omnichat.html', 'utf-8');
 const hasDoubleDollar = verifyHtml.includes('const $$');
+const sizeKB = (verifyHtml.length / 1024).toFixed(1);
+const origSize = ((css.length + js.length + fs.readFileSync('index.html','utf-8').length) / 1024).toFixed(1);
+
+console.log('Build version:', buildVersion);
 console.log('Has $$:', hasDoubleDollar);
-console.log('Has manifest:', verifyHtml.includes('manifest.json'));
-console.log('Has SW:', verifyHtml.includes('serviceWorker'));
-console.log('Size:', (verifyHtml.length / 1024).toFixed(1) + ' KB');
+console.log('CSS: ' + (css.length/1024).toFixed(1) + 'KB -> ' + (cssMin.length/1024).toFixed(1) + 'KB (' + (100-cssMin.length/css.length*100).toFixed(0) + '% reduced)');
+console.log('JS:  ' + (js.length/1024).toFixed(1) + 'KB -> ' + (jsMin.length/1024).toFixed(1) + 'KB (' + (100-jsMin.length/js.length*100).toFixed(0) + '% reduced)');
+console.log('Output: ' + sizeKB + ' KB (from ' + origSize + ' KB source)');
 
 if (!hasDoubleDollar) {
   console.log('ERROR: $$ variable was corrupted!');

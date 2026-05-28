@@ -393,7 +393,7 @@
   <script>
   if ('serviceWorker' in navigator) {
     var restartPending = false;
-    navigator.serviceWorker.register('sw.js').then(function(reg) {
+    navigator.serviceWorker.register('sw.js?v=3').then(function(reg) {
       // Check for updates on navigation
       reg.addEventListener('updatefound', function() {
         var newWorker = reg.installing;

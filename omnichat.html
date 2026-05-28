@@ -2465,7 +2465,7 @@ importJSON,
   <script>
   if ('serviceWorker' in navigator) {
     var restartPending = false;
-    navigator.serviceWorker.register('sw.js').then(function(reg) {
+    navigator.serviceWorker.register('sw.js?v=3').then(function(reg) {
       // Check for updates on navigation
       reg.addEventListener('updatefound', function() {
         var newWorker = reg.installing;
@@ -2490,6 +2490,6 @@ importJSON,
   }
   </script>
 
-  <script>if("serviceWorker"in navigator){var restartPending=false;navigator.serviceWorker.register("sw.js").then(function(reg){reg.addEventListener("updatefound",function(){var n=reg.installing;n.addEventListener("statechange",function(){if(n.state==="installed"&&navigator.serviceWorker.controller){window.__updateReady=true;window.__pendingWorker=n}})})}).catch(function(){});navigator.serviceWorker.addEventListener("controllerchange",function(){if(!restartPending){restartPending=true;window.location.reload()}})}</script>
+  <script>if("serviceWorker"in navigator){var restartPending=false;navigator.serviceWorker.register("sw.js?v=3").then(function(reg){reg.addEventListener("updatefound",function(){var n=reg.installing;n.addEventListener("statechange",function(){if(n.state==="installed"&&navigator.serviceWorker.controller){window.__updateReady=true;window.__pendingWorker=n}})})}).catch(function(){});navigator.serviceWorker.addEventListener("controllerchange",function(){if(!restartPending){restartPending=true;window.location.reload()}})}</script>
 </body>
 </html>

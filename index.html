@@ -390,6 +390,32 @@
   </div>
 
   <script src="script.js"></script>
-  <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}</script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    var restartPending = false;
+    navigator.serviceWorker.register('sw.js').then(function(reg) {
+      // Check for updates on navigation
+      reg.addEventListener('updatefound', function() {
+        var newWorker = reg.installing;
+        newWorker.addEventListener('statechange', function() {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // New version ready — store flag, app will show dialog on init
+            window.__updateReady = true;
+            // Post message to trigger skipWaiting when user confirms
+            window.__pendingWorker = newWorker;
+          }
+        });
+      });
+    }).catch(function(){});
+
+    // Listen for controller change (after skipWaiting)
+    navigator.serviceWorker.addEventListener('controllerchange', function() {
+      if (!restartPending) {
+        restartPending = true;
+        window.location.reload();
+      }
+    });
+  }
+  </script>
 </body>
 </html>

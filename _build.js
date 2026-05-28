@@ -114,7 +114,7 @@ html = html.replace(
 );
 
 // Add SW registration with version check
-const swReg = '\n  <script>if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").then(function(reg){reg.addEventListener("updatefound",function(){var w=reg.installing;w.addEventListener("statechange",function(){if(w.state==="installed"&&navigator.serviceWorker.controller){console.log("[OmniChat] Update available - refresh to apply")}})})}).catch(function(){})}</script>\n</body>';
+const swReg = '\n  <script>if("serviceWorker"in navigator){var restartPending=false;navigator.serviceWorker.register("sw.js").then(function(reg){reg.addEventListener("updatefound",function(){var n=reg.installing;n.addEventListener("statechange",function(){if(n.state==="installed"&&navigator.serviceWorker.controller){window.__updateReady=true;window.__pendingWorker=n}})})}).catch(function(){});navigator.serviceWorker.addEventListener("controllerchange",function(){if(!restartPending){restartPending=true;window.location.reload()}})}</script>\n</body>';
 html = html.replace('</body>', swReg);
 
 fs.writeFileSync('omnichat.html', html, 'utf-8');

@@ -334,6 +334,31 @@
     dom.renameDialogOverlay.style.display = 'none';
   }
 
+  function showUpdateDialog() {
+    dom.dialogBody.innerHTML = '发现新版本，已下载就绪。<br><br>是否立即重启应用？';
+    dom.dialogConfirm.textContent = '重启更新';
+    dom.dialogConfirm.className = 'btn btn-primary';
+    dom.dialogCancel.textContent = '稍后';
+    dom.dialogOverlay.style.display = 'flex';
+
+    state.pendingConfirmAction = function () {
+      hideConfirm();
+      dom.dialogConfirm.textContent = '确认';
+      dom.dialogConfirm.className = 'btn btn-danger';
+      dom.dialogCancel.textContent = '取消';
+      // Tell SW to skip waiting
+      if (window.__pendingWorker) {
+        window.__pendingWorker.postMessage({ type: 'SKIP_WAITING' });
+      } else if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+      }
+      // Fallback: reload after short delay
+      setTimeout(function () {
+        window.location.reload();
+      }, 1500);
+    };
+  }
+
   // =========================================================================
   // CONVERSATION HELPERS
   // =========================================================================
@@ -2297,11 +2322,11 @@
     renderAll();
     updateSendUI();
 
-    // Listen for PWA updates
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        showToast('新版本已就绪，下次打开生效', 'success', 4000);
-      });
+    // Check for pending PWA update
+    if (window.__updateReady) {
+      setTimeout(() => {
+        showUpdateDialog();
+      }, 2500); // After splash
     }
 
     // Focus input after splash

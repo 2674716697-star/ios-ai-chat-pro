@@ -74,6 +74,7 @@
     systemPrompt: '',
     enableCaching: true,
     preciseMode: false,
+    keepThinkingOpen: true,
   };
 
   const REQUEST_CHAR_SOFT_LIMIT = 52000;
@@ -192,6 +193,7 @@
     dom.inputActionElaborate = $('#inputActionElaborate');
     dom.inputSceneMode = $('#inputSceneMode');
     dom.inputAutoCompress = $('#inputAutoCompress');
+    dom.inputKeepThinking = $('#inputKeepThinking');
     dom.scenePanel = $('#scenePanel');
     dom.scenePanelToggle = $('#scenePanelToggle');
     dom.scenePanelBody = $('#scenePanelBody');
@@ -455,6 +457,7 @@
       sceneMode: false,
       sceneState: createSceneState(),
       autoCompress: false,
+      keepThinkingOpen: DEFAULTS.keepThinkingOpen,
       messages: [],
     };
   }
@@ -889,8 +892,11 @@
     // Thinking / reasoning section
     const reasoning = msg.reasoning || '';
     if (reasoning) {
+      const conv = getCurrentConv();
       const isStreamingReasoning = msg._streaming && !msg.content;
-      const openAttr = isStreamingReasoning ? ' open' : '';
+      const keepOpen = conv && conv.keepThinkingOpen !== false;
+      const stayOpen = isStreamingReasoning || (keepOpen && !msg._streaming);
+      const openAttr = stayOpen ? ' open' : '';
       const reasonHTML = msg._streaming ? renderContentFast(reasoning) : renderMarkdown(reasoning);
       html += '<details class="thinking-section"' + openAttr + '>';
       html += '<summary class="thinking-header">思考过程</summary>';
@@ -1173,6 +1179,7 @@
     dom.inputPreciseMode.checked = !!conv.preciseMode;
     dom.inputSceneMode.checked = !!conv.sceneMode;
     dom.inputAutoCompress.checked = !!conv.autoCompress;
+    dom.inputKeepThinking.checked = conv.keepThinkingOpen !== false;
     conv.toolCallLimit = 0;
     conv.toolCallLimitMode = 'disabled';
     dom.selectToolCallLimit.value = '0';
@@ -1204,6 +1211,7 @@
     conv.enableCaching = dom.inputCaching.checked;
     conv.sceneMode = dom.inputSceneMode.checked;
     conv.autoCompress = dom.inputAutoCompress.checked;
+    conv.keepThinkingOpen = dom.inputKeepThinking.checked;
     const prevPrecise = conv.preciseMode;
     conv.preciseMode = dom.inputPreciseMode.checked;
     if (conv.preciseMode && !prevPrecise) {
@@ -1548,7 +1556,6 @@
 
     renderMessages();
     updateTopBar();
-    scrollToBottom(true);
     updateSendUI();
 
     // Build messages array with caching support
@@ -1613,7 +1620,6 @@
     const assistantMsg = { role: 'assistant', content: '', _streaming: true };
     conv.messages.push(assistantMsg);
     renderMessages();
-    scrollToBottom(true);
 
     // Create abort controller
     state.abortController = new AbortController();
@@ -1719,7 +1725,6 @@
       updateTimestamp(conv);
       updateTopBar();
       renderMessages();
-      scrollToBottom(true);
       debouncedSave();
     }
   }
@@ -1743,7 +1748,6 @@
       setTimeout(() => {
         requestAnimationFrame(() => {
           renderMessages();
-          scrollToBottom(false);
           lastRenderAt = performance.now();
           renderScheduled = false;
         });
@@ -1878,6 +1882,7 @@
       conv.preciseMode = current.preciseMode;
       conv.sceneMode = current.sceneMode;
       conv.autoCompress = current.autoCompress;
+      conv.keepThinkingOpen = current.keepThinkingOpen;
       conv.sceneState = createSceneState(current.sceneState);
     }
 
@@ -2126,6 +2131,7 @@
           c.sceneMode = c.sceneMode || false;
           c.sceneState = createSceneState(c.sceneState);
           c.autoCompress = c.autoCompress || false;
+          c.keepThinkingOpen = c.keepThinkingOpen !== undefined ? c.keepThinkingOpen : DEFAULTS.keepThinkingOpen;
           c.messages = c.messages.filter((m) => m.role && m.content !== undefined);
 
           state.conversations.push(c);
@@ -2347,6 +2353,14 @@
       const conv = getCurrentConv();
       if (conv) {
         conv.autoCompress = dom.inputAutoCompress.checked;
+        updateTimestamp(conv);
+        debouncedSave();
+      }
+    });
+    dom.inputKeepThinking.addEventListener('change', () => {
+      const conv = getCurrentConv();
+      if (conv) {
+        conv.keepThinkingOpen = dom.inputKeepThinking.checked;
         updateTimestamp(conv);
         debouncedSave();
       }

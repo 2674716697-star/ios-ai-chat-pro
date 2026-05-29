@@ -2102,7 +2102,7 @@ function updateScenePanelUI() {
       dom.scenePanel.style.display = 'none';
       return;
     }
-    const show = conv.sceneMode;
+    var show = !!(conv.sceneMode || conv.worldMode || state.worldStarterEnabled);
     dom.scenePanel.style.display = show ? '' : 'none';
     if (show) {
       const ss = createSceneState(conv.sceneState);
@@ -2334,30 +2334,34 @@ function updateScenePanelUI() {
   function startWorldMode() {
     if(!checkAge18Plus()) return;
     var current=getCurrentConv();
-    // Capture scene data from current conv before creating new one
+    // Build card from CURRENT conv first, to validate before creating new
+    var card=current?buildCharacterCard(current):'';
+    if(!card){ showToast('请先填写角色卡','warning'); return; }
+    // Capture scene data from current conv
     var savedWorld=current&&current.sceneWorld?createSceneWorld(current.sceneWorld):null;
     var savedChar=current&&current.sceneCharacter?createSceneCharacter(current.sceneCharacter):null;
     var savedNpcs=current&&current.sceneNpcs?normalizeSceneNpcs(current.sceneNpcs):[];
     var savedStatus=current&&current.sceneStatus?createSceneStatus(current.sceneStatus):null;
-    var conv=newConversation();
-    conv=getCurrentConv();
+    // Create new conversation
+    newConversation();
+    var conv=getCurrentConv();
     if(!conv) return;
-    // Copy saved scene data into new conv
     if(savedWorld) conv.sceneWorld=savedWorld;
     if(savedChar) conv.sceneCharacter=savedChar;
     if(savedNpcs.length) conv.sceneNpcs=savedNpcs;
     if(savedStatus) conv.sceneStatus=savedStatus;
     conv.worldMode=true;
     conv.sceneMode=true;
-    var card=buildCharacterCard(conv);
-    if(!card){ showToast('请先填写角色卡','warning'); return; }
-    conv.messages.push({role:'user',content:card});
+    conv.title=savedWorld&&savedWorld.openingName?savedWorld.openingName:'世界开局';
     updateTimestamp(conv);
-    conv.title=conv.sceneWorld&&conv.sceneWorld.openingName?conv.sceneWorld.openingName:'世界开局';
-    renderAll();
     saveToStorage();
+    renderAll();
+    // Use sendMessage to properly insert message + trigger AI reply
     dom.inputMessage.value = card;
+    dom.inputMessage.style.height = 'auto';
+    dom.inputMessage.style.height = Math.min(dom.inputMessage.scrollHeight, 120) + 'px';
     dom.inputMessage.focus();
+    sendMessage();
   }
 function handleMessageAction(action, msgIndex) {
     const conv = getCurrentConv();
@@ -3524,7 +3528,7 @@ function handleMessageAction(action, msgIndex) {
         debouncedSave();
       }
     });
-    if (dom.inputWorldStarter) dom.inputWorldStarter.addEventListener('change', () => { state.worldStarterEnabled = dom.inputWorldStarter.checked; debouncedSave(); });
+    if (dom.inputWorldStarter) dom.inputWorldStarter.addEventListener('change', () => { state.worldStarterEnabled = dom.inputWorldStarter.checked; updateScenePanelUI(); debouncedSave(); });
     if (dom.inputSceneDetail) dom.inputSceneDetail.addEventListener('change', () => {
       const conv = getCurrentConv();
       if (conv) {
@@ -3706,20 +3710,10 @@ function handleMessageAction(action, msgIndex) {
     // Copy character card button
     dom.btnCopyCharCard.addEventListener('click', function() { if(!checkAge18Plus()) return;
       var conv = getCurrentConv();
-      if (!conv || !conv.sceneCharacter) return;
-      var ch = conv.sceneCharacter;
-      var card = [];
-      if (ch.name) card.push('姓名：' + ch.name);
-      if (ch.age) card.push('年龄：' + ch.age);
-      if (ch.role) card.push('身份：' + ch.role);
-      if (ch.species) card.push('种族：' + ch.species);
-      if (ch.appearance) card.push('外貌：' + ch.appearance);
-      if (ch.traits) card.push('性格/习惯：' + ch.traits);
-      if (ch.stats) card.push('状态：' + ch.stats);
-      if (ch.currentGoal) card.push('当前目标：' + ch.currentGoal);
-      var text = card.join('\n');
-      if (!text) { showToast('角色卡为空，请先填写', 'warning'); return; }
-      copyTextToClipboard(text, '角色卡已复制到剪贴板');
+      if (!conv) return;
+      var card = buildCharacterCard(conv);
+      if (!card) { showToast('角色卡为空，请先填写', 'warning'); return; }
+      copyTextToClipboard(card, '角色卡已复制到剪贴板');
     });
 
     // Generate opening prompt button
@@ -3958,7 +3952,9 @@ function handleMessageAction(action, msgIndex) {
           if (!c || !c.sceneNpcs) return;
           for (var ni=0; ni<c.sceneNpcs.length; ni++) {
             if (c.sceneNpcs[ni].id === npcId) { var imgCount=0; for(var nci=0;nci<c.sceneNpcs.length;nci++){if(c.sceneNpcs[nci].image)imgCount++;}
-              if(imgCount>=6){showToast('最多保存6张NPC图片，请先移除旧图片','warning');return;}
+              var hasExisting = c.sceneNpcs[ni].image ? true : false;
+              var newCount = hasExisting ? imgCount : imgCount + 1;
+              if (newCount > 6){showToast('最多保存6张NPC图片，请先移除旧图片','warning');return;}
               c.sceneNpcs[ni].image = dataUrl; break; }
           }
           updateTimestamp(c); debouncedSave(); renderNpcGrid();

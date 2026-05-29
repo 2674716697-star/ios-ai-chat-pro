@@ -2573,6 +2573,10 @@ function handleMessageAction(action, msgIndex) {
 
     // Build full system prompt with scene state if enabled
     let fullSystemPrompt = effectiveSystemPrompt;
+    if (conv.worldMode) {
+      var worldCard = buildCharacterCard(conv);
+      fullSystemPrompt = (effectiveSystemPrompt || '') + '\n[世界模式 — 当前角色卡与设定]\n' + worldCard + '\n\n请根据以上角色卡与世界设定进行互动。每次回复末尾必须输出 @@SCENE 块，包含当前状态和 A/B/C/D 下一步选项。';
+    }
     if (conv.sceneMode) {
       const ss = createSceneState(conv.sceneState);
       conv.sceneState = ss;
@@ -2663,7 +2667,8 @@ function handleMessageAction(action, msgIndex) {
         'D. <可选>',
         '@@END',
       ]).filter(Boolean).join('\n');
-      fullSystemPrompt = (effectiveSystemPrompt || '') + sceneBlock;
+      var sceneBlockFinal = (effectiveSystemPrompt || '') + sceneBlock;
+      fullSystemPrompt = conv.worldMode ? fullSystemPrompt + '\n\n' + sceneBlockFinal : sceneBlockFinal;
     }
 
     if (fullSystemPrompt) {

@@ -817,14 +817,33 @@ if (value) return value;
 return '';
 }
 function getSceneDirections(block) {
-const match = block.match(/^(?:走向|剧情走向)[:：]?\s*([\s\S]*)$/m);
-if (!match) return '';
-const lines = match[1]
+// Supported direction labels (priority order)
+var dirLabels = [
+'后续剧情走向', '后续走向', '剧情走向', '走向',
+'发展方向', '下一步剧情', '下一步', '接下来'
+];
+// Build a regex that matches any of the labels at start of line
+var labelGroup = dirLabels.join('|');
+var multiLineRe = new RegExp('^(?:' + labelGroup + ')[:：]?\\s*([\\s\\S]*)$', 'm');
+var match = block.match(multiLineRe);
+if (match) {
+// Normalize: split lines, strip list markers (1. / 1、/ - / ·), trim, filter
+var raw = match[1];
+var lines = raw
 .split('\n')
-.map((line) => line.trim())
-.filter((line) => line && line !== '@@END')
+.map(function(line) { return line.trim(); })
+.filter(function(line) { return line && line !== '@@END'; })
+.map(function(line) {
+// Strip leading list markers: "1.", "1、", "1)", "-", "·", "•", "*"
+return line.replace(/^[\d]{1,2}[\.\)、]?\s*|^[-·•*]\s*/, '').trim();
+})
+.filter(Boolean)
 .slice(0, 4);
-return lines.join('\n');
+if (lines.length) return lines.join('\n');
+}
+// Fallback: try single-line capture for labels like "发展方向: xxx"
+var singleLineMatch = getSceneLineAny(block, dirLabels);
+return singleLineMatch;
 }
 function renderSceneStatusTable(sceneState) {
 const ss = createSceneState(sceneState);
@@ -1852,14 +1871,29 @@ let fullSystemPrompt = effectiveSystemPrompt;
 if (conv.sceneMode) {
 const ss = createSceneState(conv.sceneState);
 conv.sceneState = ss;
-const sceneBlock = [
+// Build current scene state reference block
+var sceneStateRef = [
+'\n[当前已记录场景状态 — 仅作参考，不要展示给用户]',
+'精神状态：' + (ss.mental || '未记录'),
+'精神评分：' + (ss.mentalScore ? ss.mentalScore + '/10' : '未记录'),
+'身体细节：' + (ss.physical || '未记录'),
+'剧情总结：' + (ss.plot || '未记录'),
+];
+if (ss.directions) {
+sceneStateRef.push('上次剧情走向：');
+var prevDirs = ss.directions.split('\n').filter(Boolean);
+for (var di = 0; di < prevDirs.length; di++) {
+sceneStateRef.push((di + 1) + '. ' + prevDirs[di].trim());
+}
+} else {
+sceneStateRef.push('上次剧情走向：未记录');
+}
+sceneStateRef.push('');
+var sceneBlock = [
 '\n\n[写作场景记忆 — 独立存储，不随上下文压缩]',
-ss.mental ? '当前精神状态：' + ss.mental : '',
-ss.mentalScore ? '当前精神评分：' + ss.mentalScore + '/10' : '',
-ss.physical ? '当前身体细节：' + ss.physical : '',
-ss.plot ? '当前剧情总结：' + ss.plot : '',
-ss.directions ? '上次剧情走向：\n' + ss.directions : '',
-'\n写文模式规则：',
+].concat(sceneStateRef).concat([
+'写文模式规则：',
+'0. 每次回复末尾必须输出完整的 @@SCENE 块，且 @@SCENE 块内必须包含“走向:”标签。走向: 后必须给出 2–4 条编号剧情走向（每条 16–32 字），基于本次刚写出的正文、用户最新要求、最近上下文和当前场景记忆生成。走向之间必须有实际差异，不能泛泛而谈，不能脱离当前剧情，不能重复上一次已给出的走向。不允许只在正文里写后续可能而不写入 @@SCENE。',
 '1. 每次回复后必须维护人物精神状态、身体细节、当前剧情总结和剧情走向，不得省略 @@SCENE 状态块。',
 '2. 精神评分使用 1-10 的整数。评分要跟剧情变化一致，但不要无理由持续降低。',
 '3. 身体细节要具体到姿态、感官、疲劳、伤痛或动作变化，避免只写空泛形容词。',
@@ -1867,7 +1901,7 @@ ss.directions ? '上次剧情走向：\n' + ss.directions : '',
 '5. 防止绝望循环：除非用户明确要求悲剧，不要让所有走向都通向崩溃、死亡或无解；至少保留一个可修复、可喘息或可转机的路径。',
 '6. 如果剧情停滞，主动加入温和变量、外部线索、角色选择或可行动机会，减少重复。',
 '7. 应用会自动把场景记忆渲染到本次回答框里；正文里不要重复输出状态表。',
-'8. 场景状态要简洁：精神状态、身体细节、剧情总结各 1 句；剧情走向 2-4 条，每条不超过 24 个字。',
+'8. 场景状态要简洁：精神状态、身体细节、剧情总结各 1 句；剧情走向 2-4 条，每条控制在 16–32 个字。',
 '\n请在每次回复末尾用以下格式更新场景状态（内部记录，不要展示给用户）：',
 '@@SCENE',
 '精神: <更新后的精神状态>',
@@ -1875,12 +1909,12 @@ ss.directions ? '上次剧情走向：\n' + ss.directions : '',
 '身体: <更新后的身体细节>',
 '情节: <当前剧情小总结>',
 '走向:',
-'1. <剧情走向一>',
-'2. <剧情走向二>',
+'1. <剧情走向一 — 基于本次正文，16–32 字>',
+'2. <剧情走向二 — 与走向一有明显差异>',
 '3. <可选剧情走向三>',
 '4. <可选剧情走向四>',
 '@@END',
-].filter(Boolean).join('\n');
+]).filter(Boolean).join('\n');
 fullSystemPrompt = (effectiveSystemPrompt || '') + sceneBlock;
 }
 if (fullSystemPrompt) {
@@ -1969,6 +2003,9 @@ const mentalScore = normalizeMentalScore(getSceneLineAny(block, ['精神评分',
 const physical = getSceneLineAny(block, ['身体', '身体细节']);
 const plot = getSceneLineAny(block, ['情节', '剧情总结', '剧情']);
 const directions = getSceneDirections(block);
+if (!directions) {
+console.warn('[OmniChat] Scene mode reply has @@SCENE but no directions. Model may have omitted 走向:. block:', block.substring(0, 200));
+}
 conv.sceneState = {
 mental: mental || previousScene.mental,
 mentalScore: mentalScore || previousScene.mentalScore,

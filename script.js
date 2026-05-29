@@ -2637,7 +2637,7 @@ function handleMessageAction(action, msgIndex) {
         '3. 每次回复后必须维护剧情人物的精神状态、身体细节、当前剧情总结和剧情走向，不得省略 @@SCENE 状态块。',
         '4. 精神评分使用 1-10 的整数，评价剧情人物的心理稳定/压力/清醒程度。评分要跟剧情变化一致，但不要无理由持续降低。',
         '5. 身体细节要具体到剧情人物的姿态、感官、疲劳、伤痛、动作变化或衣着状态，避免只写空泛形容词。',
-        '6. 剧情走向必须给 2-4 个，彼此要有实际差异，并尽量避开上次已经生成过的走向。',
+        '6. 每次 @@SCENE 中的状态与走向必须基于本次回复刚刚写出的剧情片段更新。禁止直接复用上一轮状态卡或上一轮 A/B/C/D。即使剧情推进较小，也必须根据当前片段结尾生成新的 2–4 个可行动分支。',
         '7. 防止绝望循环：除非用户明确要求悲剧，不要让所有走向都通向崩溃、死亡或无解；至少保留一个可修复、可喘息或可转机的路径。',
         '8. 如果剧情停滞，主动加入温和变量、外部线索、角色选择或可行动机会，减少重复。',
         '9. 应用会自动把场景记忆渲染到本次回答框里；正文里不要重复输出状态表。',
@@ -2799,6 +2799,22 @@ function handleMessageAction(action, msgIndex) {
           if (!directions) {
             console.warn('[OmniChat] Scene mode reply has @@SCENE but no directions. Model may have omitted 走向:. block:', block.substring(0, 200));
           }
+          // parsedSceneFromThisReply: only fields ACTUALLY parsed from THIS reply
+          var parsedSceneFromThisReply = {
+            currentRole: currentRole,
+            currentGoal: currentGoal,
+            posture: posture,
+            mental: mental,
+            mentalScore: mentalScore,
+            physical: physical,
+            bodyDetails: bodyDetails,
+            plot: plot,
+            risk: risk,
+            innerVoice: innerVoice,
+            directions: directions,
+            characterStatuses: characterStatuses && characterStatuses.length ? characterStatuses : [],
+          };
+          // mergedSceneState: long-term memory (new || old)
           conv.sceneState = {
             currentRole: currentRole || previousScene.currentRole,
             currentGoal: currentGoal || previousScene.currentGoal,
@@ -2813,14 +2829,17 @@ function handleMessageAction(action, msgIndex) {
             directions: directions || previousScene.directions,
             characterStatuses: characterStatuses && characterStatuses.length ? characterStatuses : (previousScene.characterStatuses || []),
           };
-          assistantMsg.sceneSnapshot = createSceneState(conv.sceneState);
+          // assistantMsg shows only THIS reply's parsed fields
+          assistantMsg.sceneSnapshot = createSceneState(parsedSceneFromThisReply);
           assistantMsg.sceneStatusSnapshot = createSceneStatus(conv.sceneStatus);
           assistantMsg.sceneCharacterSnapshot = createSceneCharacter(conv.sceneCharacter);
           // Strip the scene block from displayed content
           assistantMsg.content = assistantMsg.content.replace(/@@SCENE\s*[\s\S]*?\s*@@END/, '').trim();
           updateScenePanelUI();
         } else {
-          assistantMsg.sceneSnapshot = createSceneState(conv.sceneState);
+          console.warn('[OmniChat] Scene mode reply has no @@SCENE block.');
+          // Do NOT show old scene state as current message's snapshot
+          assistantMsg.sceneSnapshot = null;
           assistantMsg.sceneStatusSnapshot = createSceneStatus(conv.sceneStatus);
           assistantMsg.sceneCharacterSnapshot = createSceneCharacter(conv.sceneCharacter);
         }
@@ -3831,11 +3850,10 @@ function handleMessageAction(action, msgIndex) {
       const chip = e.target.closest('.dir-choice-chip');
       if (chip && !state.isStreaming) {
         var letter = chip.dataset.choice;
-        var content = chip.dataset.content;
         dom.inputMessage.value = '选' + letter;
         dom.inputMessage.style.height = 'auto';
         dom.inputMessage.style.height = Math.min(dom.inputMessage.scrollHeight, 120) + 'px';
-        dom.inputMessage.focus();
+        sendMessage();
         return;
       }
 

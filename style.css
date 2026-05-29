@@ -1059,6 +1059,20 @@ a {
   background: rgba(255, 215, 0, 0.04);
   overflow: hidden;
   animation: sceneIn 300ms var(--spring);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - var(--top-bar-h) - 150px - var(--safe-bottom));
+}
+
+.scene-panel-body {
+  padding: 0 14px 12px;
+  transition: max-height 300ms var(--spring), opacity 200ms ease;
+  max-height: none;
+  opacity: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-height: 0;
 }
 
 @keyframes sceneIn {
@@ -1087,13 +1101,6 @@ a {
 
 .scene-panel.collapsed .scene-panel-arrow {
   transform: rotate(-90deg);
-}
-
-.scene-panel-body {
-  padding: 0 14px 12px;
-  transition: max-height 300ms var(--spring), opacity 200ms ease;
-  max-height: 500px;
-  opacity: 1;
 }
 
 .scene-panel.collapsed .scene-panel-body {
@@ -1206,8 +1213,8 @@ a {
 
 /* Immersive mode sub-card overrides */
 .scene-immersive .scene-sub-card {
-  border-color: rgba(180, 130, 160, 0.15);
-  background: rgba(30, 20, 40, 0.45);
+  border-color: rgba(220, 92, 145, 0.2);
+  background: rgba(18, 12, 28, 0.55);
 }
 
 /* --- NPC List --- */
@@ -1351,31 +1358,32 @@ a {
 
 /* Immersive mode overrides */
 .scene-immersive .scene-stat-chip {
-  background: rgba(200, 140, 170, 0.15);
-  border-color: rgba(180, 130, 160, 0.25);
+  background: rgba(220, 92, 145, 0.12);
+  border-color: rgba(220, 92, 145, 0.2);
 }
 
 .scene-immersive .dir-choice-chip {
-  border-color: rgba(200, 140, 170, 0.28);
-  background: rgba(200, 140, 170, 0.08);
+  border-color: rgba(220, 92, 145, 0.25);
+  background: rgba(220, 92, 145, 0.06);
 }
 
 .scene-immersive .dir-choice-chip:active {
-  background: rgba(200, 140, 170, 0.22);
+  background: rgba(220, 92, 145, 0.2);
   border-color: var(--scene-accent-bright);
+  box-shadow: 0 0 12px rgba(220, 92, 145, 0.15);
 }
 
 .scene-immersive .scene-npc-item {
-  border-color: rgba(180, 130, 160, 0.12);
-  background: rgba(30, 20, 40, 0.3);
+  border-color: rgba(220, 92, 145, 0.15);
+  background: rgba(18, 12, 28, 0.4);
 }
 
 .scene-immersive .scene-npc-del {
-  border-color: rgba(180, 130, 160, 0.2);
+  border-color: rgba(220, 92, 145, 0.25);
 }
 
 .scene-immersive .scene-sub-card-header {
-  color: rgba(200, 160, 180, 0.8);
+  color: var(--scene-gold-bright);
 }
 
 .scene-status-card {
@@ -1632,11 +1640,12 @@ a {
   flex-shrink: 0;
   padding: 5px 11px;
   border: 1px solid var(--border-color);
-  border-radius: 14px;
+  border-radius: 10px;
   background: transparent;
   color: var(--text-secondary);
   font-size: 12px;
   cursor: pointer;
+  min-height: 30px;
   transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
   -webkit-tap-highlight-color: transparent;
 }
@@ -2080,14 +2089,14 @@ a {
 
 /* -- Scene accent variables (overridable via :root if needed) -- */
 :root {
-  --scene-accent: #d078a0;
-  --scene-accent-bright: #e890b8;
-  --scene-accent-dim: rgba(208, 120, 160, 0.18);
-  --scene-gold: #c0a050;
-  --scene-gold-bright: #d4b860;
-  --scene-purple: rgba(40, 20, 50, 0.72);
-  --scene-card-bg: rgba(22, 16, 30, 0.78);
-  --scene-card-border: rgba(180, 120, 150, 0.28);
+  --scene-accent: #d84d84;
+  --scene-accent-bright: #e0528a;
+  --scene-accent-dim: rgba(216, 77, 132, 0.18);
+  --scene-gold: #c9a84f;
+  --scene-gold-bright: #d6b85f;
+  --scene-purple: rgba(22, 14, 32, 0.72);
+  --scene-card-bg: rgba(18, 12, 28, 0.72);
+  --scene-card-border: rgba(220, 92, 145, 0.28);
   --scene-radius: 8px;
 }
 
@@ -2107,56 +2116,108 @@ a {
   pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
+  cursor: default;
 }
 
-/* -- Container: narrow column on desktop, background visible -- */
+/* -- Quick button active state (Precise ON) -- */
+.btn-quick-active {
+  background: var(--accent-dim) !important;
+  color: var(--accent-bright) !important;
+  border-color: var(--accent) !important;
+  font-weight: 600;
+}
+
+.scene-immersive .btn-quick-active {
+  background: var(--scene-accent-dim) !important;
+  color: var(--scene-accent-bright) !important;
+  border-color: var(--scene-accent) !important;
+}
+
+/* ============================================================
+   Immersive Writing Mode — Visual Overhaul
+   ============================================================ */
+
+/* -- Container: narrow story column, background visible -- */
 .scene-immersive.app-container {
   max-width: 720px;
+  background: transparent;
 }
 
-/* -- Main content: more transparent for background depth -- */
 .scene-immersive .main-content {
   background: transparent;
 }
 
-/* -- Messages container: slight padding adjustment -- */
 .scene-immersive .messages-container {
-  padding: 0 10px;
-  padding-bottom: 12px;
+  padding: 0 8px;
+  padding-bottom: 24px;
+  padding-bottom: calc(24px + var(--safe-bottom));
 }
 
-/* -- Welcome screen: semi-transparent -- */
 .scene-immersive .welcome-screen {
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.45);
 }
 
-/* -- Assistant bubble: glass card effect -- */
+/* -- Top bar: glass, flush with story column -- */
+.scene-immersive .top-bar {
+  background: rgba(18, 12, 26, 0.78);
+  border-bottom: 1px solid var(--scene-card-border);
+}
+
+/* -- Assistant story panel: wide, glowing, novel-like -- */
 .scene-immersive .message.assistant .message-bubble {
-  background: var(--scene-card-bg);
-  border: 0.5px solid var(--scene-card-border);
+  max-width: 100%;
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(18, 12, 28, 0.72);
+  border: 1px solid rgba(220, 92, 145, 0.28);
   border-radius: var(--scene-radius);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35), 0 0 0 0.5px rgba(180, 120, 150, 0.1);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.32), 0 0 18px rgba(220,92,145,0.08);
+  font-size: 15px;
+  line-height: 1.75;
+  letter-spacing: 0.08px;
+}
+
+.scene-immersive .message.assistant .message-bubble p {
+  margin-bottom: 10px;
+  text-indent: 0;
+}
+
+.scene-immersive .message.assistant .message-bubble p:last-child {
+  margin-bottom: 0;
+}
+
+.scene-immersive .message.assistant .message-bubble em {
+  color: var(--scene-accent-bright);
+}
+
+.scene-immersive .message.assistant .message-bubble strong {
+  color: var(--scene-gold-bright);
 }
 
 .scene-immersive .message.user .message-bubble {
+  background: rgba(60, 30, 70, 0.55);
+  border: 1px solid rgba(220, 92, 145, 0.15);
   border-radius: var(--scene-radius);
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.3);
+  max-width: 78%;
 }
 
-/* -- Scene Panel: pink-purple card -- */
+/* -- Scene Panel: settings drawer, default collapsed -- */
 .scene-immersive .scene-panel {
-  margin: 6px 10px;
-  border: 0.5px solid var(--scene-card-border);
+  margin: 6px 8px;
+  border: 1px solid var(--scene-card-border);
   border-radius: var(--scene-radius);
-  background: var(--scene-card-bg);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  background: rgba(18, 12, 28, 0.68);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.35), 0 0 0 0.5px rgba(220,92,145,0.06);
 }
 
 .scene-immersive .scene-panel-header {
   color: var(--scene-gold-bright);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.2px;
-  padding: 8px 12px;
+  letter-spacing: 0.3px;
+  padding: 9px 12px;
 }
 
 .scene-immersive .scene-field label {
@@ -2166,73 +2227,138 @@ a {
 
 .scene-immersive .scene-input,
 .scene-immersive .scene-score-input {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border-color: rgba(180, 130, 160, 0.15) !important;
+  background: rgba(255, 255, 255, 0.035) !important;
+  border-color: rgba(180, 130, 160, 0.12) !important;
   border-radius: 6px !important;
+  color: rgba(255,255,255,0.8) !important;
 }
 
 .scene-immersive .scene-input:focus,
 .scene-immersive .scene-score-input:focus {
-  border-color: rgba(200, 140, 170, 0.4) !important;
+  border-color: rgba(200, 140, 170, 0.35) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
 }
 
 .scene-immersive .scene-panel-hint {
-  color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.22);
+  font-size: 10px;
 }
 
-/* -- Scene Status Card inside assistant bubble: pink-purple table -- */
+/* -- Scene Status Card: game system panel, softer lines -- */
 .scene-immersive .scene-status-card {
-  margin-top: 10px;
-  border: 0.5px solid rgba(200, 140, 170, 0.28);
+  margin-top: 12px;
+  border: 1px solid rgba(220, 92, 145, 0.22);
   border-radius: var(--scene-radius);
-  background: rgba(30, 16, 40, 0.65);
+  background: rgba(18, 12, 28, 0.62);
   overflow: hidden;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.3);
 }
 
 .scene-immersive .scene-status-title {
-  padding: 7px 10px 5px;
+  padding: 8px 12px 6px;
   font-size: 11.5px;
   font-weight: 600;
   color: var(--scene-gold-bright);
-  letter-spacing: 0.2px;
-  border-bottom: 0.5px solid rgba(180, 120, 150, 0.15);
+  letter-spacing: 0.3px;
+  border-bottom: 0.5px solid rgba(180, 120, 150, 0.12);
+  background: rgba(30, 16, 40, 0.35);
 }
 
 .scene-immersive .scene-status-table {
   font-size: 11.5px;
+  border-collapse: separate;
 }
 
 .scene-immersive .scene-status-table th {
-  width: 72px;
+  width: 68px;
   color: var(--scene-gold);
   font-weight: 500;
-  font-size: 10.5px;
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.4px;
+  background: rgba(30, 16, 40, 0.2);
 }
 
 .scene-immersive .scene-status-table th,
 .scene-immersive .scene-status-table td {
-  padding: 6px 10px;
-  border-top: 0.5px solid rgba(180, 130, 160, 0.1);
+  padding: 7px 10px;
+  border-bottom: 0.5px solid rgba(180, 130, 160, 0.08);
+  border-top: none;
+  vertical-align: top;
+}
+
+.scene-immersive .scene-status-table tr:last-child th,
+.scene-immersive .scene-status-table tr:last-child td {
+  border-bottom: none;
 }
 
 .scene-immersive .scene-status-table td {
-  color: rgba(255, 255, 255, 0.82);
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.55;
 }
 
-/* -- Bottom bar: floating glass -- */
+/* -- Compact status block: softer chips -- */
+.scene-immersive .scene-status-compact {
+  padding: 6px 10px 4px;
+  border-bottom: 0.5px solid rgba(180, 130, 160, 0.1);
+}
+
+.scene-immersive .scene-compact-label {
+  color: var(--scene-gold-bright);
+}
+
+/* -- Direction choice chips: story branch buttons -- */
+.scene-immersive .dir-choice-chip {
+  background: rgba(30, 16, 40, 0.55);
+  border-color: rgba(200, 140, 170, 0.2);
+  color: rgba(255, 255, 255, 0.72);
+  padding: 9px 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.scene-immersive .dir-choice-chip:active {
+  background: rgba(200, 120, 160, 0.18);
+  border-color: var(--scene-accent-bright);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(200, 120, 160, 0.15);
+}
+
+/* -- Bottom bar: floating game control strip -- */
 .scene-immersive .bottom-bar {
-  background: rgba(22, 16, 30, 0.78);
-  backdrop-filter: saturate(160%) blur(20px);
-  -webkit-backdrop-filter: saturate(160%) blur(20px);
-  border-top: 0.5px solid var(--scene-card-border);
+  max-width: 720px;
+  margin: 0 auto;
+  border-radius: 14px 14px 0 0;
+  background: rgba(16, 10, 24, 0.8);
+  backdrop-filter: saturate(180%) blur(24px);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  border: 1px solid rgba(220, 92, 145, 0.2);
+  border-bottom: none;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(220,92,145,0.06);
+  padding: 8px 14px;
+  padding-bottom: calc(8px + max(var(--safe-bottom), var(--keyboard-inset)));
 }
 
-/* -- Quick action buttons in scene mode -- */
+.scene-immersive .quick-actions {
+  margin-bottom: 6px;
+}
+
 .scene-immersive .btn-quick {
-  border-color: rgba(180, 130, 160, 0.18);
-  color: rgba(255, 255, 255, 0.55);
+  border-color: rgba(180, 130, 160, 0.15);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11.5px;
+  border-radius: 10px;
+  min-height: 30px;
+}
+
+.scene-immersive #btnQuickNew {
+  border-color: rgba(220, 92, 145, 0.3);
+  color: var(--scene-accent-bright);
+}
+
+.scene-immersive #btnQuickClear,
+.scene-immersive #btnQuickDeleteLast {
+  border-color: rgba(255, 180, 120, 0.15);
 }
 
 .scene-immersive .btn-quick:active {
@@ -2241,44 +2367,309 @@ a {
   border-color: var(--scene-accent);
 }
 
-/* -- Input field in scene mode -- */
 .scene-immersive .input-message {
-  background: rgba(22, 16, 30, 0.55);
-  border-color: rgba(180, 130, 160, 0.2);
+  background: rgba(14, 8, 22, 0.6);
+  border-color: rgba(180, 130, 160, 0.18);
+  border-radius: 16px;
+  font-size: 14.5px;
 }
 
 .scene-immersive .input-message:focus {
   border-color: var(--scene-accent);
-  background: rgba(22, 16, 30, 0.72);
+  background: rgba(18, 10, 28, 0.75);
 }
 
-/* -- Code blocks in scene mode -- */
+/* -- Code blocks -- */
 .scene-immersive .message-bubble code {
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.45);
+  color: #d0a0c0;
 }
 
 .scene-immersive .message-bubble pre {
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.45);
+  border-color: rgba(180, 130, 160, 0.1);
+}
+
+/* -- Thinking section -- */
+.scene-immersive .thinking-section {
   border-color: rgba(180, 130, 160, 0.12);
 }
 
-/* -- Thinking section in scene mode -- */
-.scene-immersive .thinking-section {
-  border-color: rgba(180, 130, 160, 0.15);
-}
-
 .scene-immersive .thinking-section[open] {
-  border-color: rgba(200, 140, 170, 0.3);
+  border-color: rgba(200, 140, 170, 0.25);
 }
 
 .scene-immersive .thinking-header {
-  background: rgba(30, 20, 40, 0.5);
+  background: rgba(30, 20, 40, 0.4);
 }
 
 .scene-immersive .thinking-content {
-  background: rgba(30, 20, 40, 0.3);
-  border-color: rgba(180, 130, 160, 0.1);
+  background: rgba(30, 20, 40, 0.25);
+  border-color: rgba(180, 130, 160, 0.08);
 }
+
+/* -- Redesigned Scene Status Card -- */
+.scene-immersive .scene-status-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.scene-immersive .scene-status-title-text {
+  color: var(--scene-gold-bright);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+}
+
+.scene-immersive .scene-status-role {
+  color: var(--scene-accent-bright);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.scene-immersive .scene-stat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 6px 10px 4px;
+}
+
+.scene-immersive .scene-stat-score {
+  background: rgba(220, 92, 145, 0.2);
+  border-color: rgba(220, 92, 145, 0.35);
+  color: var(--scene-accent-bright);
+  font-weight: 600;
+}
+
+.scene-immersive .scene-stat-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+}
+
+.scene-immersive .scene-stat-score strong {
+  font-weight: 700;
+  min-width: 30px;
+}
+
+.scene-immersive .scene-score-bar {
+  display: inline-block;
+  width: 48px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.1);
+  overflow: hidden;
+}
+
+.scene-immersive .scene-score-fill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(220,92,145,0.6), rgba(220,180,100,0.8));
+  transition: width 400ms var(--spring);
+}
+
+.scene-immersive .scene-status-rows {
+  padding: 2px 10px 4px;
+}
+
+.scene-immersive .scene-status-row {
+  display: flex;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.scene-immersive .scene-row-label {
+  flex-shrink: 0;
+  width: 62px;
+  color: var(--scene-gold);
+  font-weight: 500;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.scene-immersive .scene-row-value {
+  flex: 1;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.scene-immersive .scene-body-section {
+  padding: 4px 10px 2px;
+}
+
+.scene-immersive .scene-body-title {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--scene-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 3px;
+}
+
+.scene-immersive .scene-body-details {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.scene-immersive .scene-body-details li {
+  position: relative;
+  padding: 2px 0 2px 14px;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.5;
+}
+
+.scene-immersive .scene-body-details li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 5px;
+  height: 1px;
+  background: rgba(220, 92, 145, 0.4);
+}
+
+.scene-immersive .scene-body-details li {
+  background: rgba(18, 12, 28, 0.3);
+  border-radius: 3px;
+  margin-bottom: 2px;
+  border-left: 2px solid rgba(200, 120, 160, 0.25);
+}
+
+.scene-immersive .scene-body-details li.scene-body-more {
+  background: none;
+  border-left: none;
+  color: rgba(255,255,255,0.3);
+  text-align: center;
+  font-size: 14px;
+  padding-top: 0;
+}
+
+.scene-immersive .scene-body-details li.scene-body-more::before {
+  display: none;
+}
+
+.scene-immersive .scene-plot-section {
+  padding: 4px 10px;
+}
+
+.scene-immersive .scene-plot-text {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.6;
+  margin: 0 0 3px;
+}
+
+.scene-immersive .scene-risk-text {
+  font-size: 11.5px;
+  color: var(--scene-gold-bright);
+  line-height: 1.5;
+  margin: 0;
+  padding: 4px 8px;
+  background: rgba(200, 160, 60, 0.06);
+  border-left: 2px solid rgba(200, 160, 60, 0.3);
+  border-radius: 0 4px 4px 0;
+}
+
+.scene-immersive .scene-directions-section {
+  padding: 4px 10px 6px;
+}
+
+.scene-immersive .scene-directions-title {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--scene-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+
+.scene-immersive .dir-choices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.scene-immersive .dir-choice-chip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
+  width: 100%;
+  padding: 8px 10px;
+  min-height: 36px;
+  border: 1px solid rgba(220, 92, 145, 0.25);
+  border-radius: var(--scene-radius);
+  background: rgba(220, 92, 145, 0.06);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.scene-immersive .dir-choice-chip:active {
+  background: rgba(220, 92, 145, 0.18);
+  border-color: var(--scene-accent-bright);
+  color: #fff;
+  box-shadow: 0 0 14px rgba(220, 92, 145, 0.18);
+}
+@media (hover: hover) and (pointer: fine) {
+  .scene-immersive .dir-choice-chip:hover {
+    transform: translateY(-1px);
+    border-color: rgba(220, 92, 145, 0.45);
+    box-shadow: 0 2px 12px rgba(220, 92, 145, 0.1);
+  }
+}
+
+
+.scene-immersive .dir-chip-badge {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(220, 92, 145, 0.25);
+  color: var(--scene-accent-bright);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.scene-immersive .dir-chip-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.scene-immersive .dir-fallback {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.6;
+}
+
+.scene-immersive .scene-inner-voice {
+  margin: 4px 10px 8px;
+  padding: 6px 10px;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+  line-height: 1.5;
+  border-left: 2px solid rgba(200, 160, 220, 0.2);
+  background: rgba(30, 20, 40, 0.3);
+  border-radius: 0 4px 4px 0;
+}
+
+
 
 /* -- Scene-immersive responsive: mobile full-width -- */
 @media (max-width: 600px) {
@@ -2288,8 +2679,38 @@ a {
   }
 
   .scene-immersive .messages-container {
-    padding: 0 6px;
-    padding-bottom: 12px;
+    padding: 0 8px;
+    padding-bottom: 24px;
+    padding-bottom: calc(24px + var(--safe-bottom));
+  }
+
+  .scene-immersive .messages-container > .message:last-child {
+    margin-bottom: 8px;
+  }
+
+  .scene-immersive .message.assistant .message-bubble {
+    padding: 12px 14px;
+    font-size: 14.5px;
+    line-height: 1.7;
+  }
+
+  .scene-immersive .scene-panel {
+    max-height: 50dvh;
+    margin: 4px 6px;
+  }
+
+  .scene-immersive .bottom-bar {
+    max-width: none;
+    width: 100%;
+    border-radius: 12px 12px 0 0;
+    padding: 6px 10px;
+    padding-bottom: calc(6px + max(var(--safe-bottom), var(--keyboard-inset)));
+  }
+
+  .scene-immersive .dir-choice-chip {
+    padding: 10px 12px;
+    min-height: 40px;
+    font-size: 13px;
   }
 
   /* Stack dual-column rows vertically */

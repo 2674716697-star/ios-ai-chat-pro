@@ -444,10 +444,16 @@
   function createSceneState(seed = {}) {
     seed = seed || {};
     return {
+      currentRole: seed.currentRole || '',
+      currentGoal: seed.currentGoal || '',
+      posture: seed.posture || '',
       mental: seed.mental || '',
       mentalScore: normalizeMentalScore(seed.mentalScore),
       physical: seed.physical || '',
+      bodyDetails: seed.bodyDetails || '',
       plot: seed.plot || '',
+      risk: seed.risk || '',
+      innerVoice: seed.innerVoice || '',
       directions: seed.directions || '',
     };
   }
@@ -535,16 +541,25 @@
       '后续剧情走向', '后续走向', '剧情走向', '走向',
       '发展方向', '下一步剧情', '下一步', '接下来'
     ];
+    // Labels that should stop direction capture (subsequent fields)
+    var stopLabels = ['内心', '风险', '情节', '剧情', '剧情总结', '身体', '身体细节', '精神', '精神评分', '评分', '目标', '当前目标', '姿势', '角色', '当前角色', '@@END'];
 
-    // Build a regex that matches any of the labels at start of line
     var labelGroup = dirLabels.join('|');
     var multiLineRe = new RegExp('^(?:' + labelGroup + ')[:：]?\\s*([\\s\\S]*)$', 'm');
     var match = block.match(multiLineRe);
 
     if (match) {
       var raw = match[1];
-      var lines = raw
-        .split('\n')
+      var allLines = raw.split('\n');
+
+      // Truncate at first stop label
+      var stopRe = new RegExp('^(' + stopLabels.join('|') + ')[:：]', 'i');
+      var stopIdx = allLines.length;
+      for (var si = 0; si < allLines.length; si++) {
+        if (stopRe.test(allLines[si].trim())) { stopIdx = si; break; }
+      }
+
+      var lines = allLines.slice(0, stopIdx)
         .map(function(line) { return line.trim(); })
         .filter(function(line) { return line && line !== '@@END'; });
 
@@ -555,7 +570,9 @@
       for (var i = 0; i < lines.length && parsed.length < 4; i++) {
         var line = lines[i];
 
-        // Try A/B/C/D prefix: "A. xxx", "A、xxx", "A：xxx", "A: xxx", "A) xxx"
+        // Stop if this line looks like a field label
+        if (stopRe.test(line)) break;
+
         var letterMatch = line.match(/^([A-Da-d])[\.\)、：:\s]\s*(.+)/);
         if (letterMatch) {
           var letter = letterMatch[1].toUpperCase();
@@ -563,7 +580,6 @@
           if (content) { parsed.push(letter + '. ' + content); autoLetterIdx = Math.max(autoLetterIdx, letters.indexOf(letter) + 1); }
           continue;
         }
-        // Try (A) xxx or （A）xxx format
         var parenMatch = line.match(/^[\(（]([A-Da-d])[\)）]\s*(.+)/);
         if (parenMatch) {
           var pLetter = parenMatch[1].toUpperCase();
@@ -571,7 +587,6 @@
           if (pContent) { parsed.push(pLetter + '. ' + pContent); autoLetterIdx = Math.max(autoLetterIdx, letters.indexOf(pLetter) + 1); }
           continue;
         }
-        // Try numbered prefix: "1. xxx", "2、xxx", "3) xxx", "4：xxx" → map to A/B/C/D
         var numMatch = line.match(/^(\d{1,2})[\.\)、：:\s]\s*(.+)/);
         if (numMatch) {
           var num = parseInt(numMatch[1], 10);
@@ -582,7 +597,6 @@
           }
           continue;
         }
-        // Try bullet: "- xxx", "· xxx", "• xxx", "* xxx" → assign next auto letter
         var bulletMatch = line.match(/^[-·•*]\s*(.+)/);
         if (bulletMatch) {
           var bContent = bulletMatch[1].trim();
@@ -592,7 +606,6 @@
           }
           continue;
         }
-        // Plain line (no marker) → assign next auto letter
         if (line && autoLetterIdx < 4) {
           parsed.push(letters[autoLetterIdx] + '. ' + line);
           autoLetterIdx++;
@@ -601,7 +614,6 @@
       if (parsed.length) return parsed.join('\n');
     }
 
-    // Fallback: try single-line capture for labels like "发展方向: xxx"
     var singleLineMatch = getSceneLineAny(block, dirLabels);
     if (singleLineMatch) return 'A. ' + singleLineMatch;
     return '';
@@ -623,25 +635,45 @@
     return options;
   }
 
+  function getSceneBodyDetails(block) {
+    // Extract multi-line body details under "身体细节:" label
+    var labels = ['身体细节', '感官细节'];
+    var labelGroup = labels.join('|');
+    var re = new RegExp('^(?:' + labelGroup + ')[:：]?\\s*([\\s\\S]*?)(?:\\n(?:' + labelGroup + '|情节|剧情|剧情总结|风险|内心|走向|@@END)|$)', 'm');
+    var match = block.match(re);
+    if (!match) {
+      // Fallback: single-line via getSceneLineAny
+      var single = getSceneLineAny(block, labels);
+      return single;
+    }
+    var raw = match[1];
+    var lines = raw.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l && l !== '@@END'; });
+    // Strip leading bullet markers
+    lines = lines.map(function(l) { return l.replace(/^[-·•*\d{1,2}.\)、\s]+/, '').trim(); }).filter(Boolean);
+    return lines.join('\n');
+  }
+
   function parseSceneChoiceInput(text) {
     if (!text) return null;
     var t = text.replace(/\s+/g, '').trim();
     if (!t) return null;
-    // Direct single letter: "A", "a", "B。", "C.", "D" etc.
-    var directMatch = t.match(/^([A-Da-d])[。.．]*$/);
+    // Direct single letter: "A", "a", "B。", "C.", "D", "A." etc.
+    var directMatch = t.match(/^([A-Da-d])[。.．、]*$/);
     if (directMatch) return directMatch[1].toUpperCase();
-    // "选A", "选择B", "我选C", "走D", "选A吧", "就B了", "要C"
-    var choiceMatch = t.match(/^(?:选[择]?|我选|走|就|要|想选|选择)\s*([A-Da-d])\s*(?:吧|了|的)?[。.．]*$/);
+    // "选A", "选 A", "选择B", "我选C", "走D", "选A吧", "就B了", "要C", "想选D"
+    var choiceMatch = t.match(/^(?:选[择]?|我选|走|就|要|想选|选择)\s*([A-Da-d])\s*(?:吧|了|的|啦|啊)?[。.．、]*$/);
     if (choiceMatch) return choiceMatch[1].toUpperCase();
-    // "选项A", "路线B", "分支C"
-    var labelMatch = t.match(/^(?:选项|路线|分支|方向)\s*([A-Da-d])[。.．]*$/);
+    // "选项A", "路线B", "分支C", "方向D", "走向A"
+    var labelMatch = t.match(/^(?:选项|路线|分支|方向|走向)\s*([A-Da-d])[。.．、]*$/);
     if (labelMatch) return labelMatch[1].toUpperCase();
+    // "A路线", "B分支", "C选项"
+    var suffixMatch = t.match(/^([A-Da-d])\s*(?:路线|分支|选项|方向)[。.．、]*$/);
+    if (suffixMatch) return suffixMatch[1].toUpperCase();
     return null;
   }
 
   function renderSceneStatusTable(msg) {
     var ss = createSceneState(msg.sceneSnapshot);
-    // Use generation-time snapshots; fallback to current conv for old messages
     var st = msg.sceneStatusSnapshot;
     var ch = msg.sceneCharacterSnapshot;
     if (!st || !ch) {
@@ -649,61 +681,115 @@
       if (!st) st = conv && conv.sceneStatus ? conv.sceneStatus : null;
       if (!ch) ch = conv && conv.sceneCharacter ? conv.sceneCharacter : null;
     }
+    var hasAny = ss.mental || ss.mentalScore || ss.physical || ss.plot || ss.directions || ss.currentRole || ss.currentGoal || ss.posture || ss.bodyDetails || ss.risk || ss.innerVoice;
     var hasStatus = st && (st.health || st.stamina || st.composure || st.focus || st.currentObjective || st.constraints);
-    var hasChar = ch && (ch.name || ch.currentGoal);
-    if (!ss.mental && !ss.mentalScore && !ss.physical && !ss.plot && !ss.directions && !hasStatus && !hasChar) return '';
-    const score = ss.mentalScore ? ss.mentalScore + '/10' : '未评分';
-    const mental = ss.mental || '未记录';
-    const physical = ss.physical || '未记录';
-    const plot = ss.plot || '未记录';
+    var hasChar = ch && ch.name;
+    if (!hasAny && !hasStatus && !hasChar) return '';
 
-    // Build clickable direction chips
-    var directionsHtml = '未记录';
+    var roleName = ss.currentRole || (ch && ch.name) || '主角';
+    var goalText = ss.currentGoal || (ch && ch.currentGoal) || '';
+    var score = ss.mentalScore || '';
+    var mental = ss.mental || '';
+    var posture = ss.posture || '';
+    var physical = ss.physical || '';
+    var bodyDetails = ss.bodyDetails || '';
+    var plot = ss.plot || '';
+    var risk = ss.risk || '';
+    var innerVoice = ss.innerVoice || '';
+
+    // Status chips row
+    var statChips = [];
+    if (score) {
+      var scoreNum = parseInt(score, 10) || 5;
+      var pct = Math.round(scoreNum / 10 * 100);
+      statChips.push('<span class="scene-stat-chip scene-stat-score">精神 <strong>' + score + '/10</strong><span class="scene-score-bar"><span class="scene-score-fill" style="width:' + pct + '%"></span></span></span>');
+    }
+    if (st && st.health) statChips.push('<span class="scene-stat-chip">体力 ' + escapeHtml(st.health) + '</span>');
+    if (st && st.stamina) statChips.push('<span class="scene-stat-chip">精力 ' + escapeHtml(st.stamina) + '</span>');
+    if (st && st.composure) statChips.push('<span class="scene-stat-chip">冷静 ' + escapeHtml(st.composure) + '</span>');
+    if (st && st.focus) statChips.push('<span class="scene-stat-chip">专注 ' + escapeHtml(st.focus) + '</span>');
+    var chipsHtml = statChips.length ? '<div class="scene-stat-chips">' + statChips.join('') + '</div>' : '';
+
+    // Directions
+    var directionsHtml = '';
     if (ss.directions) {
       var dirOpts = parseDirectionOptions(ss.directions);
       if (dirOpts.length) {
         var chips = [];
         for (var di = 0; di < dirOpts.length; di++) {
           var d = dirOpts[di];
-          chips.push('<button class="dir-choice-chip" data-choice="' + d.letter + '" data-content="' + escapeHtml(d.content) + '">' + d.letter + '. ' + escapeHtml(d.content) + '</button>');
+          chips.push('<button class="dir-choice-chip" data-choice="' + d.letter + '" data-content="' + escapeHtml(d.content) + '"><span class="dir-chip-badge">' + d.letter + '</span><span class="dir-chip-text">' + escapeHtml(d.content) + '</span></button>');
         }
-        directionsHtml = chips.join('');
+        directionsHtml = '<div class="dir-choices-list">' + chips.join('') + '</div>';
       } else {
-        directionsHtml = escapeHtml(ss.directions).replace(/\n/g, '<br>');
+        directionsHtml = '<div class="dir-choices-list"><span class="dir-fallback">' + escapeHtml(ss.directions).replace(/\n/g, '<br>') + '</span></div>';
+      }
+    }
+
+    // Body details bullets (max 4)
+    var bodyHtml = '';
+    if (bodyDetails) {
+      var bdLines = bodyDetails.split('\n').filter(Boolean);
+      if (bdLines.length) {
+        var maxBd = Math.min(bdLines.length, 4);
+        bodyHtml = '<ul class="scene-body-details">';
+        for (var bi = 0; bi < maxBd; bi++) {
+          var clean = bdLines[bi].trim().replace(/^[-·•*\d{1,2}.\)、\s]+/, '');
+          if (clean) bodyHtml += '<li>' + escapeHtml(clean) + '</li>';
+        }
+        if (bdLines.length > 4) bodyHtml += '<li class="scene-body-more">…</li>';
+        bodyHtml += '</ul>';
       }
     }
 
     var html = '';
     html += '<div class="scene-status-card">';
-    html += '<div class="scene-status-title">场景记忆</div>';
+    // Title bar
+    html += '<div class="scene-status-title">';
+    html += '<span class="scene-status-title-text">剧情状态</span>';
+    html += '<span class="scene-status-role">' + escapeHtml(roleName) + '</span>';
+    html += '</div>';
 
-    // Compact character + status block
-    if (hasChar || hasStatus) {
-      html += '<div class="scene-status-compact">';
-      if (hasChar && ch.name) {
-        html += '<div class="scene-compact-line"><span class="scene-compact-label">角色</span>' + escapeHtml(ch.name);
-        if (ch.currentGoal) html += ' · ' + escapeHtml(ch.currentGoal);
-        html += '</div>';
-      }
-      if (hasStatus) {
-        var statItems = [];
-        if (st.health) statItems.push('<span class="scene-stat-chip">体力 ' + escapeHtml(st.health) + '</span>');
-        if (st.stamina) statItems.push('<span class="scene-stat-chip">精力 ' + escapeHtml(st.stamina) + '</span>');
-        if (st.composure) statItems.push('<span class="scene-stat-chip">冷静 ' + escapeHtml(st.composure) + '</span>');
-        if (st.focus) statItems.push('<span class="scene-stat-chip">专注 ' + escapeHtml(st.focus) + '</span>');
-        if (st.constraints) statItems.push('<span class="scene-stat-chip">' + escapeHtml(st.constraints) + '</span>');
-        if (statItems.length) html += '<div class="scene-compact-line">' + statItems.join(' ') + '</div>';
-      }
+    // Status chips
+    if (chipsHtml) html += chipsHtml;
+
+    // Info rows
+    html += '<div class="scene-status-rows">';
+    if (goalText) html += '<div class="scene-status-row"><span class="scene-row-label">当前目标</span><span class="scene-row-value">' + escapeHtml(goalText) + '</span></div>';
+    if (posture) html += '<div class="scene-status-row"><span class="scene-row-label">当前姿势</span><span class="scene-row-value">' + escapeHtml(posture) + '</span></div>';
+    if (mental) html += '<div class="scene-status-row"><span class="scene-row-label">精神状态</span><span class="scene-row-value">' + escapeHtml(mental) + '</span></div>';
+    if (physical) html += '<div class="scene-status-row"><span class="scene-row-label">身体状态</span><span class="scene-row-value">' + escapeHtml(physical) + '</span></div>';
+    html += '</div>';
+
+    // Body details section
+    if (bodyHtml) {
+      html += '<div class="scene-body-section">';
+      html += '<div class="scene-body-title">身体细节</div>';
+      html += bodyHtml;
       html += '</div>';
     }
 
-    html += '<table class="scene-status-table"><tbody>';
-    html += '<tr><th>精神状态</th><td>' + escapeHtml(mental) + '</td></tr>';
-    html += '<tr><th>精神评分</th><td>' + escapeHtml(score) + '</td></tr>';
-    html += '<tr><th>身体细节</th><td>' + escapeHtml(physical) + '</td></tr>';
-    html += '<tr><th>剧情总结</th><td>' + escapeHtml(plot) + '</td></tr>';
-    html += '<tr><th>剧情走向</th><td class="dir-choices-cell">' + directionsHtml + '</td></tr>';
-    html += '</tbody></table>';
+    // Plot and risk
+    if (plot || risk) {
+      html += '<div class="scene-plot-section">';
+      if (plot) html += '<p class="scene-plot-text">' + escapeHtml(plot) + '</p>';
+      if (risk) html += '<p class="scene-risk-text">' + escapeHtml(risk) + '</p>';
+      html += '</div>';
+    }
+
+    // Directions
+    if (directionsHtml) {
+      html += '<div class="scene-directions-section">';
+      html += '<div class="scene-directions-title">剧情走向</div>';
+      html += directionsHtml;
+      html += '</div>';
+    }
+
+    // Inner voice
+    if (innerVoice) {
+      html += '<div class="scene-inner-voice">' + escapeHtml(innerVoice) + '</div>';
+    }
+
     html += '</div>';
     return html;
   }
@@ -1048,11 +1134,11 @@
         '<span>' + dateStr + '</span>' +
         '</div></div>' +
         '<div class="conv-item-actions">' +
-        '<button class="conv-item-btn" data-action="archive" data-id="' + c.id + '" aria-label="归档">' + archiveIcon + '</button>' +
-        '<button class="conv-item-btn" data-action="rename" data-id="' + c.id + '" aria-label="重命名">' +
+        '<button class="conv-item-btn" data-action="archive" data-id="' + c.id + '" aria-label="归档" title="归档/取消归档">' + archiveIcon + '</button>' +
+        '<button class="conv-item-btn" data-action="rename" data-id="' + c.id + '" aria-label="重命名" title="重命名会话">' +
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>' +
         '</button>' +
-        '<button class="conv-item-btn danger" data-action="delete" data-id="' + c.id + '" aria-label="删除">' +
+        '<button class="conv-item-btn danger" data-action="delete" data-id="' + c.id + '" aria-label="删除" title="删除会话">' +
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>' +
         '</button></div></div>'
       );
@@ -1092,7 +1178,7 @@
         html += '<div class="conv-group-header">';
         html += '<span class="conv-group-label">' + escapeHtml(label) + '</span>';
         html += '<span class="conv-group-count">' + group.convs.length + '</span>';
-        html += '<button class="conv-group-add" data-provider="' + escapeHtml(first.provider) + '" data-model="' + escapeHtml(first.model || '') + '" data-custom-model="' + escapeHtml(first.customModel || '') + '" aria-label="在此模型下新建对话">';
+        html += '<button class="conv-group-add" data-provider="' + escapeHtml(first.provider) + '" data-model="' + escapeHtml(first.model || '') + '" data-custom-model="' + escapeHtml(first.customModel || '') + '" aria-label="在此模型下新建对话" title="在此模型下新建对话">';
         html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>';
         html += '</button></div>';
 
@@ -1711,11 +1797,11 @@
     if (show) {
       const ss = createSceneState(conv.sceneState);
       conv.sceneState = ss;
-      dom.sceneMental.value = ss.mental || '';
-      dom.sceneMentalScore.value = ss.mentalScore || '';
-      dom.scenePhysical.value = ss.physical || '';
-      dom.scenePlot.value = ss.plot || '';
-      dom.sceneDirections.value = ss.directions || '';
+      if (dom.sceneMental) dom.sceneMental.value = ss.mental || '';
+      if (dom.sceneMentalScore) dom.sceneMentalScore.value = ss.mentalScore || '';
+      if (dom.scenePhysical) dom.scenePhysical.value = ss.physical || '';
+      if (dom.scenePlot) dom.scenePlot.value = ss.plot || '';
+      if (dom.sceneDirections) dom.sceneDirections.value = ss.directions || '';
       syncSceneWorldUI();
       syncSceneCharacterUI();
       syncSceneStatusUI();
@@ -2057,11 +2143,24 @@
       // Build current scene state reference block
       var sceneStateRef = [
         '\n[当前已记录场景状态 — 仅作参考，不要展示给用户]',
+        '当前角色：' + (ss.currentRole || '未记录'),
+        '当前目标：' + (ss.currentGoal || '未记录'),
+        '当前姿势：' + (ss.posture || '未记录'),
         '精神状态：' + (ss.mental || '未记录'),
         '精神评分：' + (ss.mentalScore ? ss.mentalScore + '/10' : '未记录'),
-        '身体细节：' + (ss.physical || '未记录'),
+        '身体状态：' + (ss.physical || '未记录'),
         '剧情总结：' + (ss.plot || '未记录'),
       ];
+      if (ss.bodyDetails) {
+        sceneStateRef.push('身体细节：');
+        var bdLines = ss.bodyDetails.split('\n').filter(Boolean);
+        for (var bdi = 0; bdi < bdLines.length; bdi++) {
+          sceneStateRef.push('- ' + bdLines[bdi].trim());
+        }
+      }
+      if (ss.risk) {
+        sceneStateRef.push('风险/伏笔：' + ss.risk);
+      }
       if (ss.directions) {
         sceneStateRef.push('上次剧情走向：');
         // directions are already stored in A/B/C/D format; preserve as-is
@@ -2092,27 +2191,39 @@
         '\n\n[写作场景记忆 — 独立存储，不随上下文压缩]',
       ].concat(sceneStateRef).concat(settingRefs).concat([
         '写文模式规则：',
-        '0. 每次回复末尾必须输出完整的 @@SCENE 块，且 @@SCENE 块内必须包含”走向:”标签。走向: 后必须给出 2–4 个剧情选项，使用 A/B/C/D 选项标号（如只有两个选项则只写 A/B，三个则只写 A/B/C）。不得使用 1/2/3/4 数字编号。每个选项基于本次刚写出的正文、用户最新要求、最近上下文和当前场景记忆生成，选项之间必须有明显差异，不能泛泛而谈，不能脱离当前剧情，不能重复上一次已给出的走向。每条控制在 16–32 字。不允许只在正文里写后续可能而不写入 @@SCENE。',
-        '1. 剧情走向必须以 A/B/C/D 选项形式输出。用户下一轮如果只输入 A、B、C 或 D（或其变体如”选A””选择B”），应视为用户选择了对应剧情分支，并沿该分支继续创作，不得忽略或自行发挥；如果用户自由输入其他内容，则按用户新要求继续，不要强行套用已有选项。',
-        '2. 每次回复后必须维护人物精神状态、身体细节、当前剧情总结和剧情走向，不得省略 @@SCENE 状态块。',
-        '3. 精神评分使用 1-10 的整数。评分要跟剧情变化一致，但不要无理由持续降低。',
-        '4. 身体细节要具体到姿态、感官、疲劳、伤痛或动作变化，避免只写空泛形容词。',
-        '5. 剧情走向必须给 2-4 个，彼此要有实际差异，并尽量避开上次已经生成过的走向。',
-        '6. 防止绝望循环：除非用户明确要求悲剧，不要让所有走向都通向崩溃、死亡或无解；至少保留一个可修复、可喘息或可转机的路径。',
-        '7. 如果剧情停滞，主动加入温和变量、外部线索、角色选择或可行动机会，减少重复。',
-        '8. 应用会自动把场景记忆渲染到本次回答框里；正文里不要重复输出状态表。',
-        '9. 场景状态要简洁：精神状态、身体细节、剧情总结各 1 句；剧情走向 2-4 条，每条控制在 16–32 个字。',
+        '0. 【角色视角强制】@@SCENE 中所有字段只描述”剧情内的人物/世界”，禁止描述 AI 自身、模型状态、用户操作、写作过程、生成过程、输出流畅度、叙事技巧、处理负载。精神状态是剧情人物（默认为主角）的心理/情绪/意志状态，不是 AI 或写作者的创作状态。身体细节是剧情人物的姿态、动作、感官、伤痛、疲劳、衣着随身状态，不是”打字、输出、模拟书写、键盘敲击”。剧情总结只总结剧情内发生的事件。剧情走向是剧情内人物可采取的行动或外部变化，不是”用户可以要求/调整/改写/让 AI 继续”。如果角色不明确，优先使用角色卡里的主角；没有角色卡则用最近剧情中的主视角人物。',
+        '1. 每次回复末尾必须输出完整的 @@SCENE 块，且 @@SCENE 块内必须包含”走向:”标签。走向: 后必须给出 2–4 个剧情选项，使用 A/B/C/D 选项标号（如只有两个选项则只写 A/B，三个则只写 A/B/C）。不得使用 1/2/3/4 数字编号。每个选项基于本次刚写出的正文、用户最新要求、最近上下文和当前场景记忆生成，选项之间必须有明显差异，不能泛泛而谈，不能脱离当前剧情，不能重复上一次已给出的走向。每条控制在 24–50 字，必须包含"行动 + 可能收益/风险/情绪变化"。不允许只在正文里写后续可能而不写入 @@SCENE。',
+        '2. 剧情走向必须以 A/B/C/D 选项形式输出。用户下一轮如果只输入 A、B、C 或 D（或其变体如”选A””选择B”），应视为用户选择了对应剧情分支，并沿该分支继续创作，不得忽略或自行发挥；如果用户自由输入其他内容，则按用户新要求继续，不要强行套用已有选项。',
+        '3. 每次回复后必须维护剧情人物的精神状态、身体细节、当前剧情总结和剧情走向，不得省略 @@SCENE 状态块。',
+        '4. 精神评分使用 1-10 的整数，评价剧情人物的心理稳定/压力/清醒程度。评分要跟剧情变化一致，但不要无理由持续降低。',
+        '5. 身体细节要具体到剧情人物的姿态、感官、疲劳、伤痛、动作变化或衣着状态，避免只写空泛形容词。',
+        '6. 剧情走向必须给 2-4 个，彼此要有实际差异，并尽量避开上次已经生成过的走向。',
+        '7. 防止绝望循环：除非用户明确要求悲剧，不要让所有走向都通向崩溃、死亡或无解；至少保留一个可修复、可喘息或可转机的路径。',
+        '8. 如果剧情停滞，主动加入温和变量、外部线索、角色选择或可行动机会，减少重复。',
+        '9. 应用会自动把场景记忆渲染到本次回答框里；正文里不要重复输出状态表。',
+        '10. 场景状态要简洁：精神状态、身体细节、剧情总结各 1 句；剧情走向 2-4 条，每条控制在 24–50 个字。',
+        '11. 精神状态要写具体触发原因，如"因听见脚步声而警觉升高"，不要只写"紧张"。身体细节要写可感知的具体细节：呼吸、肌肉、视线、手指、步伐、伤口、衣物/装备、环境接触等，必须和刚生成的剧情正文一致，不要套模板。',
+        '12. 剧情走向每条必须包含行动 + 可能后果/情绪变化/风险，不能只是泛泛标题。至少包含一个主动推进、一个观察/试探、一个关系互动或外部事件；避免全是逃跑/崩溃/死亡。每个走向要明显不同。文案中自然体现可能…/但…/因此…等故事感。',
+        '13. 状态字段必须来自刚刚正文中已出现或合理可承接的细节。禁止凭空编造正文未涉及的伤口、道具、关系、人物、地点。如果正文信息不足以填写某个字段，写"尚未显露"或"暂未明确"，不得编造。',
         '\n请在每次回复末尾用以下格式更新场景状态（内部记录，不要展示给用户）：',
         '@@SCENE',
-        '精神: <更新后的精神状态>',
+        '角色: <当前POV角色名，不知道则写"主角">',
+        '目标: <角色此刻想做什么>',
+        '姿势: <角色位置、姿态、动作状态>',
+        '精神: <精神状态 — 具体触发原因>',
         '精神评分: <1-10整数>',
-        '身体: <更新后的身体细节>',
-        '情节: <当前剧情小总结>',
+        '身体: <身体状态一句话总结>',
+        '身体细节:',
+        '- <可感知细节1：呼吸/肌肉/视线等>',
+        '- <可感知细节2>',
+        '情节: <1-2句剧情总结>',
+        '风险: <隐藏风险/未解决矛盾/伏笔，1句>',
+        '内心: <角色内心独白，1句，可空>',
         '走向:',
-        'A. <剧情走向A — 基于本次正文，16–32 字>',
-        'B. <剧情走向B — 与走向A有明显差异>',
-        'C. <可选剧情走向C>',
-        'D. <可选剧情走向D>',
+        'A. <行动 + 可能后果/风险，24-50字>',
+        'B. <明显不同的行动 + 后果/风险>',
+        'C. <可选>',
+        'D. <可选>',
         '@@END',
       ]).filter(Boolean).join('\n');
       fullSystemPrompt = (effectiveSystemPrompt || '') + sceneBlock;
@@ -2231,19 +2342,31 @@
         if (sceneMatch) {
           const block = sceneMatch[1];
           const previousScene = createSceneState(conv.sceneState);
+          const currentRole = getSceneLineAny(block, ['角色', '当前角色', '主角', 'POV']);
+          const currentGoal = getSceneLineAny(block, ['目标', '当前目标']);
+          const posture = getSceneLineAny(block, ['姿势', '当前姿势', '动作']);
           const mental = getSceneLineAny(block, ['精神', '精神状态']);
           const mentalScore = normalizeMentalScore(getSceneLineAny(block, ['精神评分', '评分']));
-          const physical = getSceneLineAny(block, ['身体', '身体细节']);
+          const physical = getSceneLineAny(block, ['身体', '身体状态']);
+          const bodyDetails = getSceneBodyDetails(block);
           const plot = getSceneLineAny(block, ['情节', '剧情总结', '剧情']);
+          const risk = getSceneLineAny(block, ['风险', '伏笔', '风险/伏笔']);
+          const innerVoice = getSceneLineAny(block, ['内心', '内心回声', '内心独白', '心理']);
           const directions = getSceneDirections(block);
           if (!directions) {
             console.warn('[OmniChat] Scene mode reply has @@SCENE but no directions. Model may have omitted 走向:. block:', block.substring(0, 200));
           }
           conv.sceneState = {
+            currentRole: currentRole || previousScene.currentRole,
+            currentGoal: currentGoal || previousScene.currentGoal,
+            posture: posture || previousScene.posture,
             mental: mental || previousScene.mental,
             mentalScore: mentalScore || previousScene.mentalScore,
             physical: physical || previousScene.physical,
+            bodyDetails: bodyDetails || previousScene.bodyDetails,
             plot: plot || previousScene.plot,
+            risk: risk || previousScene.risk,
+            innerVoice: innerVoice || previousScene.innerVoice,
             directions: directions || previousScene.directions,
           };
           assistantMsg.sceneSnapshot = createSceneState(conv.sceneState);
@@ -2404,33 +2527,20 @@
   // =========================================================================
 
   function newConversation(overrides) {
-    const current = getCurrentConv();
-    const provider = (overrides && overrides.provider) || (current && current.provider) || 'openai';
-    const conv = createConversation(provider);
+    var current = getCurrentConv();
+    var provider = (overrides && overrides.provider) || (current && current.provider) || 'openai';
+    var conv = createConversation(provider);
 
     if (overrides) {
       // Targeted creation from group header — only set provider/model/customModel
       if (overrides.model !== undefined) conv.model = overrides.model;
       if (overrides.customModel !== undefined) conv.customModel = overrides.customModel;
     } else if (current) {
-      // Full inheritance from current conversation
+      // Inherit provider/model only; reset generation params and scene data to defaults
       conv.model = current.model;
       conv.customModel = current.customModel;
-      conv.systemPrompt = current.systemPrompt;
-      conv.temperature = current.temperature;
-      conv.topP = current.topP;
-      conv.maxTokens = current.maxTokens;
-      conv.stream = current.stream;
-      conv.enableCaching = current.enableCaching;
-      conv.preciseMode = current.preciseMode;
-      conv.sceneMode = current.sceneMode;
-      conv.autoCompress = current.autoCompress;
-      conv.keepThinkingOpen = current.keepThinkingOpen;
-      conv.sceneState = createSceneState(current.sceneState);
-      conv.sceneWorld = createSceneWorld(current.sceneWorld);
-      conv.sceneCharacter = createSceneCharacter(current.sceneCharacter);
-      conv.sceneStatus = createSceneStatus(current.sceneStatus);
-      conv.sceneNpcs = normalizeSceneNpcs(current.sceneNpcs);
+      // generation params stay at createConversation defaults
+      // scene data stays at createConversation defaults (empty)
     }
 
     state.conversations.push(conv);
@@ -2516,6 +2626,7 @@
       showToast('精确模式已关闭', 'info');
     }
     updateTimestamp(conv);
+    updatePreciseButton();
     debouncedSave();
     if (state.ui.isSettingsOpen) {
       dom.inputPreciseMode.checked = conv.preciseMode;
@@ -2759,6 +2870,22 @@
     }
   }
 
+  function updatePreciseButton() {
+    var conv = getCurrentConv();
+    var on = conv && conv.preciseMode;
+    var btn = dom.btnQuickPrecise;
+    if (!btn) return;
+    btn.textContent = on ? '精确 ON' : '精确';
+    btn.classList.toggle('btn-quick-active', !!on);
+    btn.title = on ? '精确模式已开启' : '精确模式：低温输出 + 防幻觉 Prompt';
+  }
+
+  function updateInputPlaceholder() {
+    var conv = getCurrentConv();
+    var on = conv && conv.sceneMode;
+    dom.inputMessage.placeholder = on ? '输入剧情行动或选择 A/B/C/D…' : '输入消息…';
+  }
+
   function updateSceneModeClass() {
     var conv = getCurrentConv();
     var on = conv && conv.sceneMode;
@@ -2766,6 +2893,7 @@
     if (dom.sceneCapsule) {
       dom.sceneCapsule.style.display = on ? '' : 'none';
     }
+    updateInputPlaceholder();
   }
 
   function renderAll() {
@@ -2775,6 +2903,7 @@
     renderConvList();
     updateScenePanelUI();
     updateSceneModeClass();
+    updatePreciseButton();
     if (state.ui.isSettingsOpen) {
       syncSettingsToUI();
     }
@@ -3002,7 +3131,7 @@
     dom.scenePanelToggle.addEventListener('click', () => {
       dom.scenePanel.classList.toggle('collapsed');
     });
-    dom.sceneMental.addEventListener('input', () => {
+    if (dom.sceneMental) dom.sceneMental.addEventListener('input', () => {
       const conv = getCurrentConv();
       if (conv && conv.sceneState) {
         conv.sceneState.mental = dom.sceneMental.value;
@@ -3010,7 +3139,7 @@
         debouncedSave();
       }
     });
-    dom.sceneMentalScore.addEventListener('input', () => {
+    if (dom.sceneMentalScore) dom.sceneMentalScore.addEventListener('input', () => {
       const conv = getCurrentConv();
       if (conv && conv.sceneState) {
         conv.sceneState.mentalScore = normalizeMentalScore(dom.sceneMentalScore.value);
@@ -3019,7 +3148,7 @@
         debouncedSave();
       }
     });
-    dom.scenePhysical.addEventListener('input', () => {
+    if (dom.scenePhysical) dom.scenePhysical.addEventListener('input', () => {
       const conv = getCurrentConv();
       if (conv && conv.sceneState) {
         conv.sceneState.physical = dom.scenePhysical.value;
@@ -3027,7 +3156,7 @@
         debouncedSave();
       }
     });
-    dom.scenePlot.addEventListener('input', () => {
+    if (dom.scenePlot) dom.scenePlot.addEventListener('input', () => {
       const conv = getCurrentConv();
       if (conv && conv.sceneState) {
         conv.sceneState.plot = dom.scenePlot.value;
@@ -3035,7 +3164,7 @@
         debouncedSave();
       }
     });
-    dom.sceneDirections.addEventListener('input', () => {
+    if (dom.sceneDirections) dom.sceneDirections.addEventListener('input', () => {
       const conv = getCurrentConv();
       if (conv && conv.sceneState) {
         conv.sceneState.directions = dom.sceneDirections.value;

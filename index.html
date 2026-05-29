@@ -341,34 +341,14 @@
     <!-- Main Chat Area -->
     <main class="main-content" id="mainContent">
       <!-- Scene State Panel -->
-      <div class="scene-panel" id="scenePanel" style="display:none">
+      <div class="scene-panel collapsed" id="scenePanel" style="display:none">
         <div class="scene-panel-header" id="scenePanelToggle">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-          <span>场景记忆</span>
+          <span>写文设置</span>
           <span class="scene-panel-arrow">▾</span>
         </div>
         <div class="scene-panel-body" id="scenePanelBody">
-          <div class="scene-field">
-            <label>精神状态</label>
-            <textarea class="input scene-input" id="sceneMental" rows="2" placeholder="人物当前的精神状态…"></textarea>
-          </div>
-          <div class="scene-field">
-            <label>精神评分</label>
-            <input class="input scene-score-input" id="sceneMentalScore" type="number" min="1" max="10" step="1" placeholder="1-10">
-          </div>
-          <div class="scene-field">
-            <label>身体细节</label>
-            <textarea class="input scene-input" id="scenePhysical" rows="2" placeholder="姿势、伤痛、疲劳、感官、动作细节…"></textarea>
-          </div>
-          <div class="scene-field">
-            <label>剧情总结</label>
-            <textarea class="input scene-input" id="scenePlot" rows="2" placeholder="当前的情节进展…"></textarea>
-          </div>
-          <div class="scene-field">
-            <label>剧情走向</label>
-            <textarea class="input scene-input" id="sceneDirections" rows="3" placeholder="2-4 个可选走向，避免重复和绝望循环…"></textarea>
-          </div>
-          <div class="scene-panel-hint">写文模式会自动维护精神、身体、剧情和走向。状态独立存储，也可手动编辑。</div>
+          <div class="scene-panel-hint">场景记忆在每次 AI 回复后自动更新并显示在回复框里。下方配置世界、角色、状态和 NPC。</div>
 
           <!-- World Opening Card -->
           <div class="scene-sub-card" id="sceneWorldCard">
@@ -548,22 +528,22 @@
     <!-- Bottom Bar -->
     <footer class="bottom-bar" id="bottomBar">
       <div class="quick-actions" id="quickActions">
-        <button class="btn-quick" id="btnQuickNew" title="新建对话">+ 新建</button>
-        <button class="btn-quick" id="btnQuickClear" title="清空当前">清空</button>
-        <button class="btn-quick" id="btnQuickDeleteLast" title="删除最后一轮">删轮</button>
-        <button class="btn-quick" id="btnQuickCopy" title="复制最后回复">复制</button>
-        <button class="btn-quick" id="btnQuickPrecise" title="精确模式">精确</button>
-        <button class="btn-quick" id="btnQuickExport" title="导出 Markdown">导出</button>
+        <button class="btn-quick" id="btnQuickNew" title="新建独立对话，保留当前模型">新对话</button>
+        <button class="btn-quick" id="btnQuickClear" title="清空当前会话消息，保留参数">清空本聊</button>
+        <button class="btn-quick" id="btnQuickDeleteLast" title="删除最后一轮用户与 AI 回复">撤回一轮</button>
+        <button class="btn-quick" id="btnQuickCopy" title="复制最后一条 AI 回复">复制回复</button>
+        <button class="btn-quick" id="btnQuickPrecise" title="精确模式：低温输出 + 防幻觉 Prompt">精确</button>
+        <button class="btn-quick" id="btnQuickExport" title="导出当前会话 Markdown">导出本聊</button>
         <span class="scene-capsule" id="sceneCapsule" style="display:none" aria-label="写文模式已开启">写文 ON</span>
       </div>
       <div class="input-row">
         <textarea class="input-message" id="inputMessage" rows="1" placeholder="输入消息…" autocomplete="off"></textarea>
-        <button class="btn-send" id="btnSend" aria-label="发送">
+        <button class="btn-send" id="btnSend" aria-label="发送消息" title="发送消息">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
           </svg>
         </button>
-        <button class="btn-stop" id="btnStop" aria-label="停止" style="display:none">
+        <button class="btn-stop" id="btnStop" aria-label="停止生成" title="停止生成" style="display:none">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
             <rect x="6" y="6" width="12" height="12" rx="1"></rect>
           </svg>

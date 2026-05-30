@@ -1139,13 +1139,14 @@ a {
   overflow: hidden;
 }
 
-.scene-panel-footer {
+/* Shared action area — visible across all tabs */
+.scene-panel-actions {
   flex-shrink: 0;
   position: sticky;
   bottom: 0;
   z-index: 2;
-  padding: 8px 12px;
-  padding-bottom: calc(8px + var(--safe-bottom));
+  padding: 10px 12px 12px;
+  padding-bottom: calc(10px + var(--safe-bottom));
   background: rgba(14, 8, 22, 0.94);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -1153,7 +1154,28 @@ a {
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.scene-panel.collapsed .scene-panel-footer { display: none; }
+.scene-panel.collapsed .scene-panel-actions { display: none; }
+
+.scene-action-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.btn-start-world {
+  flex: 1;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .scene-action-row {
+    flex-direction: column-reverse;
+  }
+  .btn-start-world {
+    width: 100%;
+    min-height: 42px;
+  }
+}
 
 /* Extra bottom space so last item isn't hidden behind sticky footer */
 .scene-panel-body { padding-bottom: 8px; }

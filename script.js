@@ -11,6 +11,7 @@
   // =========================================================================
 
   const STORAGE_KEY = 'omnichat_data';
+  const STORAGE_SCHEMA_VERSION = 2;
   const STORAGE_VERSION = 1;
 
   const PROVIDERS = {
@@ -125,6 +126,7 @@
     chatBackground: { type: 'none', value: '', opacity: 35 },
     actionPrompts: { regenerate: '', continue: '', summarize: '', elaborate: '' },
     worldStarterEnabled: false,
+    schemaVersion: 0,
     abortController: null,
     isStreaming: false,
     pendingRenameId: null,
@@ -359,6 +361,10 @@
         // Migrate old scene/world data to unified storyMode
         migrateStoryMode(conv);
       });
+      // Migrate conversations to current message display model (idempotent)
+      window.__migrated = false;
+      state.conversations = state.conversations.map(normalizeConversation);
+      if (window.__migrated) setTimeout(function() { saveToStorage(); }, 0);
       state.currentConversationId = data.currentConversationId || null;
       if (data.apiKeys) {
         state.apiKeys = data.apiKeys;
@@ -906,6 +912,49 @@ function createSceneWorld(seed) {
       npcs: conv.sceneNpcs,
       sceneState: conv.sceneState,
     });
+  }
+
+  // Detect old first user message containing a full world character card
+  function looksLikeWorldCharacterCard(text) {
+    if (!text || typeof text !== 'string') return false;
+    if (text.length <= 300) return false;
+    var kw = ['世界观', '世界设定', '角色卡', 'NPC', '主角', '规则'];
+    var count = 0;
+    for (var i = 0; i < kw.length; i++) { if (text.indexOf(kw[i]) !== -1) count++; }
+    return count >= 2;
+  }
+
+  // Normalize a single message for forward-compat
+  function normalizeMessage(msg, conv) {
+    if (!msg) return msg;
+    if (!msg.role) msg.role = 'user';
+    if (typeof msg.content !== 'string') msg.content = String(msg.content || '');
+    // Old world story first user message leaked full card into UI content.
+    // Move full card to _requestContent (for API) and add displayContent (for UI).
+    if (
+      conv && isStoryStarted(conv) &&
+      msg.role === 'user' &&
+      !msg.displayContent &&
+      !msg._requestContent &&
+      looksLikeWorldCharacterCard(msg.content)
+    ) {
+      msg.displayContent = '世界故事已开启。你的设定已发送给 AI，接下来将生成第一幕。';
+      msg._requestContent = msg.content;
+    }
+    return msg;
+  }
+
+  // Normalize a conversation to current schema — idempotent
+  function normalizeConversation(conv) {
+    if (!conv) return conv;
+    var oldVersion = conv.schemaVersion || 0;
+    if (!Array.isArray(conv.messages)) conv.messages = [];
+    for (var i = 0; i < conv.messages.length; i++) {
+      conv.messages[i] = normalizeMessage(conv.messages[i], conv);
+    }
+    conv.schemaVersion = STORAGE_SCHEMA_VERSION;
+    if (oldVersion < STORAGE_SCHEMA_VERSION) window.__migrated = true;
+    return conv;
   }
 
   function syncStoryModeToLegacy(conv) {
@@ -1490,7 +1539,7 @@ function createSceneWorld(seed) {
       div.innerHTML = '<div class="message-role">' + roleLabel + '</div><div class="' + bubbleClass + '">' + renderBubbleHTML(msg) + '</div>';
     } else {
       const roleLabel = 'You';
-      div.innerHTML = '<div class="message-role">' + roleLabel + '</div><div class="message-bubble">' + renderMarkdown(String(msg.content || '')) + '</div>';
+      div.innerHTML = '<div class="message-role">' + roleLabel + '</div><div class="message-bubble">' + renderMarkdown(String(msg.displayContent || msg.content || '')) + '</div>';
     }
 
     return div;

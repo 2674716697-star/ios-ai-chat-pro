@@ -107,14 +107,26 @@ a {
 }
 
 /* --- Splash Screen --- */
+/* During splash, lock body/app background to solid black so no color leaks through */
+html.is-splashing,
+html.is-splashing body,
+html.is-splashing .app-container {
+  background: #020308 !important;
+  overflow: hidden;
+}
+
 .splash {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: -260px;
+  min-height: calc(100dvh + 260px);
+  background: #020308;
   z-index: 99999;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-primary);
   transition: opacity 400ms ease, visibility 400ms ease;
 }
 
@@ -124,10 +136,11 @@ a {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: -200px;
-  height: 240px;
-  background: var(--bg-primary);
+  bottom: -260px;
+  height: 320px;
+  background: #020308;
   pointer-events: none;
+  z-index: 99998;
 }
 
 .splash.dismissed {
@@ -138,8 +151,9 @@ a {
 
 /* Hide bottom-bar during splash to prevent any leak */
 html.is-splashing .bottom-bar,
+html.is-splashing .bottom-bar::before,
 html.is-splashing .bottom-bar::after {
-  display: none;
+  display: none !important;
 }
 
 .splash-bg {

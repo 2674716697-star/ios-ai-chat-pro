@@ -51,8 +51,9 @@ check('__BUILD_VERSION__ exists in script.js', /__BUILD_VERSION__/.test(js));
 console.log('\n--- Splash ---');
 check('html starts with is-splashing', /<html[^>]*class=["'][^"']*is-splashing/.test(html));
 check('splash z-index 99999', /\.splash\s*\{[\s\S]*z-index:\s*99999/.test(css));
-check('splash::after exists', /\.splash::after\s*\{[\s\S]*bottom:\s*-200px[\s\S]*height:\s*240px/.test(css));
+check('splash::after extends below viewport', /\.splash::after\s*\{[\s\S]*bottom:\s*-\d+px[\s\S]*height:\s*\d+px/.test(css));
 check('is-splashing hides bottom-bar', /html\.is-splashing\s+\.bottom-bar[\s\S]*display:\s*none/.test(css));
+check('is-splashing locks body background', /html\.is-splashing[\s\S]*background:\s*#[0-9a-fA-F]+\s*!important/.test(css));
 
 // --- Global purple-black bottom UI ---
 console.log('\n--- Global bottom UI ---');

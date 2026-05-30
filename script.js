@@ -4235,9 +4235,17 @@ if (dom.btnGenHints) dom.btnGenHints.addEventListener('click', () => generateSce
     };
     if (splashDismissed) {
       dom.splash.style.transition = 'opacity 150ms ease, visibility 150ms ease';
-      setTimeout(() => { dom.splash.classList.add('dismissed'); onSplashDone(); }, 50);
+      setTimeout(() => {
+        dom.splash.classList.add('dismissed');
+        // Wait until splash fade-out transition finishes before revealing bottom-bar
+        window.setTimeout(onSplashDone, 220);
+      }, 50);
     } else {
-      setTimeout(() => { dom.splash.classList.add('dismissed'); onSplashDone(); }, 2200);
+      setTimeout(() => {
+        dom.splash.classList.add('dismissed');
+        // Wait until splash fade-out transition finishes before revealing bottom-bar
+        window.setTimeout(onSplashDone, 480);
+      }, 2200);
       sessionStorage.setItem('omnichat_splash', '1');
     }
 

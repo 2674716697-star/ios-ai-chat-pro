@@ -1666,11 +1666,22 @@ function createSceneWorld(seed) {
       // Only apply when keyboard is clearly visible (> 50px gap); otherwise let CSS safe-bottom handle it alone
       if (keyboardInset < 50) keyboardInset = 0;
       document.documentElement.style.setProperty('--keyboard-inset', Math.round(keyboardInset) + 'px');
+      updateBottomBarHeight();
     };
     window.visualViewport.addEventListener('resize', updateInsets);
     window.visualViewport.addEventListener('scroll', updateInsets);
     updateInsets();
   }
+
+  // Measure actual bottom-bar height for accurate main-content reserve
+  function updateBottomBarHeight() {
+    var bar = document.querySelector('.bottom-bar');
+    if (!bar) return;
+    var h = Math.ceil(bar.getBoundingClientRect().height);
+    document.documentElement.style.setProperty('--bottom-bar-h', h + 'px');
+  }
+  // Expose globally so other handlers can call it
+  window._updateBottomBarHeight = updateBottomBarHeight;
 
   // =========================================================================
   // RENDER: SCROLL
@@ -4210,18 +4221,23 @@ if (dom.btnGenHints) dom.btnGenHints.addEventListener('click', () => generateSce
       }, 2500); // After splash
     }
 
+    // Mark page as splashing so bottom-bar is hidden during animation
+    document.documentElement.classList.add('is-splashing');
+
     // Focus input after splash
     setTimeout(() => dom.inputMessage.focus(), 2000);
 
     // Splash screen - dismiss after animation
     const splashDismissed = sessionStorage.getItem('omnichat_splash');
+    const onSplashDone = () => {
+      document.documentElement.classList.remove('is-splashing');
+      updateBottomBarHeight();
+    };
     if (splashDismissed) {
-      // Quick dismiss on revisit
       dom.splash.style.transition = 'opacity 150ms ease, visibility 150ms ease';
-      setTimeout(() => dom.splash.classList.add('dismissed'), 50);
+      setTimeout(() => { dom.splash.classList.add('dismissed'); onSplashDone(); }, 50);
     } else {
-      // Full splash on first visit
-      setTimeout(() => dom.splash.classList.add('dismissed'), 2200);
+      setTimeout(() => { dom.splash.classList.add('dismissed'); onSplashDone(); }, 2200);
       sessionStorage.setItem('omnichat_splash', '1');
     }
 

@@ -110,7 +110,7 @@ a {
 .splash {
   position: fixed;
   inset: 0;
-  z-index: 200;
+  z-index: 99999;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -118,10 +118,28 @@ a {
   transition: opacity 400ms ease, visibility 400ms ease;
 }
 
+/* Extend splash below viewport to cover standalone/PWA bottom area */
+.splash::after {
+  content: '';
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: -200px;
+  height: 240px;
+  background: var(--bg-primary);
+  pointer-events: none;
+}
+
 .splash.dismissed {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+}
+
+/* Hide bottom-bar during splash to prevent any leak */
+html.is-splashing .bottom-bar,
+html.is-splashing .bottom-bar::after {
+  display: none;
 }
 
 .splash-bg {
@@ -884,7 +902,7 @@ a {
   overscroll-behavior-y: auto;
   overflow-anchor: none;
   padding: 8px 0;
-  padding-bottom: var(--bottom-bar-reserve, 150px);
+  padding-bottom: var(--bottom-bar-h, 150px);
   position: relative;
   background: transparent;
   transition: background 400ms var(--spring);
@@ -1700,17 +1718,6 @@ a {
   padding-bottom: calc(6px + calc(var(--safe-bottom) + var(--keyboard-inset, 0px)));
 }
 
-/* Reserve space in main-content so fixed bottom-bar doesn't obscure content */
-:root {
-  --bottom-bar-reserve: 152px;
-}
-
-@media (max-width: 640px) {
-  :root {
-    --bottom-bar-reserve: 170px;
-  }
-}
-
 .quick-actions {
   display: flex;
   gap: 4px;
@@ -2373,19 +2380,11 @@ a {
   box-shadow: 0 0 12px rgba(200, 120, 160, 0.15);
 }
 
-/* -- Bottom bar: floating game control strip -- */
+/* -- Bottom bar: centered narrower in story mode, same visual as normal -- */
 .scene-immersive .bottom-bar {
   max-width: 720px;
   margin: 0 auto;
   border-radius: 14px 14px 0 0;
-  background: #100a18;
-  backdrop-filter: saturate(180%) blur(24px);
-  -webkit-backdrop-filter: saturate(180%) blur(24px);
-  border: 1px solid rgba(220, 92, 145, 0.2);
-  border-bottom: none;
-  box-shadow: 0 -4px 24px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(220,92,145,0.06);
-  padding: 8px 14px;
-  padding-bottom: calc(8px + calc(var(--safe-bottom) + var(--keyboard-inset, 0px)));
 }
 
 .scene-immersive .quick-actions {
@@ -2943,9 +2942,6 @@ a {
     max-width: none;
     width: 100%;
     border-radius: 12px 12px 0 0;
-    padding: 6px 10px;
-    padding-bottom: calc(6px + calc(var(--safe-bottom) + var(--keyboard-inset, 0px)));
-    background: #100a18;
   }
 
   .scene-immersive .dir-choice-chip {

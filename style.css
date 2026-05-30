@@ -1439,6 +1439,25 @@ html.is-splashing .bottom-bar::after {
   color: var(--text-primary);
 }
 
+/* --- Choice chip feedback states --- */
+.dir-choice-chip.selected {
+  border-color: var(--scene-accent-bright);
+  color: #fff;
+  background: rgba(200, 120, 160, 0.22);
+  box-shadow: 0 0 14px rgba(200, 120, 160, 0.18);
+}
+
+.dir-choice-chip.loading::after {
+  content: ' \2192 发送中';
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.dir-choice-chip.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 .dir-choice-chip:last-child {
   margin-bottom: 0;
 }

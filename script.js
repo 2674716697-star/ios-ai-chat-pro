@@ -3976,7 +3976,26 @@ function handleMessageAction(action, msgIndex) {
       // Direction choice chip
       const chip = e.target.closest('.dir-choice-chip');
       if (chip && !state.isStreaming) {
+        // Prevent double-click on same choice group
+        var list = chip.closest('.dir-choices-list');
+        if (list && list.dataset.locked === '1') return;
+
         var letter = chip.dataset.choice;
+
+        // Click feedback: selected + loading
+        chip.classList.add('selected', 'loading');
+        chip.setAttribute('aria-disabled', 'true');
+
+        // Disable all chips in this group
+        if (list) {
+          list.dataset.locked = '1';
+          var allChips = list.querySelectorAll('.dir-choice-chip');
+          allChips.forEach(function(c) {
+            if (c !== chip) c.classList.add('disabled');
+            c.setAttribute('aria-disabled', 'true');
+          });
+        }
+
         dom.inputMessage.value = '选' + letter;
         dom.inputMessage.style.height = 'auto';
         dom.inputMessage.style.height = Math.min(dom.inputMessage.scrollHeight, 120) + 'px';

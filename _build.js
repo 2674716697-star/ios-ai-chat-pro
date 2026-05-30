@@ -90,8 +90,8 @@ const jsMin = minifyJS(js);
 
 // Add build version meta tag
 html = html.replace(
-  '<meta name="theme-color" content="#0f0f0f">',
-  '<meta name="theme-color" content="#0f0f0f">\n  <meta name="build-version" content="' + buildVersion + '">\n  <link rel="manifest" href="manifest.json">'
+  '<meta name="theme-color" content="#000000">',
+  '<meta name="theme-color" content="#000000">\n  <meta name="build-version" content="' + buildVersion + '">'
 );
 
 // Inline minified CSS

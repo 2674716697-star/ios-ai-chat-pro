@@ -3,7 +3,7 @@
    Network-first app shell, offline fallback, NEVER caches sw.js.
    ============================================================ */
 
-const CACHE_NAME = 'omnichat-runtime';
+const CACHE_NAME = 'omnichat-v3';
 const CORE_ASSET_RE = /\.(?:html|css|js|json)$/i;
 
 self.addEventListener('install', (event) => {

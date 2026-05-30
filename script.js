@@ -4241,6 +4241,10 @@ if (dom.btnGenHints) dom.btnGenHints.addEventListener('click', () => generateSce
       sessionStorage.setItem('omnichat_splash', '1');
     }
 
+    // Expose build version for debug (from meta tag injected by _build.js)
+    var buildMeta = document.querySelector('meta[name="build-version"]');
+    window.__BUILD_VERSION__ = buildMeta ? buildMeta.content : 'dev';
+
     // Apply chat background
     applyChatBackground();
     updateBgPresetUI();

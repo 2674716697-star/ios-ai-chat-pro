@@ -3176,6 +3176,8 @@ function handleMessageAction(action, msgIndex) {
   function switchConversation(id) {
     const conv = state.conversations.find((c) => c.id === id);
     if (!conv) return;
+    // Safety: ensure switched-to conversation is normalized to current schema
+    normalizeConversation(conv);
     state.currentConversationId = id;
     closeDrawer('history');
     renderAll();
@@ -4323,6 +4325,26 @@ if (dom.btnGenHints) dom.btnGenHints.addEventListener('click', () => generateSce
     // Expose build version for debug (from meta tag injected by _build.js)
     var buildMeta = document.querySelector('meta[name="build-version"]');
     window.__BUILD_VERSION__ = buildMeta ? buildMeta.content : 'dev';
+
+    // Debug: inspect all conversation schemas / message migration state
+    window.__debugConversationSchemas = function () {
+      return state.conversations.map(function (c) {
+        var first = c.messages && c.messages.find(function (m) { return m.role === 'user'; });
+        return {
+          id: c.id,
+          title: c.title,
+          worldMode: c.worldMode,
+          storyStarted: !!(c.storyMode && c.storyMode.started),
+          schemaVersion: c.schemaVersion,
+          msgCount: c.messages ? c.messages.length : 0,
+          firstUser: first ? {
+            contentPreview: String(first.content || '').slice(0, 80),
+            displayContent: first.displayContent,
+            hasRequestContent: !!first._requestContent,
+          } : null,
+        };
+      });
+    };
 
     // Apply chat background
     applyChatBackground();

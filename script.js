@@ -1024,6 +1024,7 @@ function createSceneWorld(seed) {
       keepThinkingOpen: DEFAULTS.keepThinkingOpen,
       worldMode: DEFAULTS.worldMode,
       sceneDetailLevel: DEFAULTS.sceneDetailLevel,
+      schemaVersion: STORAGE_SCHEMA_VERSION,
       messages: [],
     };
   }
@@ -3433,6 +3434,8 @@ function handleMessageAction(action, msgIndex) {
             delete msg._requestContent;
             return msg;
           }).filter(function(m) { return m.role && m.content !== undefined; });
+          // Normalize imported conversation to current display model
+          c = normalizeConversation(c);
 
           state.conversations.push(c);
           imported++;

@@ -1211,6 +1211,13 @@ a {
   margin-top: 8px;
 }
 
+.scene-start-hint {
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
 /* --- Scene Sub-Cards (World / Character) --- */
 .scene-sub-card {
   margin-top: 10px;

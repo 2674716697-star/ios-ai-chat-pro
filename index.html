@@ -386,7 +386,11 @@
             <div class="scene-field"><label>性格/习惯</label><textarea class="input scene-input" id="sceneCharTraits" rows="2" placeholder="性格特点、行为习惯…"></textarea></div>
             <div class="scene-field"><label>状态属性</label><textarea class="input scene-input" id="sceneCharStats" rows="2" placeholder="自由文本，如：体力 80/100&#10;冷静 6/10"></textarea></div>
             <div class="scene-field"><label>当前目标</label><textarea class="input scene-input" id="sceneCharGoal" rows="2" placeholder="角色当前的目标或动机…"></textarea></div>
-            <div class="scene-flex-row scene-btn-row"><button class="btn btn-secondary btn-sm" id="btnCopyCharCard">复制角色卡</button><button class="btn btn-primary btn-sm" id="btnGenOpeningPrompt">生成开场提示词</button><button class="btn btn-primary btn-sm" id="btnStartWorld">以此开始</button></div>
+            <div class="scene-flex-row scene-btn-row">
+              <button class="btn btn-secondary btn-sm" id="btnCopyCharCard">复制角色卡</button>
+              <button class="btn btn-primary btn-sm" id="btnStartWorld">以此开始</button>
+            </div>
+            <div class="scene-start-hint">建议先完善世界观、主角、NPC、状态和规则，开始后会自动发送给 AI。</div>
           </div>
           <div class="scene-tab-content" id="tabNpc">
             <p class="scene-tab-desc">管理故事中的其他人物，每张卡片可翻转查看详情和编辑。</p>
@@ -405,7 +409,7 @@
             <div class="scene-field"><label>规则限制</label><textarea class="input scene-input" id="sceneRules" rows="2" placeholder="世界的规则或限制条件…"></textarea></div>
           </div>
         </div>
-        <div class="scene-panel-footer">
+        <div class="scene-panel-footer" style="display:none">
           <button class="btn btn-primary btn-full" id="btnFinishSetup">完成设置</button>
         </div>
       </div>

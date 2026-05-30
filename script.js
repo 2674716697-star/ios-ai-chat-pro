@@ -129,6 +129,7 @@
     isStreaming: false,
     pendingRenameId: null,
     pendingConfirmAction: null,
+    pendingHiddenRequest: null,
     ui: {
       isHistoryOpen: false,
       isSettingsOpen: false,
@@ -1010,7 +1011,7 @@ function createSceneWorld(seed) {
   function cloneRequestMessage(m) {
     return {
       role: m.role,
-      content: String(m.content || ''),
+      content: String(m._requestContent || m.content || ''),
     };
   }
 
@@ -2449,8 +2450,13 @@ function updateScenePanelUI() {
     updateTimestamp(conv);
     saveToStorage();
     renderAll();
-    // Use sendMessage to properly insert message + trigger AI reply
-    dom.inputMessage.value = card;
+    // Build hidden request (full character card + world setup for AI)
+    var requestText = card + '\n\n请确认以上世界设定与角色卡。根据设定给出开场，描写当前地点、氛围和 NPC 状态，并在回复末尾输出 @@SCENE 状态块与 A/B/C/D 剧情分支。';
+    // Visible text: natural start phrase only (no character card spam)
+    var visibleText = '故事已经开始。请根据我的世界故事设定，带我进入开场。';
+    // Send via hidden request: visible is shown in chat, requestText is sent to AI
+    state.pendingHiddenRequest = requestText;
+    dom.inputMessage.value = visibleText;
     dom.inputMessage.style.height = 'auto';
     dom.inputMessage.style.height = Math.min(dom.inputMessage.scrollHeight, 120) + 'px';
     dom.inputMessage.focus();
@@ -2638,8 +2644,13 @@ function handleMessageAction(action, msgIndex) {
       return;
     }
 
-    // Add user message
-    conv.messages.push({ role: 'user', content: text });
+    // Add user message (with optional hidden request content)
+    var userMsg = { role: 'user', content: text };
+    if (state.pendingHiddenRequest) {
+      userMsg._requestContent = state.pendingHiddenRequest;
+      state.pendingHiddenRequest = null;
+    }
+    conv.messages.push(userMsg);
     updateTimestamp(conv);
     autoTitle(conv);
 
@@ -3300,11 +3311,19 @@ function handleMessageAction(action, msgIndex) {
       return;
     }
 
-    // Strip API keys from export
+    // Strip API keys and hidden request content from export
     const data = {
       version: STORAGE_VERSION,
       exportedAt: nowISO(),
-      conversations: state.conversations.map((c) => ({ ...c })),
+      conversations: state.conversations.map(function(c) {
+        var copy = Object.assign({}, c);
+        copy.messages = copy.messages.map(function(m) {
+          var msg = Object.assign({}, m);
+          delete msg._requestContent;
+          return msg;
+        });
+        return copy;
+      }),
     };
 
     downloadFile(`omnichat-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(data, null, 2), 'application/json');
@@ -3361,7 +3380,12 @@ function handleMessageAction(action, msgIndex) {
           c.sceneNpcs = normalizeSceneNpcs(c.sceneNpcs);
           // Migrate old scene/world data to unified storyMode
           migrateStoryMode(c);
-          c.messages = c.messages.filter((m) => m.role && m.content !== undefined);
+          // Strip hidden request content from imported messages
+          c.messages = (c.messages || []).map(function(m) {
+            var msg = Object.assign({}, m);
+            delete msg._requestContent;
+            return msg;
+          }).filter(function(m) { return m.role && m.content !== undefined; });
 
           state.conversations.push(c);
           imported++;

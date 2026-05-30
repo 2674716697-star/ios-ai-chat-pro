@@ -1089,7 +1089,7 @@ a {
   animation: sceneIn 300ms var(--spring);
   display: flex;
   flex-direction: column;
-  max-height: calc(100dvh - var(--top-bar-h) - 150px - var(--safe-bottom));
+  max-height: calc(100dvh - var(--top-bar-h) - 150px);
 }
 
 .scene-panel-body {
@@ -1143,7 +1143,6 @@ a {
 .scene-panel-actions {
   flex-shrink: 0;
   padding: 10px 12px 12px;
-  padding-bottom: calc(10px + var(--safe-bottom));
   background: rgba(14, 8, 22, 0.94);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -2223,7 +2222,6 @@ a {
 .scene-immersive .messages-container {
   padding: 0 8px;
   padding-bottom: 24px;
-  padding-bottom: calc(24px + var(--safe-bottom));
 }
 
 .scene-immersive .welcome-screen {
@@ -2959,7 +2957,6 @@ a {
   .scene-immersive .messages-container {
     padding: 0 8px;
     padding-bottom: 24px;
-    padding-bottom: calc(24px + var(--safe-bottom));
   }
 
   .scene-immersive .messages-container > .message:last-child {

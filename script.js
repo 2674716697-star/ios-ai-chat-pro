@@ -11,6 +11,24 @@
   // =========================================================================
 
   const STORAGE_KEY = 'omnichat_data';
+  // =========================================================================
+  // MIGRATION POLICY (read before changing any data structure)
+  //
+  // STORAGE_SCHEMA_VERSION tracks per-conversation data format.
+  // Bump it whenever you add/rename/restructure fields on conversations
+  // or messages.  Then add a migration step in normalizeConversation or
+  // normalizeMessage so old data is upgraded on next load.
+  //
+  // Rules:
+  // 1. Migration must be IDEMPOTENT – running it twice must give the same result.
+  // 2. Migration must NOT delete user content or clear history.
+  // 3. Render layer MUST use defensive fallbacks (e.g. displayContent || content).
+  // 4. API layer MUST use defensive fallbacks (e.g. _requestContent || content).
+  // 5. New code MUST handle messages/convos that lack the new fields.
+  // 6. loadFromStorage / switchConversation / import JSON all call normalize.
+  //
+  // Use _check_stability.mjs to confirm migration integrity after changes.
+  // =========================================================================
   const STORAGE_SCHEMA_VERSION = 2;
   const STORAGE_VERSION = 1;
 

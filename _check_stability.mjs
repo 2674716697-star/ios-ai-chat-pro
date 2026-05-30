@@ -69,6 +69,19 @@ check('bottom-bar position fixed', /\.bottom-bar\s*\{[\s\S]*position:\s*fixed/.t
 check('--bottom-bar-h dynamic', /--bottom-bar-h/.test(js));
 check('updateBottomBarHeight function', /function\s+updateBottomBarHeight/.test(js));
 
+// --- Historical conversation migration integrity ---
+console.log('\n--- Migration integrity ---');
+check('STORAGE_SCHEMA_VERSION defined', /STORAGE_SCHEMA_VERSION\s*=\s*\d+/.test(js));
+check('normalizeConversation exists', /function\s+normalizeConversation/.test(js));
+check('normalizeMessage exists', /function\s+normalizeMessage/.test(js));
+check('looksLikeWorldCharacterCard exists', /function\s+looksLikeWorldCharacterCard/.test(js));
+check('loadFromStorage calls normalizeConversation', /state\.conversations\s*=\s*state\.conversations\.map\(normalizeConversation\)/.test(js));
+check('switchConversation calls normalizeConversation', /function\s+switchConversation[\s\S]*normalizeConversation\(conv\)/.test(js));
+check('import path calls normalizeConversation', /normalizeConversation\(c\)/.test(js));
+check('createConversation sets schemaVersion', /schemaVersion:\s*STORAGE_SCHEMA_VERSION/.test(js));
+check('render uses displayContent fallback', /displayContent\s*\|\|\s*(msg\.)?content/.test(js));
+check('API uses _requestContent fallback', /_requestContent\s*\|\|\s*(m\.)?content/.test(js));
+
 console.log('\n' + '='.repeat(50));
 if (failed) {
   console.error('\n❌ STABILITY CHECK FAILED');

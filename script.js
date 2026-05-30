@@ -2451,7 +2451,7 @@ function updateScenePanelUI() {
     // Build hidden request (full character card + world setup for AI)
     var requestText = card + '\n\n请确认以上世界设定与角色卡。根据设定给出开场，描写当前地点、氛围和 NPC 状态，并在回复末尾输出 @@SCENE 状态块与 A/B/C/D 剧情分支。';
     // Visible text: natural start phrase only (no character card spam)
-    var visibleText = '故事已经开始。请根据我的世界故事设定，带我进入开场。';
+    var visibleText = '世界故事已开启。你的设定已发送给 AI，接下来将生成第一幕。';
     // Send via hidden request: visible is shown in chat, requestText is sent to AI
     state.pendingHiddenRequest = requestText;
     dom.inputMessage.value = visibleText;

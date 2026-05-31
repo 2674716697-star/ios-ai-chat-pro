@@ -806,17 +806,19 @@
         const el = createMessageElement(messages[i], i);
         dom.messagesContainer.appendChild(el);
       }
+      ensureMessagesBottomSpacer();
     }
   }
 
   function fullRenderMessages(messages) {
-    // Remove only message elements, keep welcome screen
+    // Remove only message elements, keep welcome screen and spacer
     dom.messagesContainer.querySelectorAll('.message').forEach((el) => el.remove());
     dom.welcomeScreen.classList.add('hidden');
     for (let i = 0; i < messages.length; i++) {
       const el = createMessageElement(messages[i], i);
       dom.messagesContainer.appendChild(el);
     }
+    ensureMessagesBottomSpacer();
   }
 
   function renderBubbleHTML(msg, msgIndex) {
@@ -1064,7 +1066,26 @@
     var bar = document.querySelector('.bottom-bar');
     if (!bar) return;
     var h = Math.ceil(bar.getBoundingClientRect().height);
+    var prev = document.documentElement.style.getPropertyValue('--bottom-bar-h');
     document.documentElement.style.setProperty('--bottom-bar-h', h + 'px');
+    // Keep user at bottom if they were near it before height changed
+    if (prev && prev !== h + 'px' && state.ui.autoFollowStreaming) {
+      var sc = getScrollContainer();
+      if (sc && isNearBottom(sc, 60)) {
+        requestAnimationFrame(function() { sc.scrollTop = sc.scrollHeight; });
+      }
+    }
+  }
+
+  function ensureMessagesBottomSpacer() {
+    var spacer = document.getElementById('messagesBottomSpacer');
+    if (!spacer && dom.messagesContainer) {
+      spacer = document.createElement('div');
+      spacer.id = 'messagesBottomSpacer';
+      spacer.className = 'messages-bottom-spacer';
+      dom.messagesContainer.appendChild(spacer);
+    }
+    return spacer;
   }
   // Expose globally so other handlers can call it
   window._updateBottomBarHeight = updateBottomBarHeight;
@@ -3659,6 +3680,7 @@ function handleMessageAction(action, msgIndex) {
     dom.inputMessage.addEventListener('input', () => {
       dom.inputMessage.style.height = 'auto';
       dom.inputMessage.style.height = Math.min(dom.inputMessage.scrollHeight, 120) + 'px';
+      requestAnimationFrame(updateBottomBarHeight);
     });
 
     // Smart scroll tracking — auto-follow unless user manually scrolls away
@@ -3689,6 +3711,14 @@ function handleMessageAction(action, msgIndex) {
         var expanded = qa && qa.classList.contains('expanded');
         moreBtn.setAttribute('aria-expanded', expanded);
         moreBtn.innerHTML = expanded ? '▾ 收起' : '▸ 更多';
+        requestAnimationFrame(function() {
+          updateBottomBarHeight();
+          // Keep at bottom if user was near it
+          if (state.ui.autoFollowStreaming) {
+            var sc = getScrollContainer();
+            if (sc && isNearBottom(sc, 60)) sc.scrollTop = sc.scrollHeight;
+          }
+        });
       });
     }
 
@@ -3808,6 +3838,14 @@ if (dom.btnGenHints) dom.btnGenHints.addEventListener('click', () => generateSce
     cacheDom();
     loadFromStorage();
     setupViewportInsets();
+
+    // ResizeObserver: keep --bottom-bar-h in sync with actual bottom bar height
+    var bottomBar = document.querySelector('.bottom-bar');
+    if (bottomBar && window.ResizeObserver) {
+      new ResizeObserver(function() {
+        updateBottomBarHeight();
+      }).observe(bottomBar);
+    }
 
     // Detect standalone / PWA / "Add to Home Screen" mode
     var isStandalone = window.navigator.standalone === true ||

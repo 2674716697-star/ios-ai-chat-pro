@@ -977,12 +977,19 @@ html.is-splashing .bottom-bar::after {
   overscroll-behavior-y: auto;
   overflow-anchor: none;
   padding: 8px 0;
-  padding-bottom: var(--bottom-bar-h, 150px);
+  padding-bottom: calc(var(--bottom-bar-h, 150px) + var(--safe-bottom, 0px) + 18px);
+  scroll-padding-bottom: calc(var(--bottom-bar-h, 150px) + var(--safe-bottom, 0px) + 18px);
   position: relative;
   background: transparent;
   transition: background 400ms var(--spring);
   contain: layout style;
   min-height: 0;
+}
+
+.messages-bottom-spacer {
+  height: calc(var(--bottom-bar-h, 150px) + var(--safe-bottom, 0px));
+  flex-shrink: 0;
+  pointer-events: none;
 }
 
 .messages-container {
@@ -3653,7 +3660,10 @@ html.is-standalone .bottom-bar::after {
 
 /* Message area: stable padding, bubble max-width, less edge-hugging */
 .main-content {
-  padding: 8px 12px;
+  padding-left: 12px;
+  padding-right: 12px;
+  padding-top: 8px;
+  /* Keep padding-bottom from base rule (uses --bottom-bar-h) */
 }
 .message {
   max-width: 100%;

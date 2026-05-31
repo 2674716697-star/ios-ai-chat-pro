@@ -133,7 +133,7 @@
   };
 
   // =========================================================================
-  // STATE
+  // STATE — runtime application state (persisted to localStorage)
   // =========================================================================
 
   const state = {
@@ -335,7 +335,7 @@
   }
 
   // =========================================================================
-  // STORAGE
+  // STORAGE — localStorage save/load, conversation persistence
   // =========================================================================
 
   function saveToStorage() {
@@ -1370,7 +1370,7 @@ function createSceneWorld(seed) {
   }
 
   // =========================================================================
-  // DRAWER MANAGEMENT
+  // DRAWERS — settings panel, history panel, conversation list
   // =========================================================================
 
   function openDrawer(side) {
@@ -1786,7 +1786,7 @@ function createSceneWorld(seed) {
   }
 
   // =========================================================================
-  // MARKDOWN RENDERER (no external libs)
+  // MARKDOWN — inline renderer, no external dependencies
   // =========================================================================
 
   function renderMarkdown(text) {
@@ -2772,7 +2772,7 @@ function handleMessageAction(action, msgIndex) {
   }
 
   // =========================================================================
-  // MODEL MANAGEMENT
+  // MODEL — provider select, model list refresh, model resolution
   // =========================================================================
 
   function populateModelSelect() {
@@ -2840,7 +2840,7 @@ function handleMessageAction(action, msgIndex) {
   }
 
   // =========================================================================
-  // CHAT: SEND MESSAGE
+  // SEND MESSAGE — core send flow, scene extraction, completeness checks
   // =========================================================================
 
   async function sendMessage() {
@@ -3262,7 +3262,7 @@ function handleMessageAction(action, msgIndex) {
   }
 
   // =========================================================================
-  // STREAM PROCESSING
+  // STREAM — SSE parsing, delta accumulation, render scheduling
   // =========================================================================
 
   async function processStream(resp, assistantMsg, conv) {
@@ -3359,7 +3359,7 @@ function handleMessageAction(action, msgIndex) {
   }
 
   // =========================================================================
-  // STOP REQUEST
+  // STOP — abort controller, streaming interruption
   // =========================================================================
 
   function stopCurrentRequest() {
@@ -3376,7 +3376,7 @@ function handleMessageAction(action, msgIndex) {
   }
 
   // =========================================================================
-  // CONVERSATION ACTIONS
+  // CONVERSATION — new, switch, clear, delete, rename, export, import
   // =========================================================================
 
   function newConversation(overrides) {
@@ -3800,7 +3800,7 @@ function handleMessageAction(action, msgIndex) {
   }
 
   // =========================================================================
-  // EVENT HANDLERS
+  // EVENTS — user interaction bindings, click delegation, keyboard
   // =========================================================================
 
   function setupEvents() {

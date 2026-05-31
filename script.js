@@ -771,7 +771,26 @@ function getSceneBodyDetails(block) {
     return null;
   }
 
-  function renderSceneStatusTable(msg) {
+  function isLatestInteractiveDirectionMessage(conv, msgIndex) {
+    if (!conv || !Array.isArray(conv.messages)) return false;
+    var msg = conv.messages[msgIndex];
+    if (!msg || msg.role !== 'assistant') return false;
+    if (!msg.sceneSnapshot || !msg.sceneSnapshot.directions) return false;
+
+    // Must be the LAST assistant message in the conversation
+    for (var j = conv.messages.length - 1; j > msgIndex; j--) {
+      if (conv.messages[j].role === 'assistant') return false;
+    }
+
+    // No user message must appear after this assistant (it hasn't been answered yet)
+    for (var i = msgIndex + 1; i < conv.messages.length; i++) {
+      if (conv.messages[i].role === 'user') return false;
+    }
+
+    return true;
+  }
+
+  function renderSceneStatusTable(msg, msgIndex) {
     var ss = createSceneState(msg.sceneSnapshot);
     var st = msg.sceneStatusSnapshot;
     var ch = msg.sceneCharacterSnapshot;
@@ -796,12 +815,18 @@ function getSceneBodyDetails(block) {
     if (ss.directions) {
       var dirOpts = parseDirectionOptions(ss.directions);
       if (dirOpts.length) {
+        var conv = getCurrentConv();
+        var interactive = (msgIndex != null) ? isLatestInteractiveDirectionMessage(conv, msgIndex) : true;
+        var listClass = 'dir-choices-list' + (interactive ? '' : ' locked');
+        var listLocked = interactive ? '' : ' data-locked="1"';
         var chips = [];
         for (var di = 0; di < dirOpts.length; di++) {
           var d = dirOpts[di];
-          chips.push('<button class="dir-choice-chip" data-choice="' + d.letter + '" data-content="' + escapeHtml(d.content) + '"><span class="dir-chip-badge">' + d.letter + '</span><span class="dir-chip-text">' + escapeHtml(d.content) + '</span></button>');
+          var chipDisabled = interactive ? '' : ' disabled';
+          var chipAriaDisabled = interactive ? '' : ' aria-disabled="true"';
+          chips.push('<button class="dir-choice-chip' + chipDisabled + '" data-choice="' + d.letter + '" data-content="' + escapeHtml(d.content) + '"' + chipAriaDisabled + '><span class="dir-chip-badge">' + d.letter + '</span><span class="dir-chip-text">' + escapeHtml(d.content) + '</span></button>');
         }
-        html += '<div class="scene-directions-section"><div class="scene-directions-title">剧情走向</div><div class="dir-choices-list">' + chips.join('') + '</div></div>';
+        html += '<div class="scene-directions-section"><div class="scene-directions-title">剧情走向</div><div class="' + listClass + '"' + listLocked + '>' + chips.join('') + '</div></div>';
       }
     }
     if (ss.plot) html += '<div class="scene-plot-footer">' + escapeHtml(ss.plot) + '</div>';
@@ -1470,7 +1495,7 @@ function createSceneWorld(seed) {
     return isStreaming ? value.replace(/\n?@@SCENE[\s\S]*$/m, '').trimEnd() : value;
   }
 
-  function renderBubbleHTML(msg) {
+  function renderBubbleHTML(msg, msgIndex) {
     // Build inner HTML for an assistant message bubble
     let html = '';
 
@@ -1499,7 +1524,7 @@ function createSceneWorld(seed) {
     html += '<div class="message-content">' + contentHTML + '</div>';
 
     if (msg.sceneSnapshot && !msg._streaming) {
-      html += renderSceneStatusTable(msg);
+      html += renderSceneStatusTable(msg, msgIndex);
     }
 
     // Token usage
@@ -1555,7 +1580,7 @@ function createSceneWorld(seed) {
     } else if (msg.role === 'assistant') {
       const roleLabel = 'AI';
       const bubbleClass = msg._streaming ? 'message-bubble streaming-cursor' : 'message-bubble';
-      div.innerHTML = '<div class="message-role">' + roleLabel + '</div><div class="' + bubbleClass + '">' + renderBubbleHTML(msg) + '</div>';
+      div.innerHTML = '<div class="message-role">' + roleLabel + '</div><div class="' + bubbleClass + '">' + renderBubbleHTML(msg, index) + '</div>';
     } else {
       const roleLabel = 'You';
       div.innerHTML = '<div class="message-role">' + roleLabel + '</div><div class="message-bubble">' + renderMarkdown(String(msg.displayContent || msg.content || '')) + '</div>';
@@ -4051,6 +4076,15 @@ function handleMessageAction(action, msgIndex) {
         // Prevent double-click on same choice group
         var list = chip.closest('.dir-choices-list');
         if (list && list.dataset.locked === '1') return;
+
+        // Secondary validation: only latest interactive direction message is clickable
+        var msgEl = chip.closest('.message');
+        var chipMsgIndex = msgEl ? parseInt(msgEl.dataset.index, 10) : -1;
+        var conv = getCurrentConv();
+        if (!isLatestInteractiveDirectionMessage(conv, chipMsgIndex)) {
+          showToast('这是历史分支选项，请选择最新回复下方的 A/B/C/D。', 'info');
+          return;
+        }
 
         var letter = chip.dataset.choice;
 

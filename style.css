@@ -1482,6 +1482,14 @@ html.is-splashing .bottom-bar::after {
 .dir-choice-chip.disabled {
   opacity: 0.4;
   pointer-events: none;
+  cursor: default;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Historically locked direction list — all chips non-interactive */
+.dir-choices-list.locked {
+  pointer-events: none;
 }
 
 .dir-choice-chip:last-child {

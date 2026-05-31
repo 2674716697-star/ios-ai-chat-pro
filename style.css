@@ -3794,8 +3794,14 @@ html.has-custom-bg .user .message-bubble {
 }
 
 /* ---- Story Editor Overlay ---- */
-.story-editor-open .bottom-bar { display: none; }
+/* Story editor: hide bottom bar globally, strong specificity */
+html.story-editor-open .bottom-bar { display: none !important; }
 .story-editor-open .scene-panel { display: none; }
+
+/* Story editor overlay: ensure it covers everything */
+.story-editor-overlay {
+  z-index: 9999 !important;
+}
 
 .story-editor-overlay {
   position: fixed; inset: 0; z-index: 100;
@@ -3963,17 +3969,76 @@ html.has-custom-bg .user .message-bubble {
   padding-bottom: calc(var(--bottom-bar-h, 150px) + var(--safe-bottom, 0px));
 }
 
-/* Mobile: editor fullscreen */
+/* Mobile: editor fullscreen + NPC flat form with large inputs */
 @media (max-width: 600px) {
+  html.story-editor-open .bottom-bar { display: none !important; }
+
+  .story-editor-overlay {
+    position: fixed !important; inset: 0 !important;
+    z-index: 9999 !important; height: 100dvh !important;
+  }
   .story-editor-sheet {
-    margin: 0; border-radius: 0;
-    height: 100dvh; max-height: 100dvh;
+    width: 100% !important; height: 100dvh !important;
+    max-height: 100dvh !important; margin: 0 !important;
+    border-radius: 0 !important; display: flex !important;
+    flex-direction: column !important; overflow: hidden !important;
   }
   .story-editor-header { padding: 12px 14px; }
-  .story-editor-body { padding: 12px 14px; }
+  .story-editor-body {
+    flex: 1 1 auto !important; min-height: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+    padding: 12px 14px !important;
+    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important;
+  }
   .story-editor-footer { padding: 10px 14px; }
   .story-editor-body .scene-tabs {
-    margin: -12px -14px 10px;
-    padding: 8px 14px;
+    margin: -12px -14px 10px; padding: 8px 14px;
+  }
+
+  /* NPC grid: column layout, no internal scroll, no flip */
+  .story-editor-body #sceneNpcGrid,
+  .story-editor-body .scene-npc-grid {
+    display: flex !important; flex-direction: column !important;
+    gap: 12px !important; height: auto !important;
+    max-height: none !important; overflow: visible !important;
+  }
+  .story-editor-body .npc-card {
+    position: static !important; width: 100% !important;
+    max-width: none !important; height: auto !important;
+    min-height: unset !important; overflow: visible !important;
+    transform: none !important; margin: 0 0 12px 0 !important;
+  }
+  .story-editor-body .npc-card-inner,
+  .story-editor-body .npc-card-front,
+  .story-editor-body .npc-card-back {
+    position: static !important; width: 100% !important;
+    height: auto !important; min-height: unset !important;
+    overflow: visible !important; transform: none !important;
+    display: block !important;
+  }
+  .story-editor-body .npc-card-front { display: none !important; }
+  .story-editor-body .npc-card-back {
+    padding: 12px !important; border-radius: 14px !important;
+  }
+
+  .story-editor-body .npc-edit-field {
+    width: 100% !important; min-height: 44px !important;
+    font-size: 14px !important; line-height: 1.4 !important;
+    padding: 10px 12px !important; margin-bottom: 10px !important;
+  }
+  .story-editor-body textarea.npc-edit-field {
+    min-height: 120px !important; resize: vertical !important;
+  }
+  .story-editor-body .npc-delete-btn {
+    position: static !important; float: none !important;
+    margin: 0 !important; flex-shrink: 0 !important;
+  }
+
+  .story-editor-body #btnAddNpc {
+    position: static !important; width: 100% !important;
+    min-height: 46px !important; margin-top: 12px !important;
+    z-index: auto !important;
   }
 }

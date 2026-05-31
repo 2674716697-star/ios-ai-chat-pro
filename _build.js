@@ -5,6 +5,11 @@ let html = fs.readFileSync('index.html', 'utf-8');
 const css = fs.readFileSync('style.css', 'utf-8');
 const js = fs.readFileSync('script.js', 'utf-8');
 const buildVersion = Date.now().toString(36);
+const commitHash = (() => {
+  try {
+    return require('child_process').execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim();
+  } catch (_) { return 'unknown'; }
+})();
 
 // Minify CSS: remove comments, collapse whitespace, remove unnecessary semicolons
 function minifyCSS(css) {
@@ -91,7 +96,7 @@ const jsMin = minifyJS(js);
 // Add build version meta tag
 html = html.replace(
   '<meta name="theme-color" content="#000000">',
-  '<meta name="theme-color" content="#000000">\n  <meta name="build-version" content="' + buildVersion + '">'
+  '<meta name="theme-color" content="#000000">\n  <meta name="build-version" content="' + buildVersion + '">\n  <meta name="build-commit" content="' + commitHash + '">'
 );
 
 // Inline minified CSS

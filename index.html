@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta http-equiv="refresh" content="0;url=omnichat.html">
+  <script>location.replace('omnichat.html'+location.search+location.hash)</script>
   <meta name="description" content="OmniChat 多模型 AI 聊天客户端">
   <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -377,6 +379,11 @@
             当前网页端未执行外部工具调用，入口已锁定为关闭，避免误触发循环或额外费用。
           </div>
         </div>
+
+          <div class="setting-group">
+            <button class="btn btn-secondary btn-sm" id="btnClearCache" style="font-size:11px">刷新应用缓存</button>
+            <div class="setting-hint">清除 Service Worker 和 Cache Storage，下次加载获取最新版本。不会删除聊天数据。</div>
+          </div>
 
           </div>
         </div>

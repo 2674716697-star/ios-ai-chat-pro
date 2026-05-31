@@ -5204,6 +5204,15 @@ if (dom.btnGenHints) dom.btnGenHints.addEventListener('click', () => generateSce
     if (dom.btnStartWorld) dom.btnStartWorld.addEventListener('click', () => startWorldMode());
 
     // Export / Import / Clear all
+    // Clear cache button in settings
+    var btnClearCache = $('#btnClearCache');
+    if (btnClearCache) {
+      btnClearCache.addEventListener('click', function() {
+        window.localStorage.setItem('omnichat_clear_cache', '1');
+        window.location.reload();
+      });
+    }
+
     dom.btnExportAll.addEventListener('click', () => exportAllJSON());
     dom.btnImport.addEventListener('click', () => dom.importFileInput.click());
     dom.btnClearAll.addEventListener('click', () => clearAllConversations());
@@ -5344,7 +5353,40 @@ if (dom.btnGenHints) dom.btnGenHints.addEventListener('click', () => generateSce
 
     // Expose build version for debug (from meta tag injected by _build.js)
     var buildMeta = document.querySelector('meta[name="build-version"]');
+    var commitMeta = document.querySelector('meta[name="build-commit"]');
     window.__BUILD_VERSION__ = buildMeta ? buildMeta.content : 'dev';
+    window.__BUILD_COMMIT__ = commitMeta ? commitMeta.content : 'unknown';
+    console.log('[OmniChat] Build:', window.__BUILD_VERSION__, 'Commit:', window.__BUILD_COMMIT__);
+
+    // Debug version float (debugVersion=1 or debugBudget=1)
+    if (window.location.search.indexOf('debugVersion=1') !== -1 || isDebugBudget()) {
+      var versionFloat = document.createElement('div');
+      versionFloat.id = 'debugVersionFloat';
+      versionFloat.style.cssText = 'position:fixed;bottom:8px;left:8px;z-index:9999;font-size:9px;color:rgba(255,255,255,0.3);font-family:monospace;pointer-events:none;';
+      versionFloat.textContent = 'build: ' + window.__BUILD_COMMIT__.slice(0,7) + ' / ' + window.__BUILD_VERSION__;
+      document.body.appendChild(versionFloat);
+    }
+
+    // Clear cache mechanism (?clearCache=1 or localStorage flag)
+    if (window.location.search.indexOf('clearCache=1') !== -1 || window.localStorage.getItem('omnichat_clear_cache') === '1') {
+      window.localStorage.removeItem('omnichat_clear_cache');
+      Promise.resolve().then(function() {
+        if (navigator.serviceWorker) {
+          return navigator.serviceWorker.getRegistrations().then(function(regs) {
+            return Promise.all(regs.map(function(r) { return r.unregister(); }));
+          });
+        }
+      }).then(function() {
+        if (window.caches) {
+          return caches.keys().then(function(keys) {
+            return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+          });
+        }
+      }).then(function() {
+        var cleanUrl = window.location.href.replace(/[?&]clearCache=1/g, '').replace(/[?&]$/, '');
+        window.location.replace(cleanUrl);
+      });
+    }
 
     // Debug: inspect all conversation schemas / message migration state
     window.__debugConversationSchemas = function () {

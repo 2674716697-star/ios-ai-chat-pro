@@ -864,10 +864,11 @@
         html += ' (含 ' + u.completion_tokens_details.reasoning_tokens.toLocaleString() + ' 思考)';
       }
       html += '</div>';
-      // Truncated by output limit warning
-      if (msg.finishReason === 'length') {
-        html += '<div class="token-usage" style="color:var(--scene-gold, #e0b060)">⚠️ 回复被 Max Tokens 截断，状态卡可能由备用逻辑生成。</div>';
-      }
+    }
+
+    // Truncated by output limit warning — show regardless of usage presence
+    if (!msg._streaming && msg.finishReason === 'length') {
+      html += '<div class="token-usage" style="color:var(--scene-gold, #e0b060)">⚠️ 回复被 Max Tokens 截断，状态卡可能由备用逻辑生成。</div>';
     }
 
     // Post-response action buttons
@@ -1877,42 +1878,50 @@ function handleMessageAction(action, msgIndex) {
 
     switch (action) {
       case 'regenerate': {
-        // True regenerate: remove last assistant, reuse existing last user message.
-        // Do NOT push a duplicate user message.
-        var lastMsg = conv.messages[conv.messages.length - 1];
-        if (lastMsg && lastMsg.role === 'assistant') conv.messages.pop();
-        lastMsg && lastMsg._showActions = false;
+        // True regenerate: remove target assistant, reuse existing user message.
+        // Do NOT push a duplicate user message into conv.messages.
 
-        // Find target assistant's preceding user message (msgIndex-aware)
-        var targetUser = null;
-        if (msgIndex != null && msgIndex >= 0 && conv.messages[msgIndex] && conv.messages[msgIndex].role === 'assistant') {
-          // Walk backwards from msgIndex to find the user message that triggered it
-          for (var ui = msgIndex - 1; ui >= 0; ui--) {
-            if (conv.messages[ui].role === 'user') { targetUser = conv.messages[ui]; break; }
-          }
+        // Only support regenerating the LAST assistant message for safety
+        var lastUserIdx = -1;
+        var lastAssistantIdx = -1;
+        for (var li = conv.messages.length - 1; li >= 0; li--) {
+          if (conv.messages[li].role === 'assistant' && lastAssistantIdx < 0) lastAssistantIdx = li;
+          if (conv.messages[li].role === 'user' && lastUserIdx < 0) lastUserIdx = li;
+          if (lastAssistantIdx >= 0 && lastUserIdx >= 0) break;
         }
-        // Fallback: use last user message
-        if (!targetUser) {
-          targetUser = [...conv.messages].reverse().find(function(m) { return m.role === 'user'; });
-        }
-        if (!targetUser) return;
+        if (lastAssistantIdx < 0 || lastUserIdx < 0) return;
 
-        // Preserve _requestContent so world-story hidden card is re-sent
-        if (targetUser._requestContent) {
-          state.pendingHiddenRequest = targetUser._requestContent;
+        // Guard: only support regenerating the last assistant
+        if (msgIndex != null && msgIndex !== lastAssistantIdx) {
+          showToast('当前仅支持重新生成最后一条回复。', 'warning');
+          return;
         }
 
-        // Determine the visible send text for the regenerated request
-        var sendText = prompts.regenerate || targetUser.content;
+        var lastAssistant = conv.messages[lastAssistantIdx];
+        var lastUser = conv.messages[lastUserIdx];
+        if (lastAssistant) lastAssistant._showActions = false;
 
-        // Story mode: inject hard system reminder for @@SCENE completeness
-        var storyEnabled = isStoryEnabled(conv);
-        if (storyEnabled) {
-          conv.messages.push({
-            role: 'system',
-            content: '[系统提示] 这是重新生成。必须输出完整 @@SCENE ... @@END，必须包含 [角色: 主角] 状态块和 A/B/C/D 走向。',
-          });
+        // Remove the last assistant (will be replaced by new response)
+        conv.messages.pop();
+
+        // Preserve hidden request content so world-story card is re-sent
+        if (lastUser._requestContent) {
+          state.pendingHiddenRequest = lastUser._requestContent;
         }
+
+        // Build temporary system reminders for API request only (NOT persisted)
+        var extraSys = [];
+        if (isStoryEnabled(conv)) {
+          extraSys.push('[系统提示] 这是重新生成。必须输出完整 @@SCENE ... @@END，必须包含 [角色: 主角] 状态块和 A/B/C/D 走向。');
+        }
+
+        var sendText = prompts.regenerate || lastUser.content;
+
+        state._regenerateFlags = {
+          appendUserMessage: false,
+          userText: sendText,
+          extraSystemMessages: extraSys,
+        };
 
         updateTimestamp(conv);
         renderAll();
@@ -1925,8 +1934,8 @@ function handleMessageAction(action, msgIndex) {
       case 'continue':
       case 'summarize':
       case 'elaborate': {
-        var lastMsg2 = conv.messages[conv.messages.length - 1];
-        if (lastMsg2) lastMsg2._showActions = false;
+        var lastMsg = conv.messages[conv.messages.length - 1];
+        if (lastMsg) lastMsg._showActions = false;
         var actText = prompts[action];
         updateTimestamp(conv);
         renderAll();
@@ -2087,15 +2096,27 @@ function handleMessageAction(action, msgIndex) {
       return;
     }
 
+    // Regenerate flag: when true, reuse existing last user message;
+    // do NOT push a duplicate user message into conv.messages.
+    var regenFlags = state._regenerateFlags || null;
+    state._regenerateFlags = null;
+    var isRegenerate = regenFlags && regenFlags.appendUserMessage === false;
+    var extraSystemMessages = (regenFlags && regenFlags.extraSystemMessages) || [];
+
     // Add user message (with optional hidden request content)
-    var userMsg = { role: 'user', content: text };
-    if (state.pendingHiddenRequest) {
-      userMsg._requestContent = state.pendingHiddenRequest;
-      state.pendingHiddenRequest = null;
+    if (!isRegenerate) {
+      var userMsg = { role: 'user', content: text };
+      if (state.pendingHiddenRequest) {
+        userMsg._requestContent = state.pendingHiddenRequest;
+        state.pendingHiddenRequest = null;
+      }
+      conv.messages.push(userMsg);
+      updateTimestamp(conv);
+      autoTitle(conv);
+    } else {
+      // Regenerate: use pendingHiddenRequest from the original user message
+      state.pendingHiddenRequest = state.pendingHiddenRequest || null;
     }
-    conv.messages.push(userMsg);
-    updateTimestamp(conv);
-    autoTitle(conv);
 
     dom.inputMessage.value = '';
     dom.inputMessage.style.height = 'auto';
@@ -2271,6 +2292,14 @@ function handleMessageAction(action, msgIndex) {
         reminder += '\n详细度高但不能牺牲完整性：优先保证精神/身体/NPC/A/B/C/D/@@END 完整。';
       }
       messages.push({ role: 'system', content: reminder });
+    }
+
+    // Inject extra system messages (API-only, e.g. regenerate reminder).
+    // They go into the request but NOT conv.messages — never persisted.
+    if (extraSystemMessages.length > 0) {
+      for (var esi = 0; esi < extraSystemMessages.length; esi++) {
+        messages.push({ role: 'system', content: extraSystemMessages[esi] });
+      }
     }
 
     // Add placeholder assistant message for streaming

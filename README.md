@@ -188,6 +188,79 @@ http.createServer((req, res) => {
 
 浏览器 localStorage 通常限制为 5–10 MB。
 
+## 世界故事模式调试
+
+当"状态卡 / A-B-C-D 选项卡没有出现"或选项不足时，可通过内置调试模式定位问题。
+
+### 开启调试
+
+在浏览器 DevTools Console 执行：
+
+```js
+localStorage.setItem('omnichat_debug_budget', '1')
+location.reload()
+```
+
+或者在页面 URL 后添加查询参数：
+
+```text
+?debugBudget=1
+```
+
+### 关闭调试
+
+```js
+localStorage.removeItem('omnichat_debug_budget')
+location.reload()
+```
+
+### 测试步骤
+
+1. 打开 OmniChat 页面。
+2. 开启世界故事模式。
+3. 发送一轮正常剧情。
+4. 点击 AI 回复下方的"重新生成"（或正常发送第二轮）。
+5. 打开 DevTools Console，查看是否出现以下日志分组：
+
+```text
+[OmniChat Budget Debug]
+[OmniChat Story Diagnostics]
+```
+
+> 注意：`[OmniChat Story Diagnostics]` 仅在世界故事模式开启时输出，非故事模式不会出现。
+
+### 重点检查字段
+
+`[OmniChat Story Diagnostics]` 以 `console.table` 形式输出，重点关注以下字段：
+
+| 字段 | 说明 |
+|------|------|
+| `hasSceneBlock` | AI 回复中是否包含 `@@SCENE` 块 |
+| `hasSceneSnapshot` | 是否成功解析出场景状态对象 |
+| `directionsCount` | A/B/C/D 可选方向数量 |
+| `finishReason` | 回复结束原因（`stop` / `length` 等） |
+| `truncated` | 是否被 Max Tokens 截断 |
+| `fallbackApplied` | 是否应用了前端 fallback |
+
+**判断规则：**
+
+- **`hasSceneSnapshot=false`** → 当前回复没有成功生成/解析场景状态，可能是 AI 未输出 `@@SCENE` 块或解析失败。
+- **`directionsCount<4`** → A/B/C/D 选项不足，部分选项卡不会渲染。
+- **`finishReason=length`** → 回复被 Max Tokens 截断，AI 可能在输出 `@@SCENE` 前就停止了。提示：增大 Max Tokens 或开启自动压缩释放上下文空间。
+- **`fallbackApplied=false` 且 `hasSceneSnapshot=false`** → 前端 fallback 没有兜住，这是一个 bug，需要排查 fallback 逻辑。
+- **`fallbackApplied=true` 但 UI 仍然没有选项卡** → 渲染层可能没有正确识别 `sceneSnapshot`，需检查渲染逻辑。
+
+### 安全说明
+
+调试模式**不会**打印 API Key，也不会输出完整对话内容。日志仅包含：
+
+- 字符数 / Token 估算值
+- 消息数量、布尔标志
+- Max Tokens 配置值
+- 少量状态字段
+
+> 所有调试信息均为摘要性质，无敏感数据泄露风险。
+
 ## 技术栈
 
 纯 HTML + CSS + JavaScript，无框架，无构建工具。所有状态存于 localStorage。使用 IIFE 模式组织代码，避免全局变量污染。

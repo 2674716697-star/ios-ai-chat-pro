@@ -3465,6 +3465,106 @@ function handleMessageAction(action, msgIndex) {
   }
 
   // =========================================================================
+  // STORY META STRIPPER — remove @@SCENE / 状态卡 / A/B/C/D from visible content
+  // =========================================================================
+
+  // Called AFTER sceneSnapshot/fallback is resolved, BEFORE rendering.
+  // Ensures visible message content does not duplicate the UI status card.
+  function stripStoryMetaFromVisibleContent(content) {
+    if (!content) return content;
+    var text = content;
+
+    // A. Standard @@SCENE ... @@END block
+    text = text.replace(/@@SCENE[\s\S]*?@@END/g, '');
+
+    // B. @@SCENE without @@END — strip from last @@SCENE to end
+    var lastSceneIdx = text.lastIndexOf('@@SCENE');
+    if (lastSceneIdx >= 0) {
+      text = text.slice(0, lastSceneIdx);
+    }
+
+    // C. Chinese status-block headers — strip from the LAST occurrence
+    // (only within trailing ~2000 chars to avoid false positives)
+    var scanStart = Math.max(0, text.length - 2000);
+    var scanZone = text.slice(scanStart);
+    var cnHeaders = [
+      '角色状态卡', '状态卡', '当前状态', '场景状态', '剧情状态', '角色状态',
+      '后续剧情走向', '剧情走向', '走向',
+    ];
+    var earliestMatch = scanZone.length;
+    for (var hi = 0; hi < cnHeaders.length; hi++) {
+      var hdr = cnHeaders[hi];
+      // Match header at line start, optionally preceded by separator or bracket
+      var re = new RegExp('(?:^|\\n)(?:[-—#*]{0,3}\\s*)?(?:【|\\[)?' + hdr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?:】|\\])?[:：]?\\s*$', 'm');
+      var m = scanZone.match(re);
+      if (m && m.index < earliestMatch) {
+        earliestMatch = m.index;
+        // Also strip preceding separator line if present
+        var preLines = scanZone.slice(Math.max(0, m.index - 30), m.index);
+        var sepMatch = preLines.match(/\n(?:[-—]{2,}|[#*]{2,})\s*$/);
+        if (sepMatch) {
+          earliestMatch = m.index - (preLines.length - sepMatch.index - 1);
+        }
+      }
+    }
+    if (earliestMatch < scanZone.length) {
+      text = text.slice(0, scanStart + earliestMatch);
+    }
+
+    // D. Trailing A/B/C/D option blocks
+    // Only strip from near the END of text (last ~2000 chars).
+    // Match 3-4 consecutive A/B/C/D marker lines at the very tail.
+    var tailStart = Math.max(0, text.length - 2000);
+    var tail = text.slice(tailStart);
+    var abcdRe = /^([A-Da-d])[\.\)、：:\s]+\s*(.+)\s*$/gm;
+    var allLines = tail.split('\n');
+    // Find the LAST run of 3-4 consecutive ABCD lines
+    var bestRunStart = -1;
+    var bestRunLen = 0;
+    var i = allLines.length - 1;
+    while (i >= 0) {
+      var line = allLines[i].trim();
+      if (abcdRe.test(line)) {
+        // re-test with reset lastIndex
+        abcdRe.lastIndex = 0;
+        var runStart = i;
+        while (runStart > 0 && abcdRe.test(allLines[runStart - 1].trim())) {
+          abcdRe.lastIndex = 0;
+          runStart--;
+        }
+        var runLen = i - runStart + 1;
+        if (runLen >= 3 && runLen <= 4 && runLen > bestRunLen) {
+          bestRunStart = runStart;
+          bestRunLen = runLen;
+        }
+        i = runStart - 1;
+      } else {
+        i--;
+      }
+    }
+    if (bestRunStart >= 0 && bestRunLen >= 3) {
+      // Remove from the bestRunStart to end (or just the run lines)
+      var linesBefore = allLines.slice(0, bestRunStart);
+      // Strip trailing blank lines after the ABCD block
+      while (linesBefore.length > 0 && !linesBefore[linesBefore.length - 1].trim()) {
+        linesBefore.pop();
+      }
+      text = text.slice(0, tailStart) + linesBefore.join('\n');
+    }
+
+    // Final cleanup
+    text = text.replace(/\n{3,}/g, '\n\n');
+    text = text.trim();
+
+    // E. If everything was stripped, provide a fallback sentence
+    if (!text) {
+      text = '（本轮回复主要为状态更新，已整理到下方状态卡。）';
+    }
+
+    return text;
+  }
+
+  // =========================================================================
   // SEND MESSAGE — core send flow, scene extraction, completeness checks
   // =========================================================================
 
@@ -3903,8 +4003,8 @@ function handleMessageAction(action, msgIndex) {
           assistantMsg.sceneSnapshot = createSceneState(parsedSceneFromThisReply);
           assistantMsg.sceneStatusSnapshot = createSceneStatus(conv.sceneStatus);
           assistantMsg.sceneCharacterSnapshot = createSceneCharacter(conv.sceneCharacter);
-          // Strip the scene block from displayed content
-          assistantMsg.content = assistantMsg.content.replace(/@@SCENE\s*[\s\S]*?\s*@@END/, '').trim();
+          // Note: comprehensive stripStoryMetaFromVisibleContent runs after
+          // fallback block below — don't do partial strip here.
           updateScenePanelUI();
         } else {
           console.warn('[OmniChat] Scene mode reply has no @@SCENE block.');
@@ -4022,6 +4122,14 @@ function handleMessageAction(action, msgIndex) {
         console.group('%c[OmniChat Story Diagnostics]', 'color:#0af;font-weight:bold');
         console.table(diagScene);
         console.groupEnd();
+      }
+
+      // --- Strip story meta from visible content after scene parsing ---
+      // Must run AFTER sceneSnapshot/fallback is fully resolved so the UI
+      // status card + chips get correct data, but BEFORE rendering so the
+      // plain text bubble doesn't duplicate the UI elements.
+      if (storyEnabled && assistantMsg.content) {
+        assistantMsg.content = stripStoryMetaFromVisibleContent(assistantMsg.content);
       }
 
       // Show action buttons on completed response

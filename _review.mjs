@@ -112,6 +112,10 @@ check('click handler validates with isLatestInteractiveDirectionMessage', /isLat
 check('historical chip toast message exists', /历史分支选项/.test(js));
 check('.catch error recovery exists', /\.catch\(function\s*\(err\)/.test(js));
 check('error recovery shows toast', /showToast\(.*发送选项失败/.test(js));
+check('createSceneState preserves directions', /directions:\s*seed\.directions/.test(js));
+check('renderSceneStatusTable uses directions fallback', /msg\.sceneSnapshot\s*&&\s*msg\.sceneSnapshot\.directions/.test(js));
+check('sendMessage finally forces fullRenderMessages for scene render', /fullRenderMessages\(messages\)/.test(js) || /function\s*\(\s*messages\s*\)\s*\{\s*fullRenderMessages/.test(js));
+check('dir-choices-list render code exists', /dir-choices-list/.test(js));
 
 // =========================================================================
 // 8. BUILD VERSION

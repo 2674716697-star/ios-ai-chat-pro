@@ -804,16 +804,18 @@ function getSceneBodyDetails(block) {
       // Fallback: build single character from old fields
       characters = [{ name: ss.currentRole || ch?.name || '主角', relation: '主角', isMain: true, mental: ss.mental, mentalScore: ss.mentalScore, physical: ss.physical, bodyDetails: ss.bodyDetails, goal: ss.currentGoal, posture: ss.posture, innerVoice: ss.innerVoice }];
     }
-    if (!characters.length && !ss.directions && !hasLegacy) return '';
+    if (!characters.length && !ss.directions && !(msg.sceneSnapshot && msg.sceneSnapshot.directions) && !hasLegacy) return '';
     var html = '';
+    // Fallback: use sceneSnapshot directions if ss lost them
+    var directions = ss.directions || (msg.sceneSnapshot && msg.sceneSnapshot.directions) || '';
     // Render per-character cards
     for (var ci = 0; ci < characters.length; ci++) {
       var c = characters[ci];
       html += renderCharacterCard(c, st, ch, maxBd, !!(ci===0));
     }
     // Directions section
-    if (ss.directions) {
-      var dirOpts = parseDirectionOptions(ss.directions);
+    if (directions) {
+      var dirOpts = parseDirectionOptions(directions);
       if (dirOpts.length) {
         var conv = getCurrentConv();
         var interactive = (msgIndex != null && msgIndex >= 0) ? isLatestInteractiveDirectionMessage(conv, msgIndex) : false;
@@ -3060,7 +3062,9 @@ function handleMessageAction(action, msgIndex) {
 
       updateTimestamp(conv);
       updateTopBar();
-      preserveScrollPosition(renderMessages);
+      // Full render needed: sceneSnapshot may have been updated in finally block
+      // and the diff-based renderMessages would skip re-rendering the bubble.
+      preserveScrollPosition(function (messages) { fullRenderMessages(messages); });
       debouncedSave();
     }
   }

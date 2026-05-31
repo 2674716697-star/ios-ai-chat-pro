@@ -2013,79 +2013,17 @@ function getSceneBodyDetails(block) {
   }
 
   // =========================================================================
-  // STORY EDITOR — draft transaction system
-  // state.ui.storyDraft stores a deep clone while editing; only committed
-  // on explicit save. Cancel discards the draft and restores original data.
+  // STORY EDITOR — true draft isolation via reference swap
+  //
+  // Strategy: on open, deep-clone conv story fields and REPLACE conv's
+  // references with the clones. All existing event handlers (settings page,
+  // NPC grid, chips) automatically write to the draft because the draft
+  // IS conv's current property reference. On save, the draft is already
+  // in conv — just persist. On cancel, restore original references.
   // =========================================================================
 
-  function _deepCloneStory(conv) {
-    if (!conv) return null;
-    return JSON.parse(JSON.stringify({
-      sceneWorld: conv.sceneWorld || {},
-      sceneCharacter: conv.sceneCharacter || {},
-      sceneNpcs: conv.sceneNpcs || [],
-      sceneStatus: conv.sceneStatus || {},
-      sceneState: conv.sceneState || {},
-      storyMode: conv.storyMode ? {
-        world: conv.storyMode.world || {},
-        character: conv.storyMode.character || {},
-        npcs: conv.storyMode.npcs || [],
-        status: conv.storyMode.status || {},
-        sceneState: conv.storyMode.sceneState || {},
-      } : null,
-    }));
-  }
-
-  function _commitDraftToConv(draft, conv) {
-    if (!draft || !conv) return;
-    conv.sceneWorld = JSON.parse(JSON.stringify(draft.sceneWorld));
-    conv.sceneCharacter = JSON.parse(JSON.stringify(draft.sceneCharacter));
-    conv.sceneNpcs = JSON.parse(JSON.stringify(draft.sceneNpcs));
-    conv.sceneStatus = JSON.parse(JSON.stringify(draft.sceneStatus));
-    conv.sceneState = JSON.parse(JSON.stringify(draft.sceneState));
-    if (conv.storyMode && draft.storyMode) {
-      conv.storyMode.world = JSON.parse(JSON.stringify(draft.storyMode.world));
-      conv.storyMode.character = JSON.parse(JSON.stringify(draft.storyMode.character));
-      conv.storyMode.npcs = JSON.parse(JSON.stringify(draft.storyMode.npcs));
-      conv.storyMode.status = JSON.parse(JSON.stringify(draft.storyMode.status));
-      conv.storyMode.sceneState = JSON.parse(JSON.stringify(draft.storyMode.sceneState));
-    }
-    syncStoryModeToLegacy(conv);
-  }
-
-  function _setDirtyFlag(dirty) {
-    state.ui._storyDraftDirty = dirty;
-    var statusEl = document.getElementById('storyEditorStatus');
-    if (statusEl) {
-      statusEl.textContent = dirty ? '● 有未保存修改' : '已保存';
-      statusEl.style.color = dirty ? 'var(--warning, #FFD60A)' : 'var(--text-tertiary)';
-    }
-    // Update summary strip
-    var summaryEl = document.getElementById('storyEditorSummary');
-    if (summaryEl && state.ui.storyDraft) {
-      var d = state.ui.storyDraft;
-      var w = d.sceneWorld;
-      var ch = d.sceneCharacter;
-      var rules = d.sceneWorld.rules || d.sceneStatus.constraints || '';
-      summaryEl.textContent =
-        '世界观：' + (w.openingName || w.setting ? '已填' : '未填') +
-        ' · 主角：' + (ch.name ? '已填' : '未填') +
-        ' · NPC：' + (d.sceneNpcs && d.sceneNpcs.length || 0) +
-        ' · 规则：' + (rules ? '已填' : '未填');
-    }
-  }
-
-  function _storyEditorInputHandler() {
-    _setDirtyFlag(true);
-  }
-
-  function _storyEditorFocusHandler(e) {
-    var el = e.target;
-    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
-      setTimeout(function() {
-        el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-      }, 300);
-    }
+  function isStoryEditorOpen() {
+    return !!state.ui.storyEditorOpen && !!state.ui._storyOriginals;
   }
 
   function openStoryEditor() {
@@ -2093,19 +2031,44 @@ function getSceneBodyDetails(block) {
     var editorBody = document.getElementById('storyEditorBody');
     var sourceBody = document.getElementById('scenePanelBody');
     if (!overlay || !editorBody || !sourceBody) return;
-
     var conv = getCurrentConv();
     if (!conv) return;
 
-    // Deep clone current story data as draft
-    state.ui.storyDraft = _deepCloneStory(conv);
+    // Save original references so we can restore on cancel
+    state.ui._storyOriginals = {
+      sceneWorld: conv.sceneWorld,
+      sceneCharacter: conv.sceneCharacter,
+      sceneNpcs: conv.sceneNpcs,
+      sceneStatus: conv.sceneStatus,
+      sceneState: conv.sceneState,
+      storyModeWorld: conv.storyMode && conv.storyMode.world,
+      storyModeChar: conv.storyMode && conv.storyMode.character,
+      storyModeNpcs: conv.storyMode && conv.storyMode.npcs,
+      storyModeStatus: conv.storyMode && conv.storyMode.status,
+      storyModeSceneState: conv.storyMode && conv.storyMode.sceneState,
+    };
+
+    // Block all persistence during editing
+    state.ui._originalDebouncedSave = debouncedSave;
+    debouncedSave = function() { /* no-op during story editing */ };
+
+    // Replace conv references with deep clones (→ all handlers write to draft)
+    conv.sceneWorld = JSON.parse(JSON.stringify(conv.sceneWorld || {}));
+    conv.sceneCharacter = JSON.parse(JSON.stringify(conv.sceneCharacter || {}));
+    conv.sceneNpcs = JSON.parse(JSON.stringify(conv.sceneNpcs || []));
+    conv.sceneStatus = JSON.parse(JSON.stringify(conv.sceneStatus || {}));
+    conv.sceneState = JSON.parse(JSON.stringify(conv.sceneState || {}));
+    if (conv.storyMode) {
+      conv.storyMode.world = JSON.parse(JSON.stringify(conv.storyMode.world || {}));
+      conv.storyMode.character = JSON.parse(JSON.stringify(conv.storyMode.character || {}));
+      conv.storyMode.npcs = JSON.parse(JSON.stringify(conv.storyMode.npcs || []));
+      conv.storyMode.status = JSON.parse(JSON.stringify(conv.storyMode.status || {}));
+      conv.storyMode.sceneState = JSON.parse(JSON.stringify(conv.storyMode.sceneState || {}));
+    }
 
     // Move scenePanelBody into editor
     editorBody.appendChild(sourceBody);
     sourceBody.style.display = '';
-
-    // Apply draft data to editor DOM fields
-    _syncDraftToEditorDOM(state.ui.storyDraft);
 
     // Re-render chips and NPCs inside editor
     if (typeof renderMoodChips === 'function') renderMoodChips();
@@ -2115,17 +2078,13 @@ function getSceneBodyDetails(block) {
     if (typeof renderGenreChips === 'function') renderGenreChips();
     if (typeof renderNpcGrid === 'function') renderNpcGrid();
 
-    // Wire editor inputs to draft (not conv)
+    // Hook input events for dirty tracking + summary updates
     _wireEditorListeners(editorBody);
-    state.ui._storyDraftDirty = false;
 
     // Header
-    var titleEl = document.getElementById('storyEditorTitle');
-    if (titleEl) {
-      var name = (conv.sceneWorld && conv.sceneWorld.openingName) || '';
-      titleEl.textContent = name ? '世界故事 · ' + name : '世界故事 · 未命名开局';
-    }
-    _setDirtyFlag(false);
+    _refreshEditorHeader();
+    _setEditorDirty(false);
+    _updateEditorSummary();
 
     // Show overlay
     overlay.style.display = 'flex';
@@ -2133,79 +2092,6 @@ function getSceneBodyDetails(block) {
     document.documentElement.classList.add('story-editor-open');
     document.body.style.overflow = 'hidden';
     updateBottomBarHeight();
-  }
-
-  function _syncDraftToEditorDOM(draft) {
-    if (!draft) return;
-    var body = document.getElementById('storyEditorBody');
-    if (!body) return;
-    var fields = {
-      sceneOpeningName: draft.sceneWorld.openingName || '',
-      sceneSetting: draft.sceneWorld.setting || '',
-      sceneLocations: draft.sceneWorld.locations || '',
-      sceneRules: draft.sceneWorld.rules || '',
-      sceneMood: draft.sceneWorld.mood || '',
-      sceneWorldNotes: draft.sceneWorld.notes || '',
-      sceneCharName: draft.sceneCharacter.name || '',
-      sceneCharAge: draft.sceneCharacter.age || '',
-      sceneCharRole: draft.sceneCharacter.role || '',
-      sceneCharSpecies: draft.sceneCharacter.species || '',
-      sceneCharAppearance: draft.sceneCharacter.appearance || '',
-      sceneCharTraits: draft.sceneCharacter.traits || '',
-      sceneCharStats: draft.sceneCharacter.stats || '',
-      sceneCharGoal: draft.sceneCharacter.currentGoal || '',
-      sceneHealth: draft.sceneStatus.health || '',
-      sceneStamina: draft.sceneStatus.stamina || '',
-      sceneComposure: draft.sceneStatus.composure || '',
-      sceneFocus: draft.sceneStatus.focus || '',
-      sceneObjective: draft.sceneStatus.currentObjective || '',
-      sceneConstraints: draft.sceneStatus.constraints || '',
-    };
-    for (var id in fields) {
-      var el = body.querySelector('#' + id);
-      if (el) el.value = fields[id];
-    }
-  }
-
-  function _collectEditorDOMToDraft() {
-    var draft = state.ui.storyDraft;
-    var body = document.getElementById('storyEditorBody');
-    if (!draft || !body) return;
-    var getVal = function(id) { var el = body.querySelector('#' + id); return el ? el.value : ''; };
-    draft.sceneWorld.openingName = getVal('sceneOpeningName');
-    draft.sceneWorld.setting = getVal('sceneSetting');
-    draft.sceneWorld.locations = getVal('sceneLocations');
-    draft.sceneWorld.rules = getVal('sceneRules');
-    draft.sceneWorld.mood = getVal('sceneMood');
-    draft.sceneWorld.notes = getVal('sceneWorldNotes');
-    draft.sceneCharacter.name = getVal('sceneCharName');
-    draft.sceneCharacter.age = getVal('sceneCharAge');
-    draft.sceneCharacter.role = getVal('sceneCharRole');
-    draft.sceneCharacter.species = getVal('sceneCharSpecies');
-    draft.sceneCharacter.appearance = getVal('sceneCharAppearance');
-    draft.sceneCharacter.traits = getVal('sceneCharTraits');
-    draft.sceneCharacter.stats = getVal('sceneCharStats');
-    draft.sceneCharacter.currentGoal = getVal('sceneCharGoal');
-    draft.sceneStatus.health = getVal('sceneHealth');
-    draft.sceneStatus.stamina = getVal('sceneStamina');
-    draft.sceneStatus.composure = getVal('sceneComposure');
-    draft.sceneStatus.focus = getVal('sceneFocus');
-    draft.sceneStatus.currentObjective = getVal('sceneObjective');
-    draft.sceneStatus.constraints = getVal('sceneConstraints');
-  }
-
-  function _wireEditorListeners(editorBody) {
-    if (!editorBody) return;
-    // Mark dirty on any input/change in editor fields
-    var inputs = editorBody.querySelectorAll('input, textarea, select');
-    for (var i = 0; i < inputs.length; i++) {
-      inputs[i].removeEventListener('input', _storyEditorInputHandler);
-      inputs[i].removeEventListener('change', _storyEditorInputHandler);
-      inputs[i].addEventListener('input', _storyEditorInputHandler);
-      inputs[i].addEventListener('change', _storyEditorInputHandler);
-      inputs[i].removeEventListener('focus', _storyEditorFocusHandler);
-      inputs[i].addEventListener('focus', _storyEditorFocusHandler);
-    }
   }
 
   function closeStoryEditor(saveChanges) {
@@ -2216,39 +2102,46 @@ function getSceneBodyDetails(block) {
     var conv = getCurrentConv();
     if (!overlay) return;
 
-    if (conv && state.ui.storyDraft) {
+    // Unwire listeners FIRST (sourceBody is still inside editorBody)
+    _unwireEditorListeners(sourceBody || editorBody);
+
+    if (conv && state.ui._storyOriginals) {
       if (saveChanges === true) {
-        // Collect editor values and NPC data from DOM, then commit draft to conv
-        _collectEditorDOMToDraft();
-        _collectEditorNpcsToDraft();
-        _commitDraftToConv(state.ui.storyDraft, conv);
+        // Draft is already conv's data → sync legacy + persist
+        syncStoryModeToLegacy(conv);
         updateTimestamp(conv);
         debouncedSave();
       } else {
-        // Cancel: restore the ORIGINAL snapshot back into conv
-        // (undoes any direct mutations from NPC handlers during editing)
-        _commitDraftToConv(state.ui.storyDraft, conv);
+        // Cancel: restore original references → undoes all edits
+        var orig = state.ui._storyOriginals;
+        conv.sceneWorld = orig.sceneWorld;
+        conv.sceneCharacter = orig.sceneCharacter;
+        conv.sceneNpcs = orig.sceneNpcs;
+        conv.sceneStatus = orig.sceneStatus;
+        conv.sceneState = orig.sceneState;
+        if (conv.storyMode) {
+          if (orig.storyModeWorld) conv.storyMode.world = orig.storyModeWorld;
+          if (orig.storyModeChar) conv.storyMode.character = orig.storyModeChar;
+          if (orig.storyModeNpcs) conv.storyMode.npcs = orig.storyModeNpcs;
+          if (orig.storyModeStatus) conv.storyMode.status = orig.storyModeStatus;
+          if (orig.storyModeSceneState) conv.storyMode.sceneState = orig.storyModeSceneState;
+        }
       }
     }
 
-    // Move body back
-    if (sourceBody && scenePanel && editorBody && sourceBody.parentNode === editorBody) {
+    // Move body back AFTER unwiring
+    if (sourceBody && scenePanel && sourceBody.parentNode === editorBody) {
       scenePanel.insertBefore(sourceBody, scenePanel.querySelector('.scene-panel-header').nextSibling);
       scenePanel.classList.add('collapsed');
     }
 
-    // Clean up editor listeners
-    if (editorBody) {
-      var inputs = editorBody.querySelectorAll('input, textarea, select');
-      for (var i = 0; i < inputs.length; i++) {
-        inputs[i].removeEventListener('input', _storyEditorInputHandler);
-        inputs[i].removeEventListener('change', _storyEditorInputHandler);
-        inputs[i].removeEventListener('focus', _storyEditorFocusHandler);
-      }
+    // Restore persistence
+    if (state.ui._originalDebouncedSave) {
+      debouncedSave = state.ui._originalDebouncedSave;
+      state.ui._originalDebouncedSave = null;
     }
 
-    state.ui.storyDraft = null;
-    state.ui._storyDraftDirty = false;
+    state.ui._storyOriginals = null;
     overlay.style.display = 'none';
     state.ui.storyEditorOpen = false;
     document.documentElement.classList.remove('story-editor-open');
@@ -2257,32 +2150,69 @@ function getSceneBodyDetails(block) {
     updateScenePanelUI();
   }
 
-  function _collectEditorNpcsToDraft() {
-    var draft = state.ui.storyDraft;
-    var body = document.getElementById('storyEditorBody');
-    if (!draft || !body) return;
-    // Read NPC data from editor DOM fields
-    var npcCards = body.querySelectorAll('.npc-card');
-    var npcs = [];
-    for (var ci = 0; ci < npcCards.length; ci++) {
-      var card = npcCards[ci];
-      var nameEl = card.querySelector('[data-field="name"]');
-      var roleEl = card.querySelector('[data-field="role"]');
-      var statusEl = card.querySelector('[data-field="status"]');
-      var notesEl = card.querySelector('[data-field="notes"]');
-      var npcId = card.dataset.npcId || '';
-      npcs.push({
-        id: npcId || ('npc_' + Date.now() + '_' + ci),
-        name: nameEl ? nameEl.value : '',
-        role: roleEl ? roleEl.value : '',
-        relation: roleEl ? roleEl.value : '',
-        status: statusEl ? statusEl.value : '',
-        notes: notesEl ? notesEl.value : '',
-        image: '',
-      });
+  function _setEditorDirty(dirty) {
+    state.ui._editorDirty = dirty;
+    var statusEl = document.getElementById('storyEditorStatus');
+    if (statusEl) {
+      statusEl.textContent = dirty ? '● 有未保存修改' : '已保存';
+      statusEl.style.color = dirty ? 'var(--warning, #FFD60A)' : 'var(--text-tertiary)';
     }
-    draft.sceneNpcs = npcs;
-    if (draft.storyMode) draft.storyMode.npcs = JSON.parse(JSON.stringify(npcs));
+  }
+
+  function _refreshEditorHeader() {
+    var titleEl = document.getElementById('storyEditorTitle');
+    if (!titleEl) return;
+    var conv = getCurrentConv();
+    var name = (conv && conv.sceneWorld && conv.sceneWorld.openingName) || '';
+    titleEl.textContent = name ? '世界故事 · ' + name : '世界故事 · 未命名开局';
+  }
+
+  function _updateEditorSummary() {
+    var summaryEl = document.getElementById('storyEditorSummary');
+    if (!summaryEl) return;
+    var conv = getCurrentConv();
+    if (!conv) return;
+    var w = conv.sceneWorld || {};
+    var ch = conv.sceneCharacter || {};
+    var rules = (w.rules || (conv.sceneStatus && conv.sceneStatus.constraints) || '');
+    summaryEl.textContent =
+      '世界观：' + (w.openingName || w.setting ? '已填' : '未填') +
+      ' · 主角：' + (ch.name ? '已填' : '未填') +
+      ' · NPC：' + ((conv.sceneNpcs && conv.sceneNpcs.length) || 0) +
+      ' · 规则：' + (rules ? '已填' : '未填');
+  }
+
+  function _storyEditorDirtyHandler() {
+    _setEditorDirty(true);
+    _refreshEditorHeader();
+    _updateEditorSummary();
+  }
+
+  function _storyEditorFocusHandler(e) {
+    var el = e.target;
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+      setTimeout(function() { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 300);
+    }
+  }
+
+  function _wireEditorListeners(body) {
+    if (!body) return;
+    var inputs = body.querySelectorAll('input, textarea, select');
+    for (var i = 0; i < inputs.length; i++) {
+      inputs[i].addEventListener('input', _storyEditorDirtyHandler);
+      inputs[i].addEventListener('change', _storyEditorDirtyHandler);
+      inputs[i].addEventListener('focus', _storyEditorFocusHandler);
+    }
+  }
+
+  function _unwireEditorListeners(body) {
+    if (!body) return;
+    var inputs = body.querySelectorAll('input, textarea, select');
+    for (var i = 0; i < inputs.length; i++) {
+      inputs[i].removeEventListener('input', _storyEditorDirtyHandler);
+      inputs[i].removeEventListener('change', _storyEditorDirtyHandler);
+      inputs[i].removeEventListener('focus', _storyEditorFocusHandler);
+    }
   }
 
   // =========================================================================
@@ -5400,13 +5330,30 @@ function handleMessageAction(action, msgIndex) {
       dom.sceneCapsule.style.cursor = 'pointer';
     }
 
-    // Story editor buttons: close=save+close, cancel=discard, save=save+close, start=save+startWorld
+    // Story editor buttons: close=prompt if dirty, cancel=discard, save=persist, start=save+startWorld
     var storyEditorClose = document.getElementById('storyEditorClose');
     var storyEditorCancel = document.getElementById('storyEditorCancel');
     var storyEditorSave = document.getElementById('storyEditorSave');
     var storyEditorStart = document.getElementById('storyEditorStart');
     var storyEditorOverlay = document.getElementById('storyEditorOverlay');
-    if (storyEditorClose) storyEditorClose.addEventListener('click', function() { closeStoryEditor(true); });
+
+    if (storyEditorClose) {
+      storyEditorClose.addEventListener('click', function() {
+        if (state.ui._editorDirty) {
+          showConfirm('有未保存修改。<br><br>确定放弃修改并关闭？', function() {
+            hideConfirm();
+            closeStoryEditor(false);
+          });
+          // Override confirm button text
+          setTimeout(function() {
+            dom.dialogConfirm.textContent = '放弃修改';
+            dom.dialogCancel.textContent = '返回编辑';
+          }, 50);
+        } else {
+          closeStoryEditor(true);
+        }
+      });
+    }
     if (storyEditorCancel) storyEditorCancel.addEventListener('click', function() { closeStoryEditor(false); });
     if (storyEditorSave) storyEditorSave.addEventListener('click', function() { closeStoryEditor(true); });
     if (storyEditorStart) {
@@ -5415,11 +5362,11 @@ function handleMessageAction(action, msgIndex) {
         if (typeof startWorldMode === 'function') startWorldMode();
       });
     }
-    // Overlay background click: ignore (don't close), avoid accidental data loss
+    // Overlay background: do NOT close (prevent accidental data loss)
     if (storyEditorOverlay) {
       storyEditorOverlay.addEventListener('click', function(e) {
         if (e.target === storyEditorOverlay) {
-          closeStoryEditor(true);
+          // No action on background click — user must use explicit buttons
         }
       });
     }

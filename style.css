@@ -3880,46 +3880,78 @@ html.has-custom-bg .user .message-bubble {
 .story-editor-body .scene-tab-desc {
   font-size: 11.5px; line-height: 1.6;
 }
-/* NPC cards in editor */
-.story-editor-body .npc-card {
+/* NPC cards in editor — kill flip layout, use flat edit form */
+.story-editor-body .npc-card,
+.story-editor-body .npc-card-inner,
+.story-editor-body .npc-card-front,
+.story-editor-body .npc-card-back {
   position: static !important;
-  margin-bottom: 12px;
-  padding: 12px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.02);
+  transform: none !important;
+  height: auto !important;
+  min-height: unset !important;
+  overflow: visible !important;
+  display: block !important;
 }
-.story-editor-body .npc-card .npc-card-front {
-  position: static !important;
+.story-editor-body .npc-card-front { display: none !important; }
+.story-editor-body .npc-card-back { display: block !important; }
+.story-editor-body .npc-card {
+  margin-bottom: 14px;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.025);
+}
+.story-editor-body .npc-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
 }
 .story-editor-body .npc-card .npc-card-name {
   font-size: 13px; font-weight: 600;
-  margin-bottom: 8px;
   color: var(--scene-gold-bright);
+  flex: 1;
 }
 .story-editor-body .npc-edit-field {
+  display: block;
   width: 100%; box-sizing: border-box;
-  margin-bottom: 6px;
-  font-size: 13px;
-  padding: 8px 10px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(0,0,0,0.15);
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.20);
   color: var(--text-primary);
   resize: vertical;
+  min-height: 44px;
+  font-family: var(--font-sans);
 }
+.story-editor-body textarea.npc-edit-field,
 .story-editor-body .npc-edit-field[data-field="notes"] {
-  min-height: 72px;
+  min-height: 110px;
 }
 .story-editor-body .npc-delete-btn {
-  float: right; margin-top: -32px;
-  position: relative; z-index: 1;
-  font-size: 10px; padding: 3px 8px;
+  font-size: 11px; padding: 4px 10px;
+  flex-shrink: 0;
 }
 .story-editor-body #btnAddNpc {
-  margin-top: 4px;
+  margin-top: 8px;
   width: 100%;
+  min-height: 46px;
+  font-size: 14px;
 }
+.story-editor-body .npc-card-img,
+.story-editor-body .npc-card-avatar { display: none; }
+.story-editor-body .npc-card-role,
+.story-editor-body .npc-card-status { font-size: 11px; margin-bottom: 4px; }
+.story-editor-body .npc-back-name {
+  font-size: 13px; font-weight: 600;
+  color: var(--scene-gold-bright);
+  margin-bottom: 10px;
+}
+.story-editor-body .npc-img-btn {
+  font-size: 10px; padding: 4px 8px;
+  margin-bottom: 8px; margin-right: 6px;
+}
+.story-editor-body .npc-img-btn + .npc-img-btn { margin-right: 0; }
 .story-editor-body .scene-chip { font-size: 12px; padding: 5px 12px; }
 .story-editor-body .scene-chips { gap: 6px; margin: 4px 0 8px; }
 

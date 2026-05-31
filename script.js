@@ -4082,8 +4082,8 @@ function handleMessageAction(action, msgIndex) {
         if (list && list.dataset.locked === '1') return;
 
         // Secondary validation: only latest interactive direction message is clickable
-        var msgEl = chip.closest('.message');
-        var chipMsgIndex = msgEl ? parseInt(msgEl.dataset.index, 10) : -1;
+        var chipMsgEl = chip.closest('.message');
+        var chipMsgIndex = chipMsgEl ? parseInt(chipMsgEl.dataset.index, 10) : -1;
         var conv = getCurrentConv();
         if (!isLatestInteractiveDirectionMessage(conv, chipMsgIndex)) {
           showToast('这是历史分支选项，请选择最新回复下方的 A/B/C/D。', 'info');

@@ -76,6 +76,7 @@ git status --short
 | Build 版本 | build-version meta, \_\_BUILD\_VERSION\_\_ |
 | Service Worker | CACHE_NAME omnichat-v3 |
 | 安全 | 禁止 security-pull, security-panel |
+| Markdown URL 安全过滤 | isSafeMarkdownUrl, escapeAttr, 禁止危险协议, 链接必须使用 noopener noreferrer |
 | Git 清洁度 | 禁止未知临时文件（CLAUDE.md 除外） |
 
 ### `_check_stability.mjs` 检查项目

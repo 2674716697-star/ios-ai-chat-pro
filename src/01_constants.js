@@ -75,6 +75,19 @@
     },
   };
 
+  // Per-provider maximum output token caps.
+  // Used to validate user input before sending requests.
+  const PROVIDER_CAPS = {
+    openai:     { maxOutputTokens: 32000 },
+    xai:        { maxOutputTokens: 32000 },
+    deepseek:   { maxOutputTokens: 384000 },
+    openrouter: { maxOutputTokens: 32000 },
+    groq:       { maxOutputTokens: 32000 },
+    moonshot:   { maxOutputTokens: 32000 },
+    zhipu:      { maxOutputTokens: 32000 },
+    siliconflow:{ maxOutputTokens: 32000 },
+  };
+
   const DEFAULTS = {
     temperature: 0.7,
     topP: 1,

@@ -132,6 +132,12 @@ check('fallback only in storyEnabled context', /if\s*\(\s*!assistantMsg\._sceneF
 check('fallback guard prevents loops', /_sceneFallbackAttempted\s*=\s*true/.test(js));
 check('repairStoryModeFlags exists', /function\s+repairStoryModeFlags/.test(js));
 check('migrateStoryMode calls repairStoryModeFlags', /function\s+migrateStoryMode[\s\S]*repairStoryModeFlags/.test(js));
+// migrateStoryMode must NOT skip repair based on storyMode.enabled
+var migrateFn = (js.match(/function\s+migrateStoryMode[\s\S]*?^  \}/m) || [''])[0];
+check('migrateStoryMode calls repair unconditionally',
+  /repairStoryModeFlags/.test(migrateFn) && !/(?:enabled|storyMode)\b[\s\S]*return/.test(
+    migrateFn.split('repairStoryModeFlags')[0]
+  ));
 check('normalizeConversation calls repairStoryModeFlags', /function\s+normalizeConversation[\s\S]*repairStoryModeFlags/.test(js));
 check('syncLegacyToStoryMode handles enabled/started flags', /sm\.enabled\s*=\s*sm\.enabled\s*\|\|/.test(js) && /sm\.started\s*=\s*sm\.started\s*\|\|/.test(js));
 check('sendMessage calls repairStoryModeFlags before storyEnabled check', /syncLegacyToStoryMode\(conv\)[\s\S]*repairStoryModeFlags/.test(js));
@@ -160,7 +166,49 @@ check('no security-pull', !/security-pull/.test(html + css + js));
 check('no security-panel', !/security-panel/.test(html + css + js));
 
 // =========================================================================
-// 11. GIT CLEANLINESS (exclude CLAUDE.md)
+// 11. MARKDOWN URL SECURITY
+// =========================================================================
+console.log('\n--- Markdown URL security ---');
+const mdSrc = read('src/07_markdown.js'); // also check built script.js
+
+// Core security functions must exist in both source AND built output
+check('function isSafeMarkdownUrl exists', /function\s+isSafeMarkdownUrl/.test(js));
+check('function escapeAttr exists', /function\s+escapeAttr/.test(js));
+check('isSafeMarkdownUrl in source', /function\s+isSafeMarkdownUrl/.test(mdSrc));
+check('escapeAttr in source', /function\s+escapeAttr/.test(mdSrc));
+
+// rel must use noopener noreferrer (not just noopener) in built output
+check('links use rel="noopener noreferrer"', /noopener\s+noreferrer/.test(js));
+
+// Blocked protocol keywords must appear in the isSafeMarkdownUrl function body
+// Extract just the isSafeMarkdownUrl function text for targeted checks
+var safeUrlFn = (js.match(/function\s+isSafeMarkdownUrl[\s\S]*?^  \}/m) || [''])[0];
+check('blocked protocol: javascript:', /\bjavascript\b.*:/.test(safeUrlFn));
+check('blocked protocol: data:', /\bdata\b.*:/.test(safeUrlFn));
+check('blocked protocol: vbscript:', /\bvbscript\b.*:/.test(safeUrlFn));
+check('blocked protocol: file:', /\bfile\b.*:/.test(safeUrlFn));
+check('blocked protocol: blob:', /\bblob\b.*:/.test(safeUrlFn));
+
+// Image URL must pass isImage=true flag
+check('image url passes isSafeMarkdownUrl(…, true)',
+  /isSafeMarkdownUrl\(src,\s*true\)/.test(js) || /isSafeMarkdownUrl\([^)]+,\s*true\)/.test(mdSrc));
+
+// Link URL must pass isImage=false flag (or explicit false)
+check('link url passes isSafeMarkdownUrl(…, false)',
+  /isSafeMarkdownUrl\(url,\s*false\)/.test(js) || /isSafeMarkdownUrl\([^)]+,\s*false\)/.test(mdSrc));
+
+// Bare URL auto-link regex must only match http/https
+// Find the auto-link line and verify it uses https?:\/\/ only
+var autoLinkLine = (js.match(/\(\?\<!\["'\>\]\)\(https\?[^)]+\)/g) || [''])[0] || '';
+check('bare url auto-link only matches http/https',
+  /https\?/.test(autoLinkLine) && !/\b(javascript|data:|vbscript|file:|blob:)/.test(autoLinkLine));
+
+// Control character block in isSafeMarkdownUrl
+check('isSafeMarkdownUrl blocks control characters',
+  /\\x00-\\x1f/.test(safeUrlFn) || /control character/i.test(safeUrlFn));
+
+// =========================================================================
+// 12. GIT CLEANLINESS (exclude CLAUDE.md)
 // =========================================================================
 console.log('\n--- Git cleanliness ---');
 try {
@@ -183,7 +231,7 @@ try {
 }
 
 // =========================================================================
-// 12. INDEX.HTML / OMNICHAT.HTML SYNC (light check)
+// 13. INDEX.HTML / OMNICHAT.HTML SYNC (light check)
 // =========================================================================
 console.log('\n--- Index / build sync ---');
 if (exists('index.html')) {

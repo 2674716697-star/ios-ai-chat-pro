@@ -10,10 +10,17 @@ const OUT = 'script.js';
 // Files are concatenated in this order.
 // Each file contributes a section of the IIFE that is script.js.
 const ORDER = [
-  '00_header.js',       // file banner + IIFE open
-  '01_constants.js',    // STORAGE_KEY, PROVIDERS, DEFAULTS, ERR_MSGS
-  '02_utils.js',        // generateId, nowISO, escapeHtml, debounce
-  '99_legacy_main.js',  // STATE, DOM, storage, story, adapter, render, send, events, init
+  '00_header.js',               // file banner + IIFE open
+  '01_constants.js',            // STORAGE_KEY, PROVIDERS, DEFAULTS, ERR_MSGS
+  '02_utils.js',                // generateId, nowISO, escapeHtml, debounce
+  '03_storage.js',              // saveToStorage, loadFromStorage, debouncedSave
+  '04_migration.js',            // Migration: createStoryMode, repairStoryModeFlags, normalizeConversation, etc.
+  '05_providers.js',            // Provider Adapter: getProviderConfig, buildRequestHeaders, parseStreamDelta, etc.
+  '06_story_parser.js',         // Story Parser: getSceneLine, parseDirectionOptions, parseSceneChoiceInput, etc.
+  '07_markdown.js',             // Markdown: renderMarkdown, renderContentFast, getVisibleAssistantContent
+  '08_conversation_actions.js', // Conversation Actions: newConversation, switchConversation, export/import, etc.
+  '09_model_management.js',     // Model Management: populateModelSelect, refreshModels, updateToolWarning
+  '99_legacy_main.js',          // STATE, DOM, render, send, events, init
 ];
 
 // Read and concatenate
@@ -33,10 +40,53 @@ for (const file of ORDER) {
 // Verify critical identifiers exist in output
 const REQUIRED = [
   'STORAGE_SCHEMA_VERSION',
+  'PROVIDERS',
+  'saveToStorage',
+  'loadFromStorage',
+  'debouncedSave',
+  'createStoryMode',
   'repairStoryModeFlags',
+  'migrateStoryMode',
+  'looksLikeWorldCharacterCard',
+  'normalizeMessage',
   'normalizeConversation',
+  'syncStoryModeToLegacy',
+  'syncLegacyToStoryMode',
+  'isStoryEnabled',
+  'isStoryStarted',
+  'PROVIDER_CAPS',
+  'getProviderConfig',
+  'getProviderCap',
+  'buildRequestHeaders',
+  'buildRequestBody',
+  'parseModelList',
+  'parseStreamDelta',
+  'parseNonStreamResponse',
+  'getSceneLine',
+  'getSceneLineAny',
+  'getSceneDirections',
+  'parseDirectionOptions',
+  'parseCharacterStatuses',
+  'getSceneBodyDetails',
+  'parseSceneChoiceInput',
+  'buildSceneFallbackDirections',
+  'renderMarkdown',
+  'renderContentFast',
+  'getVisibleAssistantContent',
+  'isSafeMarkdownUrl',
+  'newConversation',
+  'switchConversation',
+  'clearCurrentConversation',
+  'deleteLastRound',
+  'copyLastAssistantReply',
+  'exportAllJSON',
+  'importJSON',
+  'populateModelSelect',
+  'refreshModels',
+  'updateToolWarning',
   'sendMessage',
   'processStream',
+  'renderMessages',
   'init',
 ];
 

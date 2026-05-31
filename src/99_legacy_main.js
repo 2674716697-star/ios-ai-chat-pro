@@ -177,75 +177,6 @@
 
 
   // =========================================================================
-  // STORAGE — localStorage save/load, conversation persistence
-  // =========================================================================
-
-  function saveToStorage() {
-    try {
-      // Sync legacy scene fields → storyMode on all conversations before save
-      for (var si = 0; si < state.conversations.length; si++) {
-        syncLegacyToStoryMode(state.conversations[si]);
-      }
-      const data = {
-        version: STORAGE_VERSION,
-        conversations: state.conversations,
-        currentConversationId: state.currentConversationId,
-        apiKeys: state.apiKeys,
-        models: state.models,
-        chatBackground: state.chatBackground,
-        worldStarterEnabled: state.worldStarterEnabled,
-        actionPrompts: state.actionPrompts,
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch (e) {
-      if (e.name === 'QuotaExceededError') {
-        showToast(ERR_MSGS.storageFailed, 'error');
-      }
-    }
-  }
-
-  const debouncedSave = debounce(saveToStorage, 500);
-
-  function loadFromStorage() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return false;
-      const data = JSON.parse(raw);
-      state.conversations = data.conversations || [];
-      state.conversations.forEach((conv) => {
-        conv.sceneState = createSceneState(conv.sceneState);
-        conv.sceneWorld = createSceneWorld(conv.sceneWorld);
-        conv.sceneCharacter = createSceneCharacter(conv.sceneCharacter);
-        conv.sceneStatus = createSceneStatus(conv.sceneStatus);
-        conv.sceneNpcs = normalizeSceneNpcs(conv.sceneNpcs);
-        // Migrate old scene/world data to unified storyMode
-        migrateStoryMode(conv);
-      });
-      // Migrate conversations to current message display model (idempotent)
-      window.__migrated = false;
-      state.conversations = state.conversations.map(normalizeConversation);
-      if (window.__migrated) setTimeout(function() { saveToStorage(); }, 0);
-      state.currentConversationId = data.currentConversationId || null;
-      if (data.apiKeys) {
-        state.apiKeys = data.apiKeys;
-      } else {
-        // Migrate old format
-        state.apiKeys = {};
-        if (data.xaiApiKey) state.apiKeys.xai = data.xaiApiKey;
-        if (data.deepseekApiKey) state.apiKeys.deepseek = data.deepseekApiKey;
-      }
-      state.models = data.models || { xai: [], deepseek: [], openai: [], openrouter: [], groq: [], moonshot: [], zhipu: [], siliconflow: [] };
-      state.chatBackground = data.chatBackground || { type: 'none', value: '', opacity: 35 };
-      state.worldStarterEnabled = data.worldStarterEnabled || false;
-      state.actionPrompts = data.actionPrompts || { regenerate: '', continue: '', summarize: '', elaborate: '' };
-      return true;
-    } catch (e) {
-      showToast('数据加载失败，将使用全新状态。', 'warning');
-      return false;
-    }
-  }
-
-  // =========================================================================
   // TOAST
   // =========================================================================
 
@@ -322,30 +253,6 @@
     return state.conversations.find((c) => c.id === state.currentConversationId) || null;
   }
 
-  function normalizeMentalScore(value) {
-    const n = parseInt(value, 10);
-    if (!Number.isFinite(n)) return '';
-    return String(Math.min(10, Math.max(1, n)));
-  }
-
-  function createSceneState(seed = {}) {
-    seed = seed || {};
-    return {
-      currentRole: seed.currentRole || '',
-      currentGoal: seed.currentGoal || '',
-      posture: seed.posture || '',
-      mental: seed.mental || '',
-      mentalScore: normalizeMentalScore(seed.mentalScore),
-      physical: seed.physical || '',
-      bodyDetails: seed.bodyDetails || '',
-      plot: seed.plot || '',
-      risk: seed.risk || '',
-      innerVoice: seed.innerVoice || '',
-      directions: seed.directions || '',
-      characterStatuses: seed.characterStatuses || [],
-    };
-  }
-
   function buildSceneWorldRef(conv) {
     var sm = conv.storyMode;
     var w = (sm && sm.world) ? sm.world : conv.sceneWorld;
@@ -414,205 +321,6 @@
     return '[NPC 列表 — 稳定参考，不逐字复述]\n' + lines.join('\n');
   }
 
-  function getSceneLine(block, label) {
-    const match = block.match(new RegExp('^' + label + '[:：]\\s*(.*)$', 'm'));
-    return match ? match[1].trim() : '';
-  }
-
-  function getSceneLineAny(block, labels) {
-    for (const label of labels) {
-      const value = getSceneLine(block, label);
-      if (value) return value;
-    }
-    return '';
-  }
-
-  function getSceneDirections(block) {
-    // Supported direction labels (priority order)
-    var dirLabels = [
-      '后续剧情走向', '后续走向', '剧情走向', '走向',
-      '发展方向', '下一步剧情', '下一步', '接下来'
-    ];
-    // Labels that should stop direction capture (subsequent fields)
-    var stopLabels = ['内心', '风险', '情节', '剧情', '剧情总结', '身体', '身体细节', '精神', '精神评分', '评分', '目标', '当前目标', '姿势', '角色', '当前角色', '@@END'];
-
-    var labelGroup = dirLabels.join('|');
-    var multiLineRe = new RegExp('^(?:' + labelGroup + ')[:：]?\\s*([\\s\\S]*)$', 'm');
-    var match = block.match(multiLineRe);
-
-    if (match) {
-      var raw = match[1];
-      var allLines = raw.split('\n');
-
-      // Truncate at first stop label
-      var stopRe = new RegExp('^(' + stopLabels.join('|') + ')[:：]', 'i');
-      var stopIdx = allLines.length;
-      for (var si = 0; si < allLines.length; si++) {
-        if (stopRe.test(allLines[si].trim())) { stopIdx = si; break; }
-      }
-
-      var lines = allLines.slice(0, stopIdx)
-        .map(function(line) { return line.trim(); })
-        .filter(function(line) { return line && line !== '@@END'; });
-
-      var parsed = [];
-      var letters = ['A', 'B', 'C', 'D'];
-      var autoLetterIdx = 0;
-
-      for (var i = 0; i < lines.length && parsed.length < 4; i++) {
-        var line = lines[i];
-
-        // Stop if this line looks like a field label
-        if (stopRe.test(line)) break;
-
-        var letterMatch = line.match(/^([A-Da-d])[\.\)、：:\s]\s*(.+)/);
-        if (letterMatch) {
-          var letter = letterMatch[1].toUpperCase();
-          var content = letterMatch[2].trim();
-          if (content) { parsed.push(letter + '. ' + content); autoLetterIdx = Math.max(autoLetterIdx, letters.indexOf(letter) + 1); }
-          continue;
-        }
-        var parenMatch = line.match(/^[\(（]([A-Da-d])[\)）]\s*(.+)/);
-        if (parenMatch) {
-          var pLetter = parenMatch[1].toUpperCase();
-          var pContent = parenMatch[2].trim();
-          if (pContent) { parsed.push(pLetter + '. ' + pContent); autoLetterIdx = Math.max(autoLetterIdx, letters.indexOf(pLetter) + 1); }
-          continue;
-        }
-        var numMatch = line.match(/^(\d{1,2})[\.\)、：:\s]\s*(.+)/);
-        if (numMatch) {
-          var num = parseInt(numMatch[1], 10);
-          var nContent = numMatch[2].trim();
-          if (nContent && num >= 1 && num <= 4) {
-            parsed.push(letters[num - 1] + '. ' + nContent);
-            autoLetterIdx = Math.max(autoLetterIdx, num);
-          }
-          continue;
-        }
-        var bulletMatch = line.match(/^[-·•*]\s*(.+)/);
-        if (bulletMatch) {
-          var bContent = bulletMatch[1].trim();
-          if (bContent && autoLetterIdx < 4) {
-            parsed.push(letters[autoLetterIdx] + '. ' + bContent);
-            autoLetterIdx++;
-          }
-          continue;
-        }
-        if (line && autoLetterIdx < 4) {
-          parsed.push(letters[autoLetterIdx] + '. ' + line);
-          autoLetterIdx++;
-        }
-      }
-      if (parsed.length) return parsed.join('\n');
-    }
-
-    var singleLineMatch = getSceneLineAny(block, dirLabels);
-    if (singleLineMatch) return 'A. ' + singleLineMatch;
-    return '';
-  }
-
-  function parseDirectionOptions(directions) {
-    if (!directions) return [];
-    var lines = directions.split('\n');
-    var options = [];
-    for (var i = 0; i < lines.length; i++) {
-      var line = lines[i].trim();
-      if (!line) continue;
-      // Match "A. xxx", "A、xxx", "A) xxx", "A: xxx", "A：xxx", "(A) xxx"
-      var m = line.match(/^([A-Da-d])[\.\)、：:\s]\s*(.+)/) || line.match(/^[\(（]([A-Da-d])[\)）]\s*(.+)/);
-      if (m) {
-        options.push({ letter: m[1].toUpperCase(), content: m[2].trim() });
-      } else {
-        var nm = line.match(/^(\d{1,2})[\.\)、：:\s]\s*(.+)/);
-        if (nm) {
-          var num = parseInt(nm[1], 10);
-          var letters = ['A', 'B', 'C', 'D'];
-          if (num >= 1 && num <= 4) options.push({ letter: letters[num - 1], content: nm[2].trim() });
-        }
-      }
-    }
-    return options;
-  }
-
-
-  function parseCharacterStatuses(block) {
-    var results = [];
-    // Try new multi-character format: lines starting with [角色] or [人物]
-    var charBlocks = block.split(/\n(?=\[(?:角色|人物)\])/);
-    if (charBlocks.length <= 1) {
-      // Fallback: single character from old fields
-      var single = {
-        name: getSceneLineAny(block, ['角色','当前角色','POV']) || '主角',
-        relation: '主角',
-        isMain: true,
-        mental: getSceneLineAny(block, ['精神','精神状态']),
-        mentalScore: normalizeMentalScore(getSceneLineAny(block, ['精神评分','评分'])),
-        physical: getSceneLineAny(block, ['身体','身体状态']),
-        bodyDetails: getSceneBodyDetails(block),
-        goal: getSceneLineAny(block, ['目标','当前目标']),
-        posture: getSceneLineAny(block, ['姿势','当前姿势']),
-        innerVoice: getSceneLineAny(block, ['内心','内心回声']),
-      };
-      if (single.mental || single.physical || single.bodyDetails) results.push(single);
-      return results;
-    }
-    for (var bi = 0; bi < charBlocks.length; bi++) {
-      var cb = charBlocks[bi];
-      var isMain = /\[(?:角色|人物)\](?:.*主角)/.test(cb) || bi === 0;
-      var c = {
-        name: getSceneLineAny(cb, ['名[称字]?','角色']) || (isMain ? '主角' : '人物' + (bi+1)),
-        relation: getSceneLineAny(cb, ['关系','定位']) || (isMain ? '主角' : ''),
-        isMain: isMain,
-        mental: getSceneLineAny(cb, ['精神','精神状态']),
-        mentalScore: normalizeMentalScore(getSceneLineAny(cb, ['精神评分','评分'])),
-        physical: getSceneLineAny(cb, ['身体','身体状态']),
-        bodyDetails: getSceneBodyDetails(cb),
-        goal: getSceneLineAny(cb, ['目标','当前目标']),
-        posture: getSceneLineAny(cb, ['姿势','当前姿势']),
-        innerVoice: getSceneLineAny(cb, ['内心','内心回声']),
-      };
-      if (c.mental || c.physical || c.bodyDetails || c.goal) results.push(c);
-    }
-    if (!results.length) return [];
-    return results;
-  }
-function getSceneBodyDetails(block) {
-    // Extract multi-line body details under "身体细节:" label
-    var labels = ['身体细节', '感官细节'];
-    var labelGroup = labels.join('|');
-    var re = new RegExp('^(?:' + labelGroup + ')[:：]?\\s*([\\s\\S]*?)(?:\\n(?:' + labelGroup + '|情节|剧情|剧情总结|风险|内心|走向|@@END)|$)', 'm');
-    var match = block.match(re);
-    if (!match) {
-      // Fallback: single-line via getSceneLineAny
-      var single = getSceneLineAny(block, labels);
-      return single;
-    }
-    var raw = match[1];
-    var lines = raw.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l && l !== '@@END'; });
-    // Strip leading bullet markers
-    lines = lines.map(function(l) { return l.replace(/^[-·•*\d{1,2}.\)、\s]+/, '').trim(); }).filter(Boolean);
-    return lines.join('\n');
-  }
-
-  function parseSceneChoiceInput(text) {
-    if (!text) return null;
-    var t = text.replace(/\s+/g, '').trim();
-    if (!t) return null;
-    // Direct single letter: "A", "a", "B。", "C.", "D", "A." etc.
-    var directMatch = t.match(/^([A-Da-d])[。.．、]*$/);
-    if (directMatch) return directMatch[1].toUpperCase();
-    // "选A", "选 A", "选择B", "我选C", "走D", "选A吧", "就B了", "要C", "想选D"
-    var choiceMatch = t.match(/^(?:选[择]?|我选|走|就|要|想选|选择)\s*([A-Da-d])\s*(?:吧|了|的|啦|啊)?[。.．、]*$/);
-    if (choiceMatch) return choiceMatch[1].toUpperCase();
-    // "选项A", "路线B", "分支C", "方向D", "走向A"
-    var labelMatch = t.match(/^(?:选项|路线|分支|方向|走向)\s*([A-Da-d])[。.．、]*$/);
-    if (labelMatch) return labelMatch[1].toUpperCase();
-    // "A路线", "B分支", "C选项"
-    var suffixMatch = t.match(/^([A-Da-d])\s*(?:路线|分支|选项|方向)[。.．、]*$/);
-    if (suffixMatch) return suffixMatch[1].toUpperCase();
-    return null;
-  }
-
   function isLatestInteractiveDirectionMessage(conv, msgIndex) {
     if (!conv || !Array.isArray(conv.messages)) return false;
     var msg = conv.messages[msgIndex];
@@ -630,27 +338,6 @@ function getSceneBodyDetails(block) {
     }
 
     return true;
-  }
-
-  function buildSceneFallbackDirections(conv, contextSnippet) {
-    // Conservative story directions when the model omits @@SCENE.
-    // Uses NPC names and context to produce more relevant options.
-    var npcName = '';
-    if (conv && conv.sceneNpcs && conv.sceneNpcs.length) {
-      npcName = conv.sceneNpcs[0].name || '';
-    }
-    var lines = [
-      'A. 继续深入调查，主动寻找更多线索和突破口',
-      'B. 暂时退一步观察局势变化，寻找更安全的切入点'
-    ];
-    if (npcName) {
-      lines.push('C. 与' + npcName + '进一步接触，试探对方真实意图和掌握的信息');
-      lines.push('D. 改变行动节奏，采取' + npcName + '意料之外的行动来试探隐藏风险');
-    } else {
-      lines.push('C. 与关键人物接触，试探对方真实意图和掌握的信息');
-      lines.push('D. 改变行动节奏，采取意料之外的行动来试探隐藏风险');
-    }
-    return lines.join('\n');
   }
 
   function renderSceneStatusTable(msg, msgIndex) {
@@ -732,239 +419,6 @@ function getSceneBodyDetails(block) {
     html += '</div>';
     return html;
   }
-function createSceneWorld(seed) {
-    seed = seed || {};
-    return {
-      openingName: seed.openingName || '',
-      setting: seed.setting || '',
-      locations: seed.locations || '',
-      rules: seed.rules || '',
-      mood: seed.mood || '',
-      notes: seed.notes || '',
-    };
-  }
-
-  function createSceneCharacter(seed) {
-    seed = seed || {};
-    return {
-      name: seed.name || '',
-      age: seed.age || '',
-      role: seed.role || '',
-      species: seed.species || '',
-      appearance: seed.appearance || '',
-      traits: seed.traits || '',
-      stats: seed.stats || '',
-      currentGoal: seed.currentGoal || '',
-    };
-  }
-
-  function createSceneStatus(seed) {
-    seed = seed || {};
-    return {
-      health: seed.health || '',
-      stamina: seed.stamina || '',
-      composure: seed.composure || '',
-      focus: seed.focus || '',
-      currentObjective: seed.currentObjective || '',
-      constraints: seed.constraints || '',
-    };
-  }
-
-  function createSceneNpc(seed) {
-    seed = seed || {};
-    return {
-      id: seed.id || generateId(),
-      name: seed.name || '',
-      role: seed.role || '',
-      relation: seed.relation || '',
-      status: seed.status || '',
-      notes: seed.notes || '',
-      image: seed.image || '',
-    };
-  }
-
-  function normalizeSceneNpcs(list) {
-    if (!list || !Array.isArray(list)) return [];
-    var out = [];
-    for (var i = 0; i < list.length; i++) {
-      out.push(createSceneNpc(list[i]));
-    }
-    return out;
-  }
-
-  // =========================================================================
-  // STORY MODE (unified world + scene mode)
-  // =========================================================================
-
-  function createStoryMode(seed) {
-    seed = seed || {};
-    return {
-      enabled: seed.enabled || false,
-      started: seed.started || false,
-      world: createSceneWorld(seed.world),
-      character: createSceneCharacter(seed.character),
-      status: createSceneStatus(seed.status),
-      npcs: normalizeSceneNpcs(seed.npcs),
-      sceneState: createSceneState(seed.sceneState),
-    };
-  }
-
-  function migrateStoryMode(conv) {
-    // Always run repair, even if storyMode.enabled is already set.
-    // Old conversations may have storyMode with enabled=false but
-    // legacy worldMode/sceneMode=true — repairStoryModeFlags fixes that.
-    repairStoryModeFlags(conv);
-  }
-
-  // Robust story-mode flag inference from legacy fields and message history.
-  // Idempotent — safe to call on already-migrated conversations.
-  function repairStoryModeFlags(conv) {
-    if (!conv) return;
-
-    // Ensure storyMode object exists
-    conv.storyMode = createStoryMode(conv.storyMode);
-
-    // Ensure legacy scene fields exist
-    conv.sceneWorld = createSceneWorld(conv.sceneWorld);
-    conv.sceneCharacter = createSceneCharacter(conv.sceneCharacter);
-    conv.sceneStatus = createSceneStatus(conv.sceneStatus);
-    conv.sceneNpcs = normalizeSceneNpcs(conv.sceneNpcs);
-    conv.sceneState = createSceneState(conv.sceneState);
-
-    // --- Infer storyStarted from legacy + content ---
-    var hw = conv.sceneWorld;
-    var hc = conv.sceneCharacter;
-    var hasWorld = !!(hw.openingName || hw.era || hw.location || hw.atmosphere || hw.tech || hw.rules);
-    var hasChar = !!(hc.name || hc.age || hc.role || hc.traits || hc.background);
-    var hasNpcs = conv.sceneNpcs && conv.sceneNpcs.length > 0;
-    var hasScene = !!(conv.sceneState.directions || conv.sceneState.plot || conv.sceneState.mental || conv.sceneState.physical);
-
-    var inferredStarted =
-      !!conv.worldMode ||
-      !!conv.storyMode.started ||
-      (!!conv.storyMode.enabled && (hasWorld || hasChar || hasNpcs)) ||
-      hasScene;
-
-    // Check messages for story evidence
-    if (!inferredStarted && Array.isArray(conv.messages)) {
-      for (var mi = 0; mi < conv.messages.length; mi++) {
-        var m = conv.messages[mi];
-        if (m.role === 'assistant' && m.sceneSnapshot && m.sceneSnapshot.directions) {
-          inferredStarted = true; break;
-        }
-        if (m.role === 'assistant' && m.content && (/@@SCENE/.test(m.content) || /走向/.test(m.content))) {
-          inferredStarted = true; break;
-        }
-        if (m.role === 'user' && looksLikeWorldCharacterCard(m._requestContent || m.content)) {
-          inferredStarted = true; break;
-        }
-      }
-    }
-
-    // --- Infer storyEnabled ---
-    var inferredEnabled =
-      inferredStarted ||
-      !!conv.sceneMode ||
-      !!conv.storyMode.enabled;
-
-    // --- Apply ---
-    conv.storyMode.enabled = inferredEnabled;
-    conv.storyMode.started = inferredStarted;
-
-    // Bidirectional sync: storyMode ↔ legacy
-    conv.storyMode.world = conv.sceneWorld;
-    conv.storyMode.character = conv.sceneCharacter;
-    conv.storyMode.status = conv.sceneStatus;
-    conv.storyMode.npcs = conv.sceneNpcs;
-    conv.storyMode.sceneState = conv.sceneState;
-
-    syncStoryModeToLegacy(conv);
-  }
-
-  // Detect old first user message containing a full world character card
-  function looksLikeWorldCharacterCard(text) {
-    if (!text || typeof text !== 'string') return false;
-    if (text.length <= 300) return false;
-    var kw = ['世界观', '世界设定', '角色卡', 'NPC', '主角', '规则'];
-    var count = 0;
-    for (var i = 0; i < kw.length; i++) { if (text.indexOf(kw[i]) !== -1) count++; }
-    return count >= 2;
-  }
-
-  // Normalize a single message for forward-compat
-  function normalizeMessage(msg, conv) {
-    if (!msg) return msg;
-    if (!msg.role) msg.role = 'user';
-    if (typeof msg.content !== 'string') msg.content = String(msg.content || '');
-    // Old world story first user message leaked full card into UI content.
-    // Move full card to _requestContent (for API) and add displayContent (for UI).
-    if (
-      conv && isStoryStarted(conv) &&
-      msg.role === 'user' &&
-      !msg.displayContent &&
-      !msg._requestContent &&
-      looksLikeWorldCharacterCard(msg.content)
-    ) {
-      msg.displayContent = '世界故事已开启。你的设定已发送给 AI，接下来将生成第一幕。';
-      msg._requestContent = msg.content;
-    }
-    return msg;
-  }
-
-  // Normalize a conversation to current schema — idempotent
-  function normalizeConversation(conv) {
-    if (!conv) return conv;
-    var oldVersion = conv.schemaVersion || 0;
-    if (!Array.isArray(conv.messages)) conv.messages = [];
-    // Repair story mode flags from legacy fields before normalizing messages.
-    // This ensures normalizeMessage can use isStoryStarted correctly.
-    repairStoryModeFlags(conv);
-    for (var i = 0; i < conv.messages.length; i++) {
-      conv.messages[i] = normalizeMessage(conv.messages[i], conv);
-    }
-    conv.schemaVersion = STORAGE_SCHEMA_VERSION;
-    if (oldVersion < STORAGE_SCHEMA_VERSION) window.__migrated = true;
-    return conv;
-  }
-
-  function syncStoryModeToLegacy(conv) {
-    if (!conv.storyMode) return;
-    conv.sceneMode = conv.storyMode.enabled;
-    conv.worldMode = conv.storyMode.started;
-    conv.sceneWorld = conv.storyMode.world;
-    conv.sceneCharacter = conv.storyMode.character;
-    conv.sceneStatus = conv.storyMode.status;
-    conv.sceneNpcs = conv.storyMode.npcs;
-    conv.sceneState = conv.storyMode.sceneState;
-  }
-
-  function syncLegacyToStoryMode(conv) {
-    if (!conv) return;
-    if (!conv.storyMode) conv.storyMode = createStoryMode();
-    var sm = conv.storyMode;
-    // Also sync flags — don't lose old truthy values
-    sm.enabled = sm.enabled || !!(conv.sceneMode || conv.worldMode);
-    sm.started = sm.started || !!conv.worldMode;
-    sm.world = createSceneWorld(conv.sceneWorld);
-    sm.character = createSceneCharacter(conv.sceneCharacter);
-    sm.status = createSceneStatus(conv.sceneStatus);
-    sm.npcs = normalizeSceneNpcs(conv.sceneNpcs);
-    sm.sceneState = createSceneState(conv.sceneState);
-  }
-
-  // Helper: get effective story mode enabled/started state (primary + compat)
-  function isStoryEnabled(conv) {
-    if (!conv) return false;
-    var sm = conv.storyMode;
-    return !!(sm && sm.enabled) || !!conv.sceneMode;
-  }
-
-  function isStoryStarted(conv) {
-    if (!conv) return false;
-    var sm = conv.storyMode;
-    return !!(sm && sm.started) || !!conv.worldMode;
-  }
-
   function createConversation(provider) {
     const p = provider || 'openai';
     return {
@@ -1089,126 +543,6 @@ function createSceneWorld(seed) {
     }
 
     return requestMessages;
-  }
-
-  // =========================================================================
-  // PROVIDER ADAPTER LAYER
-  // All 8 providers use OpenAI-compatible Chat Completions format.
-  // Per-provider overrides are isolated here so sendMessage stays clean.
-  // =========================================================================
-
-  function getProviderConfig(provider) {
-    return PROVIDERS[provider] || PROVIDERS.xai;
-  }
-
-  function getApiKey(provider) {
-    return state.apiKeys[provider] || '';
-  }
-
-  function resolveModel(conv) {
-    return conv.customModel || conv.model || '';
-  }
-
-  // -- Adapter helpers: headers, body, parsing -------------------------------
-
-  function buildRequestHeaders(provider, apiKey, conv) {
-    var headers = {
-      Authorization: 'Bearer ' + apiKey,
-      'Content-Type': 'application/json',
-      Accept: conv.stream ? 'text/event-stream' : 'application/json',
-    };
-    // OpenRouter-specific headers
-    if (provider === 'openrouter') {
-      headers['HTTP-Referer'] = location.origin || 'http://localhost';
-      headers['X-Title'] = 'OmniChat';
-    }
-    return headers;
-  }
-
-  function buildRequestBody(conv, model, messages) {
-    // Default OpenAI-compatible body — works for all 8 providers
-    return {
-      model: model,
-      messages: messages,
-      temperature: conv.temperature,
-      top_p: conv.topP,
-      max_tokens: conv.maxTokens,
-      stream: conv.stream,
-    };
-  }
-
-  function parseModelList(provider, data) {
-    // Default: OpenAI-compatible { data: [{ id }] }
-    var rawModels = data.data || data.models || [];
-    return rawModels.map(function (m) {
-      return { id: m.id || m.name || String(m), object: m.object || 'model' };
-    });
-  }
-
-  function parseStreamDelta(provider, parsed) {
-    // Default: OpenAI-compatible choices[0].delta
-    var delta = parsed.choices && parsed.choices[0] ? parsed.choices[0].delta : null;
-    if (!delta) return { content: '', reasoning: '', usage: null };
-    return {
-      content: delta.content || '',
-      reasoning: delta.reasoning_content || delta.thinking || '',
-      usage: parsed.usage || null,
-    };
-  }
-
-  function parseNonStreamResponse(provider, data) {
-    // Default: OpenAI-compatible choices[0].message
-    var msg = data.choices && data.choices[0] ? data.choices[0].message : {};
-    return {
-      content: msg.content || '',
-      reasoning: msg.reasoning_content || msg.thinking || '',
-      usage: data.usage || null,
-    };
-  }
-
-  function isAnthropicModel(modelId) {
-    if (!modelId) return false;
-    const lower = modelId.toLowerCase();
-    return lower.includes('claude') || lower.startsWith('anthropic/');
-  }
-
-  function autoArchiveCheck() {
-    const now = Date.now();
-    const threshold = 60 * 60 * 1000; // 1 hour idle
-    const minMessages = 2; // ≤ 2 messages = barely used
-    let archivedCount = 0;
-
-    for (const conv of state.conversations) {
-      if (conv.archived) continue;
-      if (conv.messages.length > minMessages) continue;
-      const updated = new Date(conv.updatedAt).getTime();
-      if (now - updated < threshold) continue;
-      // Only archive if it's not the currently active conversation
-      if (conv.id === state.currentConversationId) continue;
-      conv.archived = true;
-      archivedCount++;
-    }
-
-    if (archivedCount > 0) {
-      saveToStorage();
-      renderConvList();
-    }
-  }
-
-  function toggleConversationArchive(id) {
-    const conv = state.conversations.find((c) => c.id === id);
-    if (!conv) return;
-    conv.archived = !conv.archived;
-    updateTimestamp(conv);
-    saveToStorage();
-    renderConvList();
-    const label = conv.archived ? '已归档' : '已取消归档';
-    showToast(label, 'info');
-  }
-
-  function toggleShowArchived() {
-    state.showArchived = !state.showArchived;
-    renderConvList();
   }
 
   // =========================================================================
@@ -1478,16 +812,6 @@ function createSceneWorld(seed) {
     }
   }
 
-  function renderContentFast(text) {
-    // Fast path for streaming: just escape + newlines, skip full markdown parse
-    return escapeHtml(String(text || '')).replace(/\n/g, '<br>');
-  }
-
-  function getVisibleAssistantContent(text, isStreaming) {
-    const value = String(text || '');
-    return isStreaming ? value.replace(/\n?@@SCENE[\s\S]*$/m, '').trimEnd() : value;
-  }
-
   function renderBubbleHTML(msg, msgIndex) {
     // Build inner HTML for an assistant message bubble
     let html = '';
@@ -1625,66 +949,6 @@ function createSceneWorld(seed) {
       if (details) details.open = !!keepOpen;
       bubble.classList.remove('streaming-cursor');
     }
-  }
-
-  // =========================================================================
-  // MARKDOWN — inline renderer, no external dependencies
-  // =========================================================================
-
-  function renderMarkdown(text) {
-    let html = escapeHtml(text);
-
-    // Code blocks: ```lang\ncode\n```
-    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-      const langTag = lang ? `<div style="font-size:10px;color:var(--text-tertiary);padding:4px 14px 0;text-transform:uppercase;letter-spacing:0.5px">${escapeHtml(lang)}</div>` : '';
-      return `${langTag}<pre><code>${code.trimEnd()}</code></pre>`;
-    });
-
-    // Inline code: `code`
-    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-    // Bold: **text**
-    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-
-    // Italic: *text*
-    html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-    // Images: ![alt](url)
-    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:8px;margin:4px 0">');
-
-    // Links: [text](url)
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-
-    // Auto-link bare URLs
-    html = html.replace(/(?<!["'>])(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
-
-    // Headers: ### text (at line start)
-    html = html.replace(/^### (.+)$/gm, '<h4 style="font-size:15px;margin:10px 0 4px">$1</h4>');
-    html = html.replace(/^## (.+)$/gm, '<h3 style="font-size:16px;margin:12px 0 4px">$1</h3>');
-    html = html.replace(/^# (.+)$/gm, '<h2 style="font-size:17px;margin:14px 0 6px">$1</h2>');
-
-    // Blockquote: > text
-    html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
-
-    // Horizontal rule: ---
-    html = html.replace(/^---$/gm, '<hr>');
-
-    // Unordered list items
-    html = html.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>');
-    // Ordered list items
-    html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-
-    // Wrap consecutive <li> in <ul>
-    html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
-
-    // Line breaks: preserve newlines as <br> except before block elements
-    html = html.replace(/\n/g, '<br>');
-
-    // Clean up: remove <br> before block elements
-    html = html.replace(/<br>\s*(<(?:pre|ul|ol|blockquote|hr|h[2-4]|li))/g, '$1');
-    html = html.replace(/(<\/(?:pre|ul|ol|blockquote|h[2-4])>)\s*<br>/g, '$1');
-
-    return html;
   }
 
   // =========================================================================
@@ -1896,6 +1160,52 @@ function createSceneWorld(seed) {
     dom.inputApiKey.placeholder = pConf.keyHint;
     dom.inputApiKey.value = state.apiKeys[provider] || '';
     dom.apiKeyHint.textContent = '在 ' + pConf.name + ' 平台获取，仅保存在本地浏览器';
+    updateMaxTokensCap();
+  }
+
+  function validateMaxTokensForProvider(provider, value) {
+    var cap = getProviderCap(provider);
+    var n = parseInt(value, 10);
+    if (!Number.isFinite(n) || n <= 0) return { valid: false, cap: cap, message: 'Max Tokens 必须为正整数。' };
+    if (n > cap) return { valid: false, cap: cap, message: '超过当前服务商最大输出限制 (' + cap.toLocaleString() + ')，请调低。' };
+    return { valid: true, cap: cap, message: '' };
+  }
+
+  function updateMaxTokensCap() {
+    if (!dom.inputMaxTokens || !dom.selectProvider) return;
+    var provider = dom.selectProvider.value;
+    var cap = getProviderCap(provider);
+    var currentVal = parseInt(dom.inputMaxTokens.value, 10) || 0;
+    var isOver = currentVal > cap;
+
+    // Show/hide cap hint
+    var capHint = document.getElementById('maxTokensCapHint');
+    if (!capHint) {
+      capHint = document.createElement('div');
+      capHint.id = 'maxTokensCapHint';
+      capHint.style.cssText = 'font-size:10.5px;margin-top:2px;';
+      dom.inputMaxTokens.parentNode.appendChild(capHint);
+    }
+    capHint.textContent = '最大输出限制：' + cap.toLocaleString();
+    capHint.style.color = isOver ? 'var(--danger, #e04060)' : 'var(--text-tertiary, rgba(255,255,255,0.45))';
+
+    // Mark input red when over cap
+    dom.inputMaxTokens.style.borderColor = isOver ? 'var(--danger, #e04060)' : '';
+    dom.inputMaxTokens.style.boxShadow = isOver ? '0 0 0 1px var(--danger, #e04060)' : '';
+
+    if (isOver) {
+      var errEl = document.getElementById('maxTokensError');
+      if (!errEl) {
+        errEl = document.createElement('div');
+        errEl.id = 'maxTokensError';
+        errEl.style.cssText = 'font-size:10.5px;color:var(--danger,#e04060);margin-top:2px;';
+        dom.inputMaxTokens.parentNode.appendChild(errEl);
+      }
+      errEl.textContent = '⛔ 超过限制，无法发送。请调低。';
+    } else {
+      var errEl2 = document.getElementById('maxTokensError');
+      if (errEl2) errEl2.remove();
+    }
   }
 
   function applyChatBackground() {
@@ -2600,85 +1910,102 @@ function handleMessageAction(action, msgIndex) {
     sendMessageContent(sendText);
   }
 
+  // =========================================================================
+  // DEBUG BUDGET DIAGNOSTICS — enable with ?debugBudget=1 or
+  // localStorage 'omnichat_debug_budget' = '1'
+  // =========================================================================
+
+  function isDebugBudget() {
+    if (window._OMNICHAT_DEBUG_BUDGET !== undefined) return window._OMNICHAT_DEBUG_BUDGET;
+    try {
+      if (window.localStorage.getItem('omnichat_debug_budget') === '1') { window._OMNICHAT_DEBUG_BUDGET = true; return true; }
+    } catch (_) {}
+    if (window.location.search.indexOf('debugBudget=1') !== -1) { window._OMNICHAT_DEBUG_BUDGET = true; return true; }
+    window._OMNICHAT_DEBUG_BUDGET = false;
+    return false;
+  }
+
+  function diagnoseRequestBudget(conv, messages, requestBody) {
+    var storyEnabled = isStoryEnabled(conv);
+    var storyStarted = isStoryStarted(conv);
+    var model = resolveModel(conv);
+
+    // Character counts
+    var systemChars = 0;
+    var historyChars = 0;
+    var hiddenChars = 0;
+    var hasWorldCard = false;
+    for (var mi = 0; mi < messages.length; mi++) {
+      var mc = String(messages[mi].content || '').length;
+      if (messages[mi].role === 'system') {
+        systemChars += mc;
+        if (messages[mi].content.indexOf('[世界模式') !== -1) hasWorldCard = true;
+      } else {
+        historyChars += mc;
+      }
+      if (messages[mi]._requestContent) hiddenChars += String(messages[mi]._requestContent).length;
+    }
+    var totalRequestChars = systemChars + historyChars + hiddenChars;
+
+    var shouldCompact = conv.autoCompress || countApproxChars(conv) > REQUEST_CHAR_SOFT_LIMIT;
+    var compactTriggered = shouldCompact && conv.messages.length > REQUEST_RECENT_MSG_LIMIT;
+    var recentCount = messages.filter(function(m) { return m.role !== 'system'; }).length;
+
+    return {
+      provider: conv.provider,
+      model: model,
+      stream: conv.stream,
+      sceneDetailLevel: conv.sceneDetailLevel || 'medium',
+      storyEnabled: storyEnabled,
+      storyStarted: storyStarted,
+      userMaxTokens: conv.maxTokens,
+      actualRequestMaxTokens: requestBody.max_tokens,
+      messageCount: conv.messages.length,
+      requestMessageCount: messages.length,
+      systemMessageChars: systemChars,
+      historyChars: historyChars,
+      hiddenRequestChars: hiddenChars,
+      totalRequestChars: totalRequestChars,
+      estimatedInputTokens: Math.ceil(totalRequestChars / 3),
+      estimatedTotalTokens: Math.ceil(totalRequestChars / 3) + (requestBody.max_tokens || 0),
+      bodyJsonBytes: JSON.stringify(requestBody).length,
+      hasScenePrompt: storyEnabled,
+      hasWorldCard: hasWorldCard,
+      hasHiddenRequestContent: hiddenChars > 0,
+      autoCompressEnabled: !!conv.autoCompress,
+      shouldCompact: shouldCompact,
+      compactTriggered: compactTriggered,
+      recentMessageCountAfterBuild: recentCount,
+    };
+  }
+
+  function _debugSnippet(text, maxLen) {
+    if (!text) return '';
+    var s = String(text);
+    if (s.length <= (maxLen || 120)) return s;
+    return s.slice(0, (maxLen || 120)) + '…';
+  }
+
+  function _logBudgetDebug(diag) {
+    console.group('%c[OmniChat Budget Debug]', 'color:#f0a;font-weight:bold');
+    console.log('Provider:', diag.provider, '| Model:', diag.model, '| Stream:', diag.stream);
+    console.log('Story:', (diag.storyEnabled ? 'enabled' : 'off'), (diag.storyStarted ? 'started' : ''), '| Detail:', diag.sceneDetailLevel);
+    console.log('MaxTokens (user):', diag.userMaxTokens, '| (request):', diag.actualRequestMaxTokens);
+    console.log('Messages (conv/request):', diag.messageCount, '/', diag.requestMessageCount);
+    console.log('Chars — sys:', diag.systemMessageChars, 'hist:', diag.historyChars, 'hidden:', diag.hiddenRequestChars, 'total:', diag.totalRequestChars);
+    console.log('Est tokens — input:', diag.estimatedInputTokens, 'total:', diag.estimatedTotalTokens);
+    console.log('Body JSON:', diag.bodyJsonBytes, 'bytes');
+    console.log('ScenePrompt:', diag.hasScenePrompt, 'WorldCard:', diag.hasWorldCard, 'HiddenContent:', diag.hasHiddenRequestContent);
+    console.log('AutoCompress:', diag.autoCompressEnabled, '| ShouldCompact:', diag.shouldCompact, '| CompactTriggered:', diag.compactTriggered, '| RecentMsgs:', diag.recentMessageCountAfterBuild);
+    console.groupEnd();
+    window.__OMNICHAT_LAST_BUDGET_DEBUG = diag;
+  }
+
   // Shared send logic without clearing input (used by action buttons)
   async function sendMessageContent(text) {
     dom.inputMessage.value = text;
     await sendMessage();
     dom.inputMessage.value = '';
-  }
-
-  function updateToolWarning() {
-    dom.selectToolCallLimit.value = '0';
-    dom.selectToolCallLimit.disabled = true;
-    dom.toolWarning.style.display = '';
-  }
-
-  // =========================================================================
-  // MODEL — provider select, model list refresh, model resolution
-  // =========================================================================
-
-  function populateModelSelect() {
-    const conv = getCurrentConv();
-    const provider = conv ? conv.provider : 'xai';
-    const models = state.models[provider] || [];
-
-    dom.selectModel.innerHTML = '';
-
-    if (models.length === 0) {
-      dom.selectModel.innerHTML = '<option value="">-- 点击刷新获取模型 --</option>';
-      dom.modelHint.textContent = '尚未获取模型列表';
-      return;
-    }
-
-    dom.selectModel.innerHTML =
-      '<option value="">-- 选择模型 --</option>' +
-      models
-        .map((m) => {
-          const selected = conv && conv.model === m.id ? ' selected' : '';
-          return `<option value="${escapeHtml(m.id)}"${selected}>${escapeHtml(m.id)}</option>`;
-        })
-        .join('');
-
-    dom.modelHint.textContent = `共 ${models.length} 个可用模型，最后更新：${new Date().toLocaleTimeString()}`;
-  }
-
-  async function refreshModels() {
-    const provider = dom.selectProvider.value;
-    const apiKey = getApiKey(provider);
-
-    if (!apiKey) {
-      showToast('请先填写 API Key。', 'error');
-      return;
-    }
-
-    const pConf = getProviderConfig(provider);
-    dom.btnRefreshModels.textContent = '获取中…';
-    dom.btnRefreshModels.disabled = true;
-
-    try {
-      const headers = buildRequestHeaders(provider, apiKey, { stream: false });
-      const resp = await fetch(pConf.modelsUrl, {
-        headers: { Authorization: headers.Authorization, 'Content-Type': 'application/json' },
-      });
-
-      if (!resp.ok) {
-        if (resp.status === 401) throw new Error(ERR_MSGS.unauthorized);
-        if (resp.status === 429) throw new Error(ERR_MSGS.rateLimited);
-        throw new Error(`获取模型失败 (${resp.status})`);
-      }
-
-      const data = await resp.json();
-      state.models[provider] = parseModelList(provider, data);
-
-      saveToStorage();
-      populateModelSelect();
-      showToast(`成功获取 ${state.models[provider].length} 个模型`, 'success');
-    } catch (e) {
-      showToast(e.message || '获取模型列表失败', 'error');
-    } finally {
-      dom.btnRefreshModels.textContent = '刷新模型列表';
-      dom.btnRefreshModels.disabled = false;
-    }
   }
 
   // =========================================================================
@@ -2720,8 +2047,13 @@ function handleMessageAction(action, msgIndex) {
       showToast('Top P 必须在 0 到 1 之间。', 'error');
       return;
     }
-    if (!Number.isInteger(conv.maxTokens) || conv.maxTokens <= 0) {
-      showToast('Max Tokens 必须为正整数。', 'error');
+    // Validate maxTokens against provider cap
+    var maxTokValid = validateMaxTokensForProvider(conv.provider, conv.maxTokens);
+    if (!maxTokValid.valid) {
+      showToast(maxTokValid.message, 'error');
+      if (maxTokValid.cap && conv.maxTokens > maxTokValid.cap) {
+        openDrawer('settings');
+      }
       return;
     }
 
@@ -2923,6 +2255,16 @@ function handleMessageAction(action, msgIndex) {
 
     const pConf = getProviderConfig(conv.provider);
 
+    // --- Debug budget diagnostics (before fetch) ---
+    var _dbgBodyPreview = null;
+    if (isDebugBudget()) {
+      const headers = buildRequestHeaders(conv.provider, apiKey, conv);
+      var body = buildRequestBody(conv, model, messages);
+      _dbgBodyPreview = body;
+      var diag = diagnoseRequestBudget(conv, messages, body);
+      _logBudgetDebug(diag);
+    }
+
     try {
       const headers = buildRequestHeaders(conv.provider, apiKey, conv);
       const body = buildRequestBody(conv, model, messages);
@@ -2936,11 +2278,45 @@ function handleMessageAction(action, msgIndex) {
 
       if (!resp.ok) {
         const errText = await resp.text().catch(() => '');
+        // Enhanced error diagnostics
+        var errDetail = {
+          status: resp.status,
+          statusText: resp.statusText || '',
+          errSnippet: (errText || '').slice(0, 1000),
+          provider: conv.provider,
+          model: model,
+          maxTokens: body.max_tokens,
+        };
+        // Budget-aware error messages
+        if (resp.status === 400 && /max_tokens|token|context|length|too long|maximum context/i.test(errText)) {
+          var cap = getProviderCap(conv.provider);
+          var budgetToast = '';
+          if (conv.provider === 'deepseek' && /invalid.*max_tokens/i.test(errText)) {
+            budgetToast = 'DeepSeek 拒绝了 max_tokens 参数。当前值过大，请调低到 ' + cap.toLocaleString() + ' 以下。';
+          } else {
+            budgetToast = '服务商拒绝了请求预算，可能是 Max Tokens 或上下文过大。';
+          }
+          if (isDebugBudget()) {
+            console.warn('[OmniChat Budget Error]', errDetail);
+            if (!budgetToast.includes('debug:')) {
+              budgetToast += ' (debug: ' + body.max_tokens + ' max_tokens, ~' + Math.ceil(JSON.stringify(messages).length / 3) + ' est input tokens)';
+            }
+          }
+          throw new Error(budgetToast);
+        }
+        if (resp.status === 413) {
+          if (isDebugBudget()) {
+            console.warn('[OmniChat Budget Error 413]', errDetail);
+          }
+          throw new Error('请求体过大，服务商拒绝接收。');
+        }
+        if (isDebugBudget()) {
+          console.warn('[OmniChat Request Error]', errDetail);
+        }
         if (resp.status === 401) throw new Error(ERR_MSGS.unauthorized);
         if (resp.status === 429) throw new Error(ERR_MSGS.rateLimited);
         if (resp.status === 400 && errText.includes('model')) throw new Error(ERR_MSGS.modelNotFound);
         if (resp.status === 402) throw new Error(ERR_MSGS.insufficientBalance);
-        if (resp.status === 413) throw new Error(ERR_MSGS.contextTooLong);
         throw new Error(`${ERR_MSGS.serverError} (${resp.status})`);
       }
 
@@ -2954,6 +2330,9 @@ function handleMessageAction(action, msgIndex) {
         if (parsed.usage) {
           assistantMsg.usage = parsed.usage;
         }
+        if (parsed.finishReason) {
+          assistantMsg.finishReason = parsed.finishReason;
+        }
       }
     } catch (e) {
       if (e.name === 'AbortError') {
@@ -2962,6 +2341,10 @@ function handleMessageAction(action, msgIndex) {
       } else if (e.name === 'TypeError' && e.message === 'Failed to fetch') {
         conv.messages.pop();
         showToast(ERR_MSGS.cors, 'error', 6000);
+        if (isDebugBudget()) {
+          console.warn('[OmniChat CORS Error] Type: TypeError/Failed to fetch. Provider:', conv.provider, 'Model:', model);
+          if (_dbgBodyPreview) console.warn('[OmniChat CORS Error] Body ~', JSON.stringify(_dbgBodyPreview).length, 'bytes');
+        }
       } else {
         conv.messages.pop();
         showToast(e.message || ERR_MSGS.network, 'error');
@@ -3088,6 +2471,28 @@ function handleMessageAction(action, msgIndex) {
         }
       }
 
+      // --- Story output completeness diagnostics (debug only) ---
+      if (isDebugBudget() && storyEnabled) {
+        var diagScene = {
+          hasSceneBlock: /@@SCENE/.test(assistantMsg.content || ''),
+          hasSceneSnapshot: !!assistantMsg.sceneSnapshot,
+          directionsCount: (assistantMsg.sceneSnapshot && assistantMsg.sceneSnapshot.directions)
+            ? parseDirectionOptions(assistantMsg.sceneSnapshot.directions).length : 0,
+          contentLength: (assistantMsg.content || '').length,
+          reasoningLength: (assistantMsg.reasoning || '').length,
+          finishReason: assistantMsg.finishReason || null,
+          truncated: assistantMsg.finishReason === 'length',
+          fallbackApplied: !!assistantMsg._sceneFallbackAttempted,
+        };
+        console.group('%c[OmniChat Story Diagnostics]', 'color:#0af;font-weight:bold');
+        console.table(diagScene);
+        if (diagScene.truncated) {
+          console.warn('[OmniChat] ⚠️ 回复被输出上限截断 (finish_reason=length)，可能缺失 @@SCENE/A/B/C/D。');
+          showToast('回复被输出上限截断，可能缺失 @@SCENE/A/B/C/D。', 'warning');
+        }
+        console.groupEnd();
+      }
+
       // Show action buttons on completed response
       if (assistantMsg.content && conv.messages.includes(assistantMsg)) {
         assistantMsg._showActions = true;
@@ -3165,6 +2570,11 @@ function handleMessageAction(action, msgIndex) {
             if (delta.usage) {
               assistantMsg.usage = delta.usage;
             }
+
+            // Capture finish_reason from streaming chunk (typically on last delta)
+            if (delta.finishReason) {
+              assistantMsg.finishReason = delta.finishReason;
+            }
           } catch (_) {
             // Skip unparseable chunks
           }
@@ -3185,6 +2595,9 @@ function handleMessageAction(action, msgIndex) {
             if (delta.content) assistantMsg.content += delta.content;
             if (delta.usage) {
               assistantMsg.usage = delta.usage;
+            }
+            if (delta.finishReason) {
+              assistantMsg.finishReason = delta.finishReason;
             }
           } catch (_) { /* skip */ }
         }
@@ -3215,368 +2628,6 @@ function handleMessageAction(action, msgIndex) {
 
   function isAbortRequested() {
     return state.abortController ? state.abortController.signal.aborted : false;
-  }
-
-  // =========================================================================
-  // CONVERSATION — new, switch, clear, delete, rename, export, import
-  // =========================================================================
-
-  function newConversation(overrides) {
-    var current = getCurrentConv();
-    var provider = (overrides && overrides.provider) || (current && current.provider) || 'openai';
-    var conv = createConversation(provider);
-
-    if (overrides) {
-      // Targeted creation from group header — only set provider/model/customModel
-      if (overrides.model !== undefined) conv.model = overrides.model;
-      if (overrides.customModel !== undefined) conv.customModel = overrides.customModel;
-    } else if (current) {
-      // Inherit provider/model only; reset generation params and scene data to defaults
-      conv.model = current.model;
-      conv.customModel = current.customModel;
-      // generation params stay at createConversation defaults
-      // scene data stays at createConversation defaults (empty)
-    }
-
-    state.conversations.push(conv);
-    state.currentConversationId = conv.id;
-    renderAll();
-    saveToStorage();
-    dom.inputMessage.focus();
-  }
-
-  function switchConversation(id) {
-    const conv = state.conversations.find((c) => c.id === id);
-    if (!conv) return;
-    // Safety: ensure switched-to conversation is normalized to current schema
-    normalizeConversation(conv);
-    state.currentConversationId = id;
-    closeDrawer('history');
-    renderAll();
-    scrollToBottom(true);
-    debouncedSave();
-  }
-
-  function clearCurrentConversation() {
-    const conv = getCurrentConv();
-    if (!conv) return;
-    showConfirm('确认清空当前会话的所有消息？（会话参数保留）', () => {
-      conv.messages = [];
-      conv.title = '新对话';
-      updateTimestamp(conv);
-      hideConfirm();
-      renderAll();
-      saveToStorage();
-      showToast('会话已清空', 'success');
-    });
-  }
-
-  function deleteLastRound() {
-    const conv = getCurrentConv();
-    if (!conv || conv.messages.length === 0) return;
-
-    // Find last user message and remove it + everything after
-    let lastUserIdx = -1;
-    for (let i = conv.messages.length - 1; i >= 0; i--) {
-      if (conv.messages[i].role === 'user') {
-        lastUserIdx = i;
-        break;
-      }
-    }
-
-    if (lastUserIdx === -1) return;
-
-    conv.messages.splice(lastUserIdx);
-    if (conv.messages.length === 0) conv.title = '新对话';
-    updateTimestamp(conv);
-    renderAll();
-    saveToStorage();
-    showToast('已删除最后一轮问答', 'success');
-  }
-
-  function copyLastAssistantReply() {
-    const conv = getCurrentConv();
-    if (!conv) return;
-    for (let i = conv.messages.length - 1; i >= 0; i--) {
-      if (conv.messages[i].role === 'assistant') {
-        const text = conv.messages[i].content;
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(text).then(() => showToast('已复制到剪贴板', 'success'));
-        }
-        return;
-      }
-    }
-    showToast('没有可复制的 AI 回复', 'warning');
-  }
-
-  function togglePreciseMode() {
-    const conv = getCurrentConv();
-    if (!conv) return;
-    conv.preciseMode = !conv.preciseMode;
-    if (conv.preciseMode) {
-      conv._savedTemperature = conv.temperature;
-      conv.temperature = 0.2;
-      showToast('精确模式已开启：低温输出 + 防幻觉 Prompt', 'success');
-    } else {
-      conv.temperature = conv._savedTemperature || DEFAULTS.temperature;
-      conv._savedTemperature = undefined;
-      showToast('精确模式已关闭', 'info');
-    }
-    updateTimestamp(conv);
-    updatePreciseButton();
-    debouncedSave();
-    if (state.ui.isSettingsOpen) {
-      dom.inputPreciseMode.checked = conv.preciseMode;
-      dom.inputTemperature.value = conv.temperature;
-      dom.tempVal.textContent = conv.temperature;
-    }
-    updateTopBar();
-  }
-
-  function deleteConversation(id) {
-    showConfirm('确认删除该会话？此操作不可恢复。', () => {
-      state.conversations = state.conversations.filter((c) => c.id !== id);
-      if (state.currentConversationId === id) {
-        state.currentConversationId = state.conversations.length > 0 ? state.conversations[0].id : null;
-      }
-      hideConfirm();
-      renderAll();
-      saveToStorage();
-      showToast('会话已删除', 'success');
-    });
-  }
-
-  function clearAllConversations() {
-    if (state.conversations.length === 0) return;
-    showConfirm(`确认删除全部 ${state.conversations.length} 个会话？<br><br>此操作不可恢复。建议先导出全部 JSON 备份。`, () => {
-      state.conversations = [];
-      state.currentConversationId = null;
-      hideConfirm();
-      renderAll();
-      saveToStorage();
-      showToast('全部会话已清空', 'success');
-    });
-  }
-
-  function clearArchivedConversations() {
-    const archived = state.conversations.filter((c) => c.archived);
-    if (archived.length === 0) {
-      showToast('没有已归档的会话', 'info');
-      return;
-    }
-    showConfirm(`确认删除全部 ${archived.length} 个已归档会话？<br><br>此操作不可恢复。建议先导出全部 JSON 备份。`, () => {
-      state.conversations = state.conversations.filter((c) => !c.archived);
-      hideConfirm();
-      renderAll();
-      saveToStorage();
-      showToast(`已删除 ${archived.length} 个归档会话`, 'success');
-    });
-  }
-
-  function renameConversation(id) {
-    const conv = state.conversations.find((c) => c.id === id);
-    if (!conv) return;
-    showRenameDialog(id, conv.title);
-  }
-
-  function doRename() {
-    const id = state.pendingRenameId;
-    const newTitle = dom.renameInput.value.trim();
-    if (!id || !newTitle) {
-      hideRenameDialog();
-      return;
-    }
-    const conv = state.conversations.find((c) => c.id === id);
-    if (conv) {
-      conv.title = newTitle;
-      updateTimestamp(conv);
-      renderAll();
-      saveToStorage();
-    }
-    hideRenameDialog();
-  }
-
-  // =========================================================================
-  // IMPORT / EXPORT
-  // =========================================================================
-
-  function exportConversationMarkdown() {
-    const conv = getCurrentConv();
-    if (!conv) {
-      showToast('无当前会话可导出', 'warning');
-      return;
-    }
-
-    const pConf = getProviderConfig(conv.provider);
-    const model = resolveModel(conv);
-    let md = `# ${conv.title}\n\n`;
-    md += `- 服务商：${pConf.name}\n`;
-    md += `- 模型：${model || '未选择'}\n`;
-    md += `- 时间：${conv.createdAt}\n`;
-    if (conv.systemPrompt) {
-      md += `- System Prompt：${conv.systemPrompt}\n`;
-    }
-    md += `\n---\n\n`;
-
-    for (const m of conv.messages) {
-      const role = m.role === 'user' ? '**You**' : '**AI**';
-      md += `### ${role}\n\n${m.content}\n\n`;
-    }
-
-    downloadFile(`${conv.title}.md`, md, 'text/markdown');
-    showToast('Markdown 导出成功', 'success');
-  }
-
-  function exportAllJSON() {
-    if (state.conversations.length === 0) {
-      showToast('无会话可导出', 'warning');
-      return;
-    }
-
-    // Strip API keys from export. Preserve story-mode _requestContent
-    // so world-story backups can be restored with full character card intact.
-    const data = {
-      version: STORAGE_VERSION,
-      exportedAt: nowISO(),
-      conversations: state.conversations.map(function(c) {
-        var copy = Object.assign({}, c);
-        copy.messages = copy.messages.map(function(m) {
-          var msg = Object.assign({}, m);
-          var isStoryStarted = c.storyMode && c.storyMode.started;
-          var isFirstUser = msg.role === 'user' && msg.displayContent && msg._requestContent;
-          if (!(isStoryStarted && isFirstUser)) {
-            delete msg._requestContent;
-          }
-          return msg;
-        });
-        return copy;
-      }),
-    };
-
-    downloadFile(`omnichat-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(data, null, 2), 'application/json');
-    showToast('全部会话 JSON 导出成功', 'success');
-  }
-
-  function importJSON(file) {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      try {
-        const data = JSON.parse(e.target.result);
-
-        if (!data.conversations || !Array.isArray(data.conversations)) {
-          throw new Error('格式无效：缺少 conversations 数组');
-        }
-
-        let imported = 0;
-        const existingIds = new Set(state.conversations.map((c) => c.id));
-
-        for (const c of data.conversations) {
-          if (!c.id || !c.messages || !Array.isArray(c.messages)) continue;
-
-          // Avoid overwriting existing IDs
-          if (existingIds.has(c.id)) {
-            c.id = generateId();
-          }
-          existingIds.add(c.id);
-
-          // Ensure all fields exist
-          c.title = c.title || '导入的对话';
-          c.createdAt = c.createdAt || nowISO();
-          c.updatedAt = c.updatedAt || nowISO();
-          c.provider = c.provider || 'xai';
-          c.model = c.model || '';
-          c.customModel = c.customModel || '';
-          c.systemPrompt = c.systemPrompt || '';
-          c.temperature = c.temperature ?? DEFAULTS.temperature;
-          c.topP = c.topP ?? DEFAULTS.topP;
-          c.maxTokens = c.maxTokens ?? DEFAULTS.maxTokens;
-          c.stream = c.stream ?? DEFAULTS.stream;
-          c.toolCallLimit = c.toolCallLimit ?? DEFAULTS.toolCallLimit;
-          c.toolCallLimitMode = c.toolCallLimitMode || 'disabled';
-          c.enableCaching = c.enableCaching !== undefined ? c.enableCaching : DEFAULTS.enableCaching;
-          c.preciseMode = c.preciseMode || false;
-          c.archived = c.archived || false;
-          c.sceneMode = c.sceneMode || false;
-          c.sceneState = createSceneState(c.sceneState);
-          c.autoCompress = c.autoCompress || false;
-          c.keepThinkingOpen = c.keepThinkingOpen !== undefined ? c.keepThinkingOpen : DEFAULTS.keepThinkingOpen;
-          c.sceneDetailLevel = c.sceneDetailLevel || DEFAULTS.sceneDetailLevel;
-          c.sceneWorld = createSceneWorld(c.sceneWorld);
-          c.sceneCharacter = createSceneCharacter(c.sceneCharacter);
-          c.sceneStatus = createSceneStatus(c.sceneStatus);
-          c.sceneNpcs = normalizeSceneNpcs(c.sceneNpcs);
-          // Migrate old scene/world data to unified storyMode
-          migrateStoryMode(c);
-          // Preserve story-mode hidden request content so restored
-          // world-story conversations keep their full character card.
-          c.messages = (c.messages || []).map(function(m) {
-            var msg = Object.assign({}, m);
-            var isStoryStarted = c.storyMode && c.storyMode.started;
-            var isFirstUser = msg.role === 'user' && msg.displayContent && msg._requestContent;
-            if (!(isStoryStarted && isFirstUser)) {
-              delete msg._requestContent;
-            }
-            return msg;
-          }).filter(function(m) { return m.role && m.content !== undefined; });
-          // Normalize imported conversation to current display model
-          c = normalizeConversation(c);
-
-          state.conversations.push(c);
-          imported++;
-        }
-
-        if (imported === 0) {
-          throw new Error('未找到有效会话数据');
-        }
-
-        saveToStorage();
-        renderAll();
-        showToast(`成功导入 ${imported} 个会话`, 'success');
-      } catch (e) {
-        showToast(e.message || ERR_MSGS.importFailed, 'error');
-      }
-    };
-    reader.onerror = function () {
-      showToast(ERR_MSGS.importFailed, 'error');
-    };
-    reader.readAsText(file);
-  }
-
-  function downloadFile(filename, content, mimeType) {
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-
-  function copyTextToClipboard(text, successMessage) {
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(text)
-        .then(function () { showToast(successMessage, 'success'); })
-        .catch(function () { showToast('复制失败，请手动选择文本复制', 'warning'); });
-      return;
-    }
-    var ta = document.createElement('textarea');
-    ta.value = text;
-    ta.setAttribute('readonly', '');
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    ta.style.pointerEvents = 'none';
-    document.body.appendChild(ta);
-    ta.select();
-    try {
-      document.execCommand('copy');
-      showToast(successMessage, 'success');
-    } catch (_) {
-      showToast('复制失败，请手动选择文本复制', 'warning');
-    } finally {
-      document.body.removeChild(ta);
-    }
   }
 
   // =========================================================================
@@ -3709,7 +2760,7 @@ function handleMessageAction(action, msgIndex) {
     dom.searchInput.addEventListener('input', () => renderConvList());
 
     // Settings changes - auto save
-    dom.selectProvider.addEventListener('change', () => syncSettingsFromUI());
+    dom.selectProvider.addEventListener('change', () => { syncSettingsFromUI(); updateMaxTokensCap(); });
     dom.inputApiKey.addEventListener('input', () => {
       const provider = dom.selectProvider.value;
       state.apiKeys[provider] = dom.inputApiKey.value.trim();
@@ -3763,6 +2814,7 @@ function handleMessageAction(action, msgIndex) {
       }
     });
     dom.inputMaxTokens.addEventListener('input', () => {
+      updateMaxTokensCap();
       const conv = getCurrentConv();
       if (conv) {
         conv.maxTokens = parseInt(dom.inputMaxTokens.value, 10) || DEFAULTS.maxTokens;

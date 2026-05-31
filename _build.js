@@ -1,7 +1,7 @@
 // Build standalone omnichat.html with minification
 const fs = require('fs');
 
-let html = fs.readFileSync('index.template.html', 'utf-8');
+let html = fs.readFileSync('index.html', 'utf-8');
 const css = fs.readFileSync('style.css', 'utf-8');
 const js = fs.readFileSync('script.js', 'utf-8');
 const buildVersion = Date.now().toString(36);
@@ -110,7 +110,7 @@ html = html.replace(
   () => '<style>' + cssMin + '</style>'
 );
 
-// Inline minified JS
+// Inline minified JS with version
 html = html.replace(
   '<script src="script.js"></script>',
   () => '<script>' + jsMin + '</script>'
@@ -130,7 +130,7 @@ fs.writeFileSync('index.html', html, 'utf-8');
 // Verify
 const verifyHtml = fs.readFileSync('omnichat.html', 'utf-8');
 const sizeKB = (verifyHtml.length / 1024).toFixed(1);
-const origSize = ((css.length + js.length + html.length) / 1024).toFixed(1);
+const origSize = ((css.length + js.length + fs.readFileSync('index.html','utf-8').length) / 1024).toFixed(1);
 
 console.log('Build version:', buildVersion);
 console.log('CSS: ' + (css.length/1024).toFixed(1) + 'KB -> ' + (cssMin.length/1024).toFixed(1) + 'KB (' + (100-cssMin.length/css.length*100).toFixed(0) + '% reduced)');

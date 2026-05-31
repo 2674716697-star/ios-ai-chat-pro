@@ -1,0 +1,135 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - button "历史会话" [ref=e4] [cursor=pointer]:
+      - img [ref=e5]
+    - generic [ref=e6] [cursor=pointer]:
+      - generic [ref=e7]: 新对话
+      - generic [ref=e8]:
+        - generic [ref=e9]: OpenAI
+        - generic [ref=e10]: 未选择
+        - generic [ref=e11]: 0 条消息 · ~0 字符
+    - button "背景" [ref=e12] [cursor=pointer]:
+      - img [ref=e13]
+    - button "设置" [active] [ref=e17] [cursor=pointer]:
+      - img [ref=e18]
+  - complementary [ref=e51]:
+    - generic [ref=e52]:
+      - heading "设置" [level=2] [ref=e53]
+      - button "关闭" [ref=e54] [cursor=pointer]:
+        - img [ref=e55]
+    - generic [ref=e58]:
+      - generic [ref=e59]:
+        - generic [ref=e60]: 服务商
+        - combobox [ref=e61] [cursor=pointer]:
+          - option "OpenAI" [selected]
+          - option "xAI / Grok"
+          - option "DeepSeek"
+          - option "OpenRouter"
+          - option "Groq"
+          - option "Moonshot (Kimi)"
+          - option "智谱 (GLM)"
+          - option "SiliconFlow"
+      - generic [ref=e62]:
+        - generic [ref=e63]: OpenAI API Key
+        - generic [ref=e64]:
+          - textbox "sk-..." [ref=e65]
+          - button "显示/隐藏" [ref=e66] [cursor=pointer]:
+            - img [ref=e67]
+        - generic [ref=e70]: 在 OpenAI 平台获取，仅保存在本地浏览器
+      - generic [ref=e71]:
+        - generic [ref=e72]: 模型
+        - combobox [ref=e73] [cursor=pointer]:
+          - option "-- 点击刷新获取模型 --" [selected]
+        - generic [ref=e74]: 尚未获取模型列表
+        - button "刷新模型列表" [ref=e75] [cursor=pointer]
+      - generic [ref=e76]:
+        - generic [ref=e77]: 自定义模型名（可选）
+        - textbox "留空使用上方选择的模型" [ref=e78]
+      - generic [ref=e79]:
+        - generic [ref=e80]: 聊天背景
+        - generic [ref=e81]:
+          - button "默认" [ref=e82] [cursor=pointer]
+          - button "海洋" [ref=e83] [cursor=pointer]
+          - button "日落" [ref=e84] [cursor=pointer]
+          - button "森林" [ref=e85] [cursor=pointer]
+          - button "墨蓝" [ref=e86] [cursor=pointer]
+          - button "炭灰" [ref=e87] [cursor=pointer]
+        - button "从相册选择" [ref=e89] [cursor=pointer]
+        - generic [ref=e90]:
+          - generic [ref=e91]: 背景透明度
+          - slider [ref=e92] [cursor=pointer]: "35"
+      - generic [ref=e93]:
+        - generic [ref=e94]: System Prompt
+        - textbox "设置 AI 的行为和角色…" [ref=e95]
+      - generic [ref=e96]:
+        - generic [ref=e97]: Temperature 0.7
+        - slider [ref=e98] [cursor=pointer]: "0.7"
+      - generic [ref=e99]:
+        - generic [ref=e100]: Top P 1
+        - slider [ref=e101] [cursor=pointer]: "1"
+      - generic [ref=e102]:
+        - generic [ref=e103]: Max Tokens
+        - spinbutton [ref=e104]: "2000"
+      - generic [ref=e106]: 流式输出 (Stream)
+      - generic [ref=e110]:
+        - text: 提示缓存 (Caching)
+        - generic [ref=e111]: Claude 模型缓存系统提示和对话前缀，大幅降低费用
+      - generic [ref=e115]:
+        - text: 精确模式 (Anti-Hallucination)
+        - generic [ref=e116]: 低温 + 严谨 System Prompt，减少幻觉
+      - generic [ref=e120]:
+        - generic [ref=e121]: 世界故事模式
+        - text: 开启后显示世界观、角色卡、NPC、状态、规则和剧情分支面板，适合写文、角色扮演和世界开局。
+      - generic [ref=e125]:
+        - text: 自动压缩上下文
+        - generic [ref=e126]: 对话过长时自动总结旧消息，保持上下文窗口可控
+      - generic [ref=e130]:
+        - text: 思考完成后保持展开
+        - generic [ref=e131]: AI 回复完成后 reasoning / 思考过程 details 保持展开状态
+      - generic [ref=e134]:
+        - generic [ref=e135]:
+          - text: 状态卡详细度
+          - generic [ref=e136]: 控制 AI 回复末尾人物状态/身体细节/剧情走向的描述细腻程度
+        - combobox [ref=e137] [cursor=pointer]:
+          - option "低 — 简洁"
+          - option "中 — 清楚" [selected]
+          - option "高 — 细腻"
+          - option "超高 — 丰富"
+      - generic [ref=e138]:
+        - generic [ref=e139]: 消息操作按钮（可自定义提示词）
+        - generic [ref=e140]:
+          - textbox "重新生成" [ref=e141]
+          - textbox "继续生成" [ref=e142]
+          - textbox "生成摘要" [ref=e143]
+          - textbox "深入探讨" [ref=e144]
+        - generic [ref=e145]: 修改按钮对应的提示词，留空使用默认
+      - generic [ref=e146]:
+        - generic [ref=e147]: 工具调用（实验中）
+        - combobox [disabled] [ref=e148] [cursor=pointer]:
+          - option "0 - 关闭" [disabled] [selected]
+        - generic [ref=e149]: 当前网页端未执行外部工具调用，入口已锁定为关闭，避免误触发循环或额外费用。
+  - main [ref=e21]:
+    - generic [ref=e23]:
+      - img [ref=e25]
+      - heading "OmniChat" [level=3] [ref=e27]
+      - paragraph [ref=e28]: 支持 OpenAI、xAI / Grok、DeepSeek、OpenRouter 等多服务商聊天
+      - generic [ref=e29]:
+        - generic [ref=e30]: 1. 填写 OpenAI API Key
+        - generic [ref=e31]: 2. 选择或输入模型
+      - generic [ref=e32]:
+        - button "开始配置" [ref=e33] [cursor=pointer]
+        - button "查看历史" [ref=e34] [cursor=pointer]
+      - paragraph [ref=e35]: 完成配置后就可以直接输入消息开始对话
+      - paragraph [ref=e36]: API Key 只保存在当前浏览器 localStorage。请勿在公共设备上使用。
+  - contentinfo [ref=e37]:
+    - generic [ref=e38]:
+      - button "新对话" [ref=e39] [cursor=pointer]
+      - button "清空本聊" [ref=e40] [cursor=pointer]
+      - button "撤回一轮" [ref=e41] [cursor=pointer]
+      - button "复制回复" [ref=e42] [cursor=pointer]
+      - button "精确" [ref=e43] [cursor=pointer]
+      - button "导出本聊" [ref=e44] [cursor=pointer]
+    - generic [ref=e45]:
+      - textbox "输入消息…" [ref=e46]
+      - button "发送消息" [ref=e47] [cursor=pointer]:
+        - img [ref=e48]

@@ -1,0 +1,44 @@
+- generic [ref=e12]:
+  - banner [ref=e13]:
+    - button "历史会话" [ref=e14] [cursor=pointer]:
+      - img [ref=e15]
+    - generic [ref=e16] [cursor=pointer]:
+      - generic [ref=e17]: hi
+      - generic [ref=e18]:
+        - generic [ref=e19]: DeepSeek
+        - generic [ref=e20]: deepseek-v4-pro
+        - generic [ref=e21]: 1 条消息 · ~2 字符
+    - button "背景" [ref=e22] [cursor=pointer]:
+      - img [ref=e23]
+    - button "设置" [ref=e27] [cursor=pointer]:
+      - img [ref=e28]
+  - option "OpenAI" [selected]
+  - option "xAI / Grok"
+  - option "DeepSeek"
+  - option "OpenRouter"
+  - option "Groq"
+  - option "Moonshot (Kimi)"
+  - option "智谱 (GLM)"
+  - option "SiliconFlow"
+  - option "低 — 简洁"
+  - option "中 — 清楚" [selected]
+  - option "高 — 细腻"
+  - option "超高 — 丰富"
+  - option "0 - 关闭" [disabled] [selected]
+  - main [ref=e31]:
+    - generic [ref=e60]:
+      - generic [ref=e61]: You
+      - generic [ref=e62]: hi
+  - contentinfo [ref=e47]:
+    - generic [ref=e48]:
+      - button "新对话" [ref=e49] [cursor=pointer]
+      - button "清空本聊" [ref=e50] [cursor=pointer]
+      - button "撤回一轮" [ref=e51] [cursor=pointer]
+      - button "复制回复" [ref=e52] [cursor=pointer]
+      - button "精确" [ref=e53] [cursor=pointer]
+      - button "导出本聊" [ref=e54] [cursor=pointer]
+    - generic [ref=e55]:
+      - textbox "输入消息…" [ref=e56]
+      - button "发送消息" [ref=e57] [cursor=pointer]:
+        - img [ref=e58]
+  - generic [ref=e63]: "服务商拒绝了请求预算，可能是 Max Tokens 或上下文过大。 (debug: 2000000 max_tokens, ~79 est input tokens)"

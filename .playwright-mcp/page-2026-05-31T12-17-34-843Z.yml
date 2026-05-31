@@ -1,0 +1,178 @@
+- generic [ref=e12]:
+  - banner [ref=e13]:
+    - button "历史会话" [ref=e14] [cursor=pointer]:
+      - img [ref=e15]
+    - generic [ref=e16] [cursor=pointer]:
+      - generic [ref=e17]: 开始故事
+      - generic [ref=e18]:
+        - generic [ref=e19]: DeepSeek
+        - generic [ref=e20]: deepseek-v4-pro
+        - generic [ref=e21]: 0 条消息 · ~0 字符
+    - button "背景" [ref=e22] [cursor=pointer]:
+      - img [ref=e23]
+    - button "设置" [ref=e27] [cursor=pointer]:
+      - img [ref=e28]
+  - complementary [ref=e99]:
+    - generic [ref=e100]:
+      - heading "设置" [level=2] [ref=e101]
+      - button "关闭" [ref=e102] [cursor=pointer]:
+        - img [ref=e103]
+    - generic [ref=e106]:
+      - generic [ref=e107]:
+        - generic [ref=e108]: 服务商
+        - combobox [ref=e109] [cursor=pointer]:
+          - option "OpenAI"
+          - option "xAI / Grok"
+          - option "DeepSeek" [selected]
+          - option "OpenRouter"
+          - option "Groq"
+          - option "Moonshot (Kimi)"
+          - option "智谱 (GLM)"
+          - option "SiliconFlow"
+      - generic [ref=e110]:
+        - generic [ref=e111]: DeepSeek API Key
+        - generic [ref=e112]:
+          - textbox "sk-..." [ref=e113]: sk-14d3df5a1d6a4c8a981b4624859886b3
+          - button "显示/隐藏" [ref=e114] [cursor=pointer]:
+            - img [ref=e115]
+        - generic [ref=e118]: 在 DeepSeek 平台获取，仅保存在本地浏览器
+      - generic [ref=e119]:
+        - generic [ref=e120]: 模型
+        - combobox [ref=e121] [cursor=pointer]:
+          - option "-- 选择模型 --"
+          - option "deepseek-v4-flash"
+          - option "deepseek-v4-pro" [selected]
+        - generic [ref=e122]: 共 2 个可用模型，最后更新：20:17:33
+        - button "刷新模型列表" [ref=e123] [cursor=pointer]
+      - generic [ref=e124]:
+        - generic [ref=e125]: 自定义模型名（可选）
+        - textbox "留空使用上方选择的模型" [ref=e126]
+      - generic [ref=e127]:
+        - generic [ref=e128]: 聊天背景
+        - generic [ref=e129]:
+          - button "默认" [ref=e130] [cursor=pointer]
+          - button "海洋" [ref=e131] [cursor=pointer]
+          - button "日落" [ref=e132] [cursor=pointer]
+          - button "森林" [ref=e133] [cursor=pointer]
+          - button "墨蓝" [ref=e134] [cursor=pointer]
+          - button "炭灰" [ref=e135] [cursor=pointer]
+        - button "从相册选择" [ref=e137] [cursor=pointer]
+        - generic [ref=e138]:
+          - generic [ref=e139]: 背景透明度
+          - slider [ref=e140] [cursor=pointer]: "35"
+      - generic [ref=e141]:
+        - generic [ref=e142]: System Prompt
+        - textbox "设置 AI 的行为和角色…" [ref=e143]
+      - generic [ref=e144]:
+        - generic [ref=e145]: Temperature 0.7
+        - slider [ref=e146] [cursor=pointer]: "0.7"
+      - generic [ref=e147]:
+        - generic [ref=e148]: Top P 1
+        - slider [ref=e149] [cursor=pointer]: "1"
+      - generic [ref=e150]:
+        - generic [ref=e151]: Max Tokens
+        - spinbutton [ref=e152]: "2000000"
+        - generic [ref=e153]: 最大输出限制：384,000
+        - generic [ref=e154]: ⛔ 超过限制，无法发送。请调低。
+      - generic [ref=e156]: 流式输出 (Stream)
+      - generic [ref=e160]:
+        - text: 提示缓存 (Caching)
+        - generic [ref=e161]: Claude 模型缓存系统提示和对话前缀，大幅降低费用
+      - generic [ref=e165]:
+        - text: 精确模式 (Anti-Hallucination)
+        - generic [ref=e166]: 低温 + 严谨 System Prompt，减少幻觉
+      - generic [ref=e170]:
+        - generic [ref=e171]: 世界故事模式
+        - text: 开启后显示世界观、角色卡、NPC、状态、规则和剧情分支面板，适合写文、角色扮演和世界开局。
+      - generic [ref=e175]:
+        - text: 自动压缩上下文
+        - generic [ref=e176]: 对话过长时自动总结旧消息，保持上下文窗口可控
+      - generic [ref=e180]:
+        - text: 思考完成后保持展开
+        - generic [ref=e181]: AI 回复完成后 reasoning / 思考过程 details 保持展开状态
+      - generic [ref=e184]:
+        - generic [ref=e185]:
+          - text: 状态卡详细度
+          - generic [ref=e186]: 控制 AI 回复末尾人物状态/身体细节/剧情走向的描述细腻程度
+        - combobox [ref=e187] [cursor=pointer]:
+          - option "低 — 简洁"
+          - option "中 — 清楚"
+          - option "高 — 细腻"
+          - option "超高 — 丰富" [selected]
+      - generic [ref=e188]:
+        - generic [ref=e189]: 消息操作按钮（可自定义提示词）
+        - generic [ref=e190]:
+          - textbox "重新生成" [ref=e191]
+          - textbox "继续生成" [ref=e192]
+          - textbox "生成摘要" [ref=e193]
+          - textbox "深入探讨" [ref=e194]
+        - generic [ref=e195]: 修改按钮对应的提示词，留空使用默认
+      - generic [ref=e196]:
+        - generic [ref=e197]: 工具调用（实验中）
+        - combobox [disabled] [ref=e198] [cursor=pointer]:
+          - option "0 - 关闭" [disabled] [selected]
+        - generic [ref=e199]: 当前网页端未执行外部工具调用，入口已锁定为关闭，避免误触发循环或额外费用。
+  - main [ref=e31]:
+    - generic [ref=e32]:
+      - generic [ref=e33] [cursor=pointer]:
+        - img [ref=e34]
+        - generic [ref=e37]: 世界故事
+        - generic [ref=e38]: ▾
+      - generic:
+        - generic [ref=e39]:
+          - button "世界观" [ref=e40] [cursor=pointer]
+          - button "主角" [ref=e41] [cursor=pointer]
+          - button "NPC图鉴" [ref=e42] [cursor=pointer]
+          - button "状态" [ref=e43] [cursor=pointer]
+          - button "规则/提示" [ref=e44] [cursor=pointer]
+        - generic [ref=e45]:
+          - paragraph [ref=e46]: 先写这个世界的基本背景、地点、时代、氛围和限制。越具体，AI 越容易稳定开局。
+          - generic [ref=e47]:
+            - generic [ref=e48]: 开局名称
+            - textbox "雨夜旧城 / 星港醒来 / 学院报到" [ref=e49]: 测试
+          - generic [ref=e50]:
+            - generic [ref=e51]: 世界背景
+            - textbox "这个世界的背景设定、当前场景…" [ref=e52]: 测试世界
+          - generic [ref=e53]:
+            - generic [ref=e54]: 地点清单
+            - textbox "一行一个地点" [ref=e55]
+          - generic [ref=e56]:
+            - generic [ref=e57]: 故事基调
+            - generic [ref=e58]:
+              - button "悬疑" [ref=e59] [cursor=pointer]
+              - button "温柔" [ref=e60] [cursor=pointer]
+              - button "冒险" [ref=e61] [cursor=pointer]
+              - button "日常" [ref=e62] [cursor=pointer]
+              - button "紧张" [ref=e63] [cursor=pointer]
+              - button "奇幻" [ref=e64] [cursor=pointer]
+              - button "科幻" [ref=e65] [cursor=pointer]
+          - generic [ref=e66]:
+            - generic [ref=e67]: 备注
+            - textbox "其他补充…" [ref=e68]
+    - generic [ref=e70]:
+      - img [ref=e72]
+      - heading "OmniChat" [level=3] [ref=e74]
+      - paragraph [ref=e75]: 支持 OpenAI、xAI / Grok、DeepSeek、OpenRouter 等多服务商聊天
+      - generic [ref=e76]:
+        - generic [ref=e77]: 1. DeepSeek API Key 已就绪
+        - generic [ref=e78]: 2. 模型已选择：deepseek-v4-pro
+      - generic [ref=e79]:
+        - button "调整设置" [ref=e80] [cursor=pointer]
+        - button "查看历史" [ref=e81] [cursor=pointer]
+      - paragraph [ref=e82]: 配置已完成，直接在下方输入消息开始对话
+      - paragraph [ref=e83]: API Key 只保存在当前浏览器 localStorage。请勿在公共设备上使用。
+  - contentinfo [ref=e84]:
+    - generic [ref=e85]:
+      - button "新对话" [ref=e86] [cursor=pointer]
+      - button "清空本聊" [ref=e87] [cursor=pointer]
+      - button "撤回一轮" [ref=e88] [cursor=pointer]
+      - button "复制回复" [ref=e89] [cursor=pointer]
+      - button "精确" [ref=e90] [cursor=pointer]
+      - button "导出本聊" [ref=e91] [cursor=pointer]
+      - button "生成提示词" [ref=e92] [cursor=pointer]
+      - generic "世界故事模式已开启": 世界故事 ON
+    - generic [ref=e93]:
+      - textbox "输入剧情行动或选择 A/B/C/D…" [ref=e94]: hi
+      - button "发送消息" [active] [ref=e95] [cursor=pointer]:
+        - img [ref=e96]
+  - generic [ref=e200]: 超过当前服务商最大输出限制 (384,000)，请调低。

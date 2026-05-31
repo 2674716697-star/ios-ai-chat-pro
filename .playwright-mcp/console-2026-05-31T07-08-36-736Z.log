@@ -1,0 +1,10 @@
+[      14ms] ReferenceError: getToolCallSettings is not defined
+    at http://localhost:3457/omnichat.html:4498:1
+    at http://localhost:3457/omnichat.html:4509:3
+[      25ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://localhost:3457/omnichat.html:0
+[   78467ms] [WARNING] [OmniChat] Scene mode reply has no @@SCENE block. @ http://localhost:3457/omnichat.html:3225
+[   78466ms] TypeError: Cannot read properties of undefined (reading 'length')
+    at fullRenderMessages (http://localhost:3457/omnichat.html:1801:30)
+    at http://localhost:3457/omnichat.html:3242:46
+    at preserveScrollPosition (http://localhost:3457/omnichat.html:2069:1)
+    at sendMessage (http://localhost:3457/omnichat.html:3242:1)

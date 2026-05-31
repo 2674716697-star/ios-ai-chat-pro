@@ -1,0 +1,150 @@
+- generic [ref=e12]:
+  - banner [ref=e13]:
+    - button "历史会话" [ref=e14] [cursor=pointer]:
+      - img [ref=e15]
+    - generic [ref=e16] [cursor=pointer]:
+      - generic [ref=e17]: Hello! This is a smoke t…
+      - generic [ref=e18]:
+        - generic [ref=e19]: DeepSeek
+        - generic [ref=e20]: deepseek-v4-pro
+        - generic [ref=e21]: 2 条消息 · ~71 字符
+    - button "背景" [ref=e22] [cursor=pointer]:
+      - img [ref=e23]
+    - button "设置" [active] [ref=e27] [cursor=pointer]:
+      - img [ref=e28]
+  - complementary [ref=e74]:
+    - generic [ref=e75]:
+      - heading "设置" [level=2] [ref=e76]
+      - button "关闭" [ref=e77] [cursor=pointer]:
+        - img [ref=e78]
+    - generic [ref=e81]:
+      - generic [ref=e82]:
+        - generic [ref=e83]: 服务商
+        - combobox [ref=e84] [cursor=pointer]:
+          - option "OpenAI"
+          - option "xAI / Grok"
+          - option "DeepSeek" [selected]
+          - option "OpenRouter"
+          - option "Groq"
+          - option "Moonshot (Kimi)"
+          - option "智谱 (GLM)"
+          - option "SiliconFlow"
+      - generic [ref=e85]:
+        - generic [ref=e86]: DeepSeek API Key
+        - generic [ref=e87]:
+          - textbox "sk-..." [ref=e88]: sk-14d3df5a1d6a4c8a981b4624859886b3
+          - button "显示/隐藏" [ref=e89] [cursor=pointer]:
+            - img [ref=e90]
+        - generic [ref=e93]: 在 DeepSeek 平台获取，仅保存在本地浏览器
+      - generic [ref=e94]:
+        - generic [ref=e95]: 模型
+        - combobox [ref=e96] [cursor=pointer]:
+          - option "-- 选择模型 --"
+          - option "deepseek-v4-flash"
+          - option "deepseek-v4-pro" [selected]
+        - generic [ref=e97]: 共 2 个可用模型，最后更新：19:24:48
+        - button "刷新模型列表" [ref=e98] [cursor=pointer]
+      - generic [ref=e99]:
+        - generic [ref=e100]: 自定义模型名（可选）
+        - textbox "留空使用上方选择的模型" [ref=e101]
+      - generic [ref=e102]:
+        - generic [ref=e103]: 聊天背景
+        - generic [ref=e104]:
+          - button "默认" [ref=e105] [cursor=pointer]
+          - button "海洋" [ref=e106] [cursor=pointer]
+          - button "日落" [ref=e107] [cursor=pointer]
+          - button "森林" [ref=e108] [cursor=pointer]
+          - button "墨蓝" [ref=e109] [cursor=pointer]
+          - button "炭灰" [ref=e110] [cursor=pointer]
+        - button "从相册选择" [ref=e112] [cursor=pointer]
+        - generic [ref=e113]:
+          - generic [ref=e114]: 背景透明度
+          - slider [ref=e115] [cursor=pointer]: "35"
+      - generic [ref=e116]:
+        - generic [ref=e117]: System Prompt
+        - textbox "设置 AI 的行为和角色…" [ref=e118]
+      - generic [ref=e119]:
+        - generic [ref=e120]: Temperature 0.9
+        - slider [ref=e121] [cursor=pointer]: "0.9"
+      - generic [ref=e122]:
+        - generic [ref=e123]: Top P 1
+        - slider [ref=e124] [cursor=pointer]: "1"
+      - generic [ref=e125]:
+        - generic [ref=e126]: Max Tokens
+        - spinbutton [ref=e127]: "2000"
+      - generic [ref=e129]: 流式输出 (Stream)
+      - generic [ref=e133]:
+        - text: 提示缓存 (Caching)
+        - generic [ref=e134]: Claude 模型缓存系统提示和对话前缀，大幅降低费用
+      - generic [ref=e138]:
+        - text: 精确模式 (Anti-Hallucination)
+        - generic [ref=e139]: 低温 + 严谨 System Prompt，减少幻觉
+      - generic [ref=e143]:
+        - generic [ref=e144]: 世界故事模式
+        - text: 开启后显示世界观、角色卡、NPC、状态、规则和剧情分支面板，适合写文、角色扮演和世界开局。
+      - generic [ref=e148]:
+        - text: 自动压缩上下文
+        - generic [ref=e149]: 对话过长时自动总结旧消息，保持上下文窗口可控
+      - generic [ref=e153]:
+        - text: 思考完成后保持展开
+        - generic [ref=e154]: AI 回复完成后 reasoning / 思考过程 details 保持展开状态
+      - generic [ref=e157]:
+        - generic [ref=e158]:
+          - text: 状态卡详细度
+          - generic [ref=e159]: 控制 AI 回复末尾人物状态/身体细节/剧情走向的描述细腻程度
+        - combobox [ref=e160] [cursor=pointer]:
+          - option "低 — 简洁"
+          - option "中 — 清楚" [selected]
+          - option "高 — 细腻"
+          - option "超高 — 丰富"
+      - generic [ref=e161]:
+        - generic [ref=e162]: 消息操作按钮（可自定义提示词）
+        - generic [ref=e163]:
+          - textbox "重新生成" [ref=e164]
+          - textbox "继续生成" [ref=e165]
+          - textbox "生成摘要" [ref=e166]
+          - textbox "深入探讨" [ref=e167]
+        - generic [ref=e168]: 修改按钮对应的提示词，留空使用默认
+      - generic [ref=e169]:
+        - generic [ref=e170]: 工具调用（实验中）
+        - combobox [disabled] [ref=e171] [cursor=pointer]:
+          - option "0 - 关闭" [disabled] [selected]
+        - generic [ref=e172]: 当前网页端未执行外部工具调用，入口已锁定为关闭，避免误触发循环或额外费用。
+  - main [ref=e31]:
+    - generic [ref=e32]:
+      - generic [ref=e33]:
+        - generic [ref=e34]: You
+        - generic [ref=e35]: Hello! This is a smoke test message. Reply with just "OK" to confirm.
+      - generic [ref=e36]:
+        - generic [ref=e37]: AI
+        - generic [ref=e38]:
+          - group [ref=e39]:
+            - generic "思考过程" [ref=e40] [cursor=pointer]
+            - generic [ref=e41]: "We are asked to do a smoke test: \"Hello! This is a smoke test message. Reply with just 'OK' to confirm.\" I need to reply with exactly \"OK\" and nothing else."
+          - generic [ref=e42]: OK
+          - generic [ref=e43]: "Tokens: 57 入 + 43 出 = 100 总 (含 41 思考)"
+          - generic [ref=e44]:
+            - button "重新生成" [ref=e45] [cursor=pointer]:
+              - img [ref=e46]
+              - text: 重新生成
+            - button "继续生成" [ref=e49] [cursor=pointer]:
+              - img [ref=e50]
+              - text: 继续生成
+            - button "生成摘要" [ref=e52] [cursor=pointer]:
+              - img [ref=e53]
+              - text: 生成摘要
+            - button "深入探讨" [ref=e56] [cursor=pointer]:
+              - img [ref=e57]
+              - text: 深入探讨
+  - contentinfo [ref=e60]:
+    - generic [ref=e61]:
+      - button "新对话" [ref=e62] [cursor=pointer]
+      - button "清空本聊" [ref=e63] [cursor=pointer]
+      - button "撤回一轮" [ref=e64] [cursor=pointer]
+      - button "复制回复" [ref=e65] [cursor=pointer]
+      - button "精确" [ref=e66] [cursor=pointer]
+      - button "导出本聊" [ref=e67] [cursor=pointer]
+    - generic [ref=e68]:
+      - textbox "输入消息…" [ref=e69]
+      - button "发送消息" [ref=e70] [cursor=pointer]:
+        - img [ref=e71]

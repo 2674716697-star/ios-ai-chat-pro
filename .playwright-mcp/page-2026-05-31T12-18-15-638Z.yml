@@ -1,0 +1,89 @@
+- generic [ref=e12]:
+  - banner [ref=e13]:
+    - button "历史会话" [ref=e14] [cursor=pointer]:
+      - img [ref=e15]
+    - generic [ref=e16] [cursor=pointer]:
+      - generic [ref=e17]: hi
+      - generic [ref=e18]:
+        - generic [ref=e19]: DeepSeek
+        - generic [ref=e20]: deepseek-v4-pro
+        - generic [ref=e21]: 1 条消息 · ~2 字符
+    - button "背景" [ref=e22] [cursor=pointer]:
+      - img [ref=e23]
+    - button "设置" [ref=e27] [cursor=pointer]:
+      - img [ref=e28]
+  - option "OpenAI" [selected]
+  - option "xAI / Grok"
+  - option "DeepSeek"
+  - option "OpenRouter"
+  - option "Groq"
+  - option "Moonshot (Kimi)"
+  - option "智谱 (GLM)"
+  - option "SiliconFlow"
+  - option "低 — 简洁"
+  - option "中 — 清楚" [selected]
+  - option "高 — 细腻"
+  - option "超高 — 丰富"
+  - option "0 - 关闭" [disabled] [selected]
+  - main [ref=e31]:
+    - generic [ref=e32]:
+      - generic [ref=e33] [cursor=pointer]:
+        - img [ref=e34]
+        - generic [ref=e37]: 世界故事
+        - generic [ref=e38]: ▾
+      - generic:
+        - generic [ref=e39]:
+          - button "世界观" [ref=e40] [cursor=pointer]
+          - button "主角" [ref=e41] [cursor=pointer]
+          - button "NPC图鉴" [ref=e42] [cursor=pointer]
+          - button "状态" [ref=e43] [cursor=pointer]
+          - button "规则/提示" [ref=e44] [cursor=pointer]
+        - generic [ref=e45]:
+          - paragraph [ref=e46]: 先写这个世界的基本背景、地点、时代、氛围和限制。越具体，AI 越容易稳定开局。
+          - generic [ref=e47]:
+            - generic [ref=e48]: 开局名称
+            - textbox "雨夜旧城 / 星港醒来 / 学院报到" [ref=e49]: 测试
+          - generic [ref=e50]:
+            - generic [ref=e51]: 世界背景
+            - textbox "这个世界的背景设定、当前场景…" [ref=e52]: 测试世界
+          - generic [ref=e53]:
+            - generic [ref=e54]: 地点清单
+            - textbox "一行一个地点" [ref=e55]
+          - generic [ref=e56]:
+            - generic [ref=e57]: 故事基调
+            - generic [ref=e58]:
+              - button "悬疑" [ref=e59] [cursor=pointer]
+              - button "温柔" [ref=e60] [cursor=pointer]
+              - button "冒险" [ref=e61] [cursor=pointer]
+              - button "日常" [ref=e62] [cursor=pointer]
+              - button "紧张" [ref=e63] [cursor=pointer]
+              - button "奇幻" [ref=e64] [cursor=pointer]
+              - button "科幻" [ref=e65] [cursor=pointer]
+          - generic [ref=e66]:
+            - generic [ref=e67]: 备注
+            - textbox "其他补充…" [ref=e68]
+    - generic [ref=e69]:
+      - generic [ref=e98]:
+        - generic [ref=e99]: You
+        - generic [ref=e100]: hi
+      - generic [ref=e101]:
+        - generic [ref=e102]: AI
+        - generic [ref=e103]:
+          - group [ref=e104]:
+            - generic "思考过程" [ref=e105] [cursor=pointer]
+            - generic [ref=e106]: 我们被要求根据角色卡和世界设定进行互动。角色卡是“测”，身份是“测试者”，世界设定是“测试世界”。用户输入“hi”，这是简单的打招呼。我们需要以角色身份回复，并在末尾输出@@SCENE块。由于是初次互动，我们需要建立初始场景。按照规则，我们需要在回复里基于刚刚写出的正文更新状态。但这是开场，我们可以写一个简单的开场白，然后构造初始状态。世界设定很简短，我们可以发挥，但保持简单，毕竟测试世界。可以描述测在一个测试房间醒来，或者类似。然后输出状态块。注意格式要求：精神评分、身体细节至少2条、走向4条等。我们将创建一个初始场景：测站在一个空旷的白色房间里，感觉有点困惑。然后输出状态。
+          - generic [ref=e107]: 测站在一片纯白空间中，四周没有墙壁也没有天花板，脚下却是坚实的平面。他低头看了看自己的双手——一切都显得格外真实，却又透着某种人为的
+  - contentinfo [ref=e84]:
+    - generic [ref=e85]:
+      - button "新对话" [ref=e86] [cursor=pointer]
+      - button "清空本聊" [ref=e87] [cursor=pointer]
+      - button "撤回一轮" [ref=e88] [cursor=pointer]
+      - button "复制回复" [ref=e89] [cursor=pointer]
+      - button "精确" [ref=e90] [cursor=pointer]
+      - button "导出本聊" [ref=e91] [cursor=pointer]
+      - button "生成提示词" [ref=e92] [cursor=pointer]
+      - generic "世界故事模式已开启": 世界故事 ON
+    - generic [ref=e93]:
+      - textbox "输入剧情行动或选择 A/B/C/D…" [disabled] [ref=e94]
+      - button "停止生成" [ref=e108] [cursor=pointer]:
+        - img [ref=e109]

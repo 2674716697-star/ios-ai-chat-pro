@@ -1,0 +1,10 @@
+[      27ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://localhost:8080/omnichat.html?debugBudget=1:0
+[   16501ms] [LOG] Provider: deepseek | Model: deepseek-v4-pro | Stream: true @ http://localhost:8080/omnichat.html?debugBudget=1:3367
+[   16501ms] [LOG] Story: off  | Detail: medium @ http://localhost:8080/omnichat.html?debugBudget=1:3368
+[   16501ms] [LOG] MaxTokens (user): 2000 | (request): 2000 @ http://localhost:8080/omnichat.html?debugBudget=1:3369
+[   16501ms] [LOG] Messages (conv/request): 2 / 2 @ http://localhost:8080/omnichat.html?debugBudget=1:3370
+[   16501ms] [LOG] Chars — sys: 172 hist: 2 hidden: 0 total: 174 @ http://localhost:8080/omnichat.html?debugBudget=1:3371
+[   16501ms] [LOG] Est tokens — input: 58 total: 2058 @ http://localhost:8080/omnichat.html?debugBudget=1:3372
+[   16501ms] [LOG] Body JSON: 334 bytes @ http://localhost:8080/omnichat.html?debugBudget=1:3373
+[   16501ms] [LOG] ScenePrompt: false WorldCard: false HiddenContent: false @ http://localhost:8080/omnichat.html?debugBudget=1:3374
+[   16501ms] [LOG] AutoCompress: false | ShouldCompact: false | CompactTriggered: false | RecentMsgs: 1 @ http://localhost:8080/omnichat.html?debugBudget=1:3375

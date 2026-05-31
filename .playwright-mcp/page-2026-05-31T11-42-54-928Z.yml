@@ -1,0 +1,73 @@
+- generic [ref=e1]:
+  - generic [ref=e12]:
+    - banner [ref=e13]:
+      - button "历史会话" [ref=e14] [cursor=pointer]:
+        - img [ref=e15]
+      - generic [ref=e16] [cursor=pointer]:
+        - generic [ref=e17]: Hello! This is a smoke t…
+        - generic [ref=e18]:
+          - generic [ref=e19]: DeepSeek
+          - generic [ref=e20]: deepseek-v4-pro
+          - generic [ref=e21]: 2 条消息 · ~71 字符
+      - button "背景" [ref=e22] [cursor=pointer]:
+        - img [ref=e23]
+      - button "设置" [ref=e27] [cursor=pointer]:
+        - img [ref=e28]
+    - option "OpenAI" [selected]
+    - option "xAI / Grok"
+    - option "DeepSeek"
+    - option "OpenRouter"
+    - option "Groq"
+    - option "Moonshot (Kimi)"
+    - option "智谱 (GLM)"
+    - option "SiliconFlow"
+    - option "低 — 简洁"
+    - option "中 — 清楚" [selected]
+    - option "高 — 细腻"
+    - option "超高 — 丰富"
+    - option "0 - 关闭" [disabled] [selected]
+    - main [ref=e31]:
+      - generic [ref=e69]:
+        - generic [ref=e295]:
+          - generic [ref=e296]: You
+          - generic [ref=e297]: Hello! This is a smoke test message. Reply with just "OK" to confirm.
+        - generic [ref=e298]:
+          - generic [ref=e299]: AI
+          - generic [ref=e300]:
+            - group [ref=e301]:
+              - generic "思考过程" [ref=e302] [cursor=pointer]
+              - generic [ref=e303]: "We are asked to do a smoke test: \"Hello! This is a smoke test message. Reply with just 'OK' to confirm.\" I need to reply with exactly \"OK\" and nothing else."
+            - generic [ref=e304]: OK
+            - generic [ref=e305]: "Tokens: 57 入 + 43 出 = 100 总 (含 41 思考)"
+            - generic [ref=e306]:
+              - button "重新生成" [ref=e307] [cursor=pointer]:
+                - img [ref=e308]
+                - text: 重新生成
+              - button "继续生成" [ref=e311] [cursor=pointer]:
+                - img [ref=e312]
+                - text: 继续生成
+              - button "生成摘要" [ref=e314] [cursor=pointer]:
+                - img [ref=e315]
+                - text: 生成摘要
+              - button "深入探讨" [ref=e318] [cursor=pointer]:
+                - img [ref=e319]
+                - text: 深入探讨
+    - contentinfo [ref=e185]:
+      - generic [ref=e186]:
+        - button "新对话" [ref=e187] [cursor=pointer]
+        - button "清空本聊" [ref=e188] [cursor=pointer]
+        - button "撤回一轮" [ref=e189] [cursor=pointer]
+        - button "复制回复" [ref=e190] [cursor=pointer]
+        - button "精确" [ref=e191] [cursor=pointer]
+        - button "导出本聊" [ref=e192] [cursor=pointer]
+      - generic [ref=e194]:
+        - textbox "输入消息…" [ref=e213]
+        - button "发送消息" [ref=e196] [cursor=pointer]:
+          - img [ref=e197]
+  - generic [ref=e323]:
+    - generic [ref=e324]:
+      - generic [ref=e325]: 重命名会话
+      - textbox "输入新标题" [active] [ref=e326]: Hello! This is a smoke t…
+    - generic [ref=e327]:
+      - button "取消" [ref=e328] [cursor=pointer]
+      - button "确认" [ref=e329] [cursor=pointer]

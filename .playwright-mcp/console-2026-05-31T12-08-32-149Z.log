@@ -1,0 +1,13 @@
+[      27ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://localhost:8080/omnichat.html?debugBudget=1:0
+[   14378ms] [LOG] Provider: deepseek | Model: deepseek-v4-pro | Stream: true @ http://localhost:8080/omnichat.html?debugBudget=1:3367
+[   14378ms] [LOG] Story: enabled started | Detail: ultra @ http://localhost:8080/omnichat.html?debugBudget=1:3368
+[   14378ms] [LOG] MaxTokens (user): 2000000 | (request): 2000000 @ http://localhost:8080/omnichat.html?debugBudget=1:3369
+[   14378ms] [LOG] Messages (conv/request): 2 / 3 @ http://localhost:8080/omnichat.html?debugBudget=1:3370
+[   14379ms] [LOG] Chars — sys: 2829 hist: 4 hidden: 0 total: 2833 @ http://localhost:8080/omnichat.html?debugBudget=1:3371
+[   14379ms] [LOG] Est tokens — input: 945 total: 2000945 @ http://localhost:8080/omnichat.html?debugBudget=1:3372
+[   14379ms] [LOG] Body JSON: 3108 bytes @ http://localhost:8080/omnichat.html?debugBudget=1:3373
+[   14379ms] [LOG] ScenePrompt: true WorldCard: true HiddenContent: false @ http://localhost:8080/omnichat.html?debugBudget=1:3374
+[   14379ms] [LOG] AutoCompress: false | ShouldCompact: false | CompactTriggered: false | RecentMsgs: 1 @ http://localhost:8080/omnichat.html?debugBudget=1:3375
+[   14592ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://api.deepseek.com/chat/completions:0
+[   14592ms] [WARNING] [OmniChat Budget Error] {status: 400, statusText: , errSnippet: {"error":{"message":"Invalid max_tokens value, the…or","param":null,"code":"invalid_request_error"}}, provider: deepseek, model: deepseek-v4-pro} @ http://localhost:8080/omnichat.html?debugBudget=1:3614
+[   14593ms] [TABLE] {hasSceneBlock: false, hasSceneSnapshot: false, directionsCount: 0, contentLength: 0, reasoningLength: 0, finishReason: null, truncated: false, fallbackApplied: false} @ http://localhost:8080/omnichat.html?debugBudget=1:3777

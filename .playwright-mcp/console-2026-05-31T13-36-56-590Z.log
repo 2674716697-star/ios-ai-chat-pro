@@ -1,0 +1,15 @@
+[      26ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://localhost:8080/omnichat.html?v=strip-test:0
+[  197283ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://api.deepseek.com/chat/completions:0
+[  279869ms] [WARNING] [OmniChat] Story response missing: mental/心理, body/身体 @ http://localhost:8080/omnichat.html?v=strip-test:3863
+[  342478ms] [WARNING] [OmniChat] Scene mode reply has no @@SCENE block. @ http://localhost:8080/omnichat.html?v=strip-test:3841
+[  342478ms] [WARNING] [OmniChat] Story response missing: body/身体, sceneSnapshot, directions @ http://localhost:8080/omnichat.html?v=strip-test:3863
+[  342478ms] [WARNING] [OmniChat] Scene directions fallback applied (0 → 4). @ http://localhost:8080/omnichat.html?v=strip-test:3893
+[  343295ms] [WARNING] [OmniChat] Scene mode reply has no @@SCENE block. @ http://localhost:8080/omnichat.html?v=strip-test:3841
+[  343295ms] [WARNING] [OmniChat] Story response missing: sceneSnapshot, directions @ http://localhost:8080/omnichat.html?v=strip-test:3863
+[  343295ms] [WARNING] [OmniChat] Scene directions fallback applied (0 → 4). @ http://localhost:8080/omnichat.html?v=strip-test:3893
+[  344108ms] [WARNING] [OmniChat] Scene mode reply has no @@SCENE block. @ http://localhost:8080/omnichat.html?v=strip-test:3841
+[  344108ms] [WARNING] [OmniChat] Story response missing: mental/心理, body/身体, sceneSnapshot, directions @ http://localhost:8080/omnichat.html?v=strip-test:3863
+[  344108ms] [WARNING] [OmniChat] Scene directions fallback applied (0 → 4). @ http://localhost:8080/omnichat.html?v=strip-test:3893
+[  344911ms] [WARNING] [OmniChat] Scene mode reply has no @@SCENE block. @ http://localhost:8080/omnichat.html?v=strip-test:3841
+[  344911ms] [WARNING] [OmniChat] Story response missing: mental/心理, body/身体, sceneSnapshot, directions @ http://localhost:8080/omnichat.html?v=strip-test:3863
+[  344911ms] [WARNING] [OmniChat] Scene directions fallback applied (0 → 4). @ http://localhost:8080/omnichat.html?v=strip-test:3893

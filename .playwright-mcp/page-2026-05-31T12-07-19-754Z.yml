@@ -1,0 +1,65 @@
+- generic [ref=e12]:
+  - banner [ref=e13]:
+    - button "历史会话" [ref=e14] [cursor=pointer]:
+      - img [ref=e15]
+    - generic [ref=e16] [cursor=pointer]:
+      - generic [ref=e17]: hi
+      - generic [ref=e18]:
+        - generic [ref=e19]: DeepSeek
+        - generic [ref=e20]: deepseek-v4-pro
+        - generic [ref=e21]: 2 条消息 · ~36 字符
+    - button "背景" [ref=e22] [cursor=pointer]:
+      - img [ref=e23]
+    - button "设置" [ref=e27] [cursor=pointer]:
+      - img [ref=e28]
+  - option "OpenAI" [selected]
+  - option "xAI / Grok"
+  - option "DeepSeek"
+  - option "OpenRouter"
+  - option "Groq"
+  - option "Moonshot (Kimi)"
+  - option "智谱 (GLM)"
+  - option "SiliconFlow"
+  - option "低 — 简洁"
+  - option "中 — 清楚" [selected]
+  - option "高 — 细腻"
+  - option "超高 — 丰富"
+  - option "0 - 关闭" [disabled] [selected]
+  - main [ref=e31]:
+    - generic [ref=e32]:
+      - generic [ref=e60]:
+        - generic [ref=e61]: You
+        - generic [ref=e62]: hi
+      - generic [ref=e63]:
+        - generic [ref=e64]: AI
+        - generic [ref=e65]:
+          - group [ref=e66]:
+            - generic "思考过程" [ref=e67] [cursor=pointer]
+            - generic [ref=e68]: We need to respond with a friendly greeting. The user said "hi". I should respond in a helpful, accurate manner, as per system prompt. I'll just say hello and ask how I can help.
+          - generic [ref=e69]: Hello! How can I assist you today?
+          - generic [ref=e70]: "Tokens: 40 入 + 52 出 = 92 总 (含 42 思考)"
+          - generic [ref=e71]:
+            - button "重新生成" [ref=e72] [cursor=pointer]:
+              - img [ref=e73]
+              - text: 重新生成
+            - button "继续生成" [ref=e76] [cursor=pointer]:
+              - img [ref=e77]
+              - text: 继续生成
+            - button "生成摘要" [ref=e79] [cursor=pointer]:
+              - img [ref=e80]
+              - text: 生成摘要
+            - button "深入探讨" [ref=e83] [cursor=pointer]:
+              - img [ref=e84]
+              - text: 深入探讨
+  - contentinfo [ref=e47]:
+    - generic [ref=e48]:
+      - button "新对话" [ref=e49] [cursor=pointer]
+      - button "清空本聊" [ref=e50] [cursor=pointer]
+      - button "撤回一轮" [ref=e51] [cursor=pointer]
+      - button "复制回复" [ref=e52] [cursor=pointer]
+      - button "精确" [ref=e53] [cursor=pointer]
+      - button "导出本聊" [ref=e54] [cursor=pointer]
+    - generic [ref=e55]:
+      - textbox "输入消息…" [ref=e56]
+      - button "发送消息" [ref=e57] [cursor=pointer]:
+        - img [ref=e58]

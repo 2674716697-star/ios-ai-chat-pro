@@ -1,0 +1,3 @@
+[     840ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ https://2674716697-star.github.io/omnichat/omnichat.html?debugBudget=1:0
+[    1196ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://2674716697-star.github.io/favicon.ico:0
+[    1445ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ https://2674716697-star.github.io/omnichat/omnichat.html?debugBudget=1:0

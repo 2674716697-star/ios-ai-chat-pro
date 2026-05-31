@@ -1,0 +1,68 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - button "历史会话" [ref=e4] [cursor=pointer]:
+      - img [ref=e5]
+    - generic [ref=e6] [cursor=pointer]:
+      - generic [ref=e7]: Hello! This is a smoke t…
+      - generic [ref=e8]:
+        - generic [ref=e9]: DeepSeek
+        - generic [ref=e10]: deepseek-v4-pro
+        - generic [ref=e11]: 2 条消息 · ~71 字符
+    - button "背景" [ref=e12] [cursor=pointer]:
+      - img [ref=e13]
+    - button "设置" [ref=e17] [cursor=pointer]:
+      - img [ref=e18]
+  - option "OpenAI"
+  - option "xAI / Grok"
+  - option "DeepSeek" [selected]
+  - option "OpenRouter"
+  - option "Groq"
+  - option "Moonshot (Kimi)"
+  - option "智谱 (GLM)"
+  - option "SiliconFlow"
+  - option "-- 选择模型 --"
+  - option "deepseek-v4-flash"
+  - option "deepseek-v4-pro" [selected]
+  - option "低 — 简洁"
+  - option "中 — 清楚"
+  - option "高 — 细腻"
+  - option "超高 — 丰富" [selected]
+  - option "0 - 关闭" [disabled] [selected]
+  - main [ref=e21]:
+    - generic [ref=e22]:
+      - generic [ref=e238]:
+        - generic [ref=e239]: You
+        - generic [ref=e240]: Hello! This is a smoke test message. Reply with just "OK" to confirm.
+      - generic [ref=e241]:
+        - generic [ref=e242]: AI
+        - generic [ref=e243]:
+          - group [ref=e244]:
+            - generic "思考过程" [ref=e245] [cursor=pointer]
+            - generic [ref=e246]: "We are asked to do a smoke test: \"Hello! This is a smoke test message. Reply with just 'OK' to confirm.\" I need to reply with exactly \"OK\" and nothing else."
+          - generic [ref=e247]: OK
+          - generic [ref=e248]: "Tokens: 57 入 + 43 出 = 100 总 (含 41 思考)"
+          - generic [ref=e249]:
+            - button "重新生成" [ref=e250] [cursor=pointer]:
+              - img [ref=e251]
+              - text: 重新生成
+            - button "继续生成" [ref=e254] [cursor=pointer]:
+              - img [ref=e255]
+              - text: 继续生成
+            - button "生成摘要" [ref=e257] [cursor=pointer]:
+              - img [ref=e258]
+              - text: 生成摘要
+            - button "深入探讨" [ref=e261] [cursor=pointer]:
+              - img [ref=e262]
+              - text: 深入探讨
+  - contentinfo [ref=e37]:
+    - generic [ref=e38]:
+      - button "新对话" [ref=e39] [cursor=pointer]
+      - button "清空本聊" [ref=e40] [cursor=pointer]
+      - button "撤回一轮" [ref=e41] [cursor=pointer]
+      - button "复制回复" [ref=e42] [cursor=pointer]
+      - button "精确" [ref=e43] [cursor=pointer]
+      - button "导出本聊" [ref=e44] [cursor=pointer]
+    - generic [ref=e45]:
+      - textbox "输入消息…" [ref=e237]
+      - button "发送消息" [ref=e47] [cursor=pointer]:
+        - img [ref=e48]

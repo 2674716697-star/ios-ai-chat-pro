@@ -1,0 +1,5 @@
+[      15ms] ReferenceError: getToolCallSettings is not defined
+    at http://localhost:3457/omnichat.html:4494:1
+    at http://localhost:3457/omnichat.html:4505:3
+[      24ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://localhost:3457/omnichat.html:0
+[   99397ms] [WARNING] [OmniChat] Scene mode reply has no @@SCENE block. @ http://localhost:3457/omnichat.html:3223

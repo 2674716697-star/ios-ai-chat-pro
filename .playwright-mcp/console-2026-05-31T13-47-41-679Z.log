@@ -1,0 +1,14 @@
+[      31ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://localhost:8080/omnichat.html?v=final-run:0
+[   42492ms] [WARNING] [OmniChat] Story response missing: body/身体 @ http://localhost:8080/omnichat.html?v=final-run:3933
+[   43704ms] [WARNING] [OmniChat] Scene mode reply has no @@SCENE block. @ http://localhost:8080/omnichat.html?v=final-run:3911
+[   43704ms] [WARNING] [OmniChat] Story response missing: body/身体, sceneSnapshot, directions @ http://localhost:8080/omnichat.html?v=final-run:3933
+[   43704ms] [WARNING] [OmniChat] Scene directions fallback applied (0 → 4). @ http://localhost:8080/omnichat.html?v=final-run:3963
+[   44906ms] [WARNING] [OmniChat] Scene mode reply has no @@SCENE block. @ http://localhost:8080/omnichat.html?v=final-run:3911
+[   44906ms] [WARNING] [OmniChat] Story response missing: sceneSnapshot, directions @ http://localhost:8080/omnichat.html?v=final-run:3933
+[   44906ms] [WARNING] [OmniChat] Scene directions fallback applied (0 → 4). @ http://localhost:8080/omnichat.html?v=final-run:3963
+[   46121ms] [WARNING] [OmniChat] Scene mode reply has no @@SCENE block. @ http://localhost:8080/omnichat.html?v=final-run:3911
+[   46121ms] [WARNING] [OmniChat] Story response missing: mental/心理, body/身体, sceneSnapshot, directions @ http://localhost:8080/omnichat.html?v=final-run:3933
+[   46122ms] [WARNING] [OmniChat] Scene directions fallback applied (0 → 4). @ http://localhost:8080/omnichat.html?v=final-run:3963
+[   47335ms] [WARNING] [OmniChat] Scene mode reply has no @@SCENE block. @ http://localhost:8080/omnichat.html?v=final-run:3911
+[   47335ms] [WARNING] [OmniChat] Story response missing: mental/心理, body/身体, sceneSnapshot, directions @ http://localhost:8080/omnichat.html?v=final-run:3933
+[   47335ms] [WARNING] [OmniChat] Scene directions fallback applied (0 → 4). @ http://localhost:8080/omnichat.html?v=final-run:3963

@@ -1,0 +1,230 @@
+- generic [ref=e12]:
+  - banner [ref=e13]:
+    - button "历史会话" [ref=e14] [cursor=pointer]:
+      - img [ref=e15]
+    - generic [ref=e16] [cursor=pointer]:
+      - generic [ref=e17]: hi
+      - generic [ref=e18]:
+        - generic [ref=e19]: DeepSeek
+        - generic [ref=e20]: deepseek-v4-pro
+        - generic [ref=e21]: 2 条消息 · ~227 字符
+    - button "背景" [ref=e22] [cursor=pointer]:
+      - img [ref=e23]
+    - button "设置" [active] [ref=e27] [cursor=pointer]:
+      - img [ref=e28]
+  - complementary [ref=e183]:
+    - generic [ref=e184]:
+      - heading "设置" [level=2] [ref=e185]
+      - button "关闭" [ref=e186] [cursor=pointer]:
+        - img [ref=e187]
+    - generic [ref=e190]:
+      - generic [ref=e191]:
+        - generic [ref=e192]: 服务商
+        - combobox [ref=e193] [cursor=pointer]:
+          - option "OpenAI"
+          - option "xAI / Grok"
+          - option "DeepSeek" [selected]
+          - option "OpenRouter"
+          - option "Groq"
+          - option "Moonshot (Kimi)"
+          - option "智谱 (GLM)"
+          - option "SiliconFlow"
+      - generic [ref=e194]:
+        - generic [ref=e195]: DeepSeek API Key
+        - generic [ref=e196]:
+          - textbox "sk-..." [ref=e197]: sk-14d3df5a1d6a4c8a981b4624859886b3
+          - button "显示/隐藏" [ref=e198] [cursor=pointer]:
+            - img [ref=e199]
+        - generic [ref=e202]: 在 DeepSeek 平台获取，仅保存在本地浏览器
+      - generic [ref=e203]:
+        - generic [ref=e204]: 模型
+        - combobox [ref=e205] [cursor=pointer]:
+          - option "-- 选择模型 --"
+          - option "deepseek-v4-flash"
+          - option "deepseek-v4-pro" [selected]
+        - generic [ref=e206]: 共 2 个可用模型，最后更新：20:18:46
+        - button "刷新模型列表" [ref=e207] [cursor=pointer]
+      - generic [ref=e208]:
+        - generic [ref=e209]: 自定义模型名（可选）
+        - textbox "留空使用上方选择的模型" [ref=e210]
+      - generic [ref=e211]:
+        - generic [ref=e212]: 聊天背景
+        - generic [ref=e213]:
+          - button "默认" [ref=e214] [cursor=pointer]
+          - button "海洋" [ref=e215] [cursor=pointer]
+          - button "日落" [ref=e216] [cursor=pointer]
+          - button "森林" [ref=e217] [cursor=pointer]
+          - button "墨蓝" [ref=e218] [cursor=pointer]
+          - button "炭灰" [ref=e219] [cursor=pointer]
+        - button "从相册选择" [ref=e221] [cursor=pointer]
+        - generic [ref=e222]:
+          - generic [ref=e223]: 背景透明度
+          - slider [ref=e224] [cursor=pointer]: "35"
+      - generic [ref=e225]:
+        - generic [ref=e226]: System Prompt
+        - textbox "设置 AI 的行为和角色…" [ref=e227]
+      - generic [ref=e228]:
+        - generic [ref=e229]: Temperature 0.7
+        - slider [ref=e230] [cursor=pointer]: "0.7"
+      - generic [ref=e231]:
+        - generic [ref=e232]: Top P 1
+        - slider [ref=e233] [cursor=pointer]: "1"
+      - generic [ref=e234]:
+        - generic [ref=e235]: Max Tokens
+        - spinbutton [ref=e236]: "2000"
+        - generic [ref=e237]: 最大输出限制：384,000
+      - generic [ref=e239]: 流式输出 (Stream)
+      - generic [ref=e243]:
+        - text: 提示缓存 (Caching)
+        - generic [ref=e244]: Claude 模型缓存系统提示和对话前缀，大幅降低费用
+      - generic [ref=e248]:
+        - text: 精确模式 (Anti-Hallucination)
+        - generic [ref=e249]: 低温 + 严谨 System Prompt，减少幻觉
+      - generic [ref=e253]:
+        - generic [ref=e254]: 世界故事模式
+        - text: 开启后显示世界观、角色卡、NPC、状态、规则和剧情分支面板，适合写文、角色扮演和世界开局。
+      - generic [ref=e258]:
+        - text: 自动压缩上下文
+        - generic [ref=e259]: 对话过长时自动总结旧消息，保持上下文窗口可控
+      - generic [ref=e263]:
+        - text: 思考完成后保持展开
+        - generic [ref=e264]: AI 回复完成后 reasoning / 思考过程 details 保持展开状态
+      - generic [ref=e267]:
+        - generic [ref=e268]:
+          - text: 状态卡详细度
+          - generic [ref=e269]: 控制 AI 回复末尾人物状态/身体细节/剧情走向的描述细腻程度
+        - combobox [ref=e270] [cursor=pointer]:
+          - option "低 — 简洁"
+          - option "中 — 清楚"
+          - option "高 — 细腻"
+          - option "超高 — 丰富" [selected]
+      - generic [ref=e271]:
+        - generic [ref=e272]: 消息操作按钮（可自定义提示词）
+        - generic [ref=e273]:
+          - textbox "重新生成" [ref=e274]
+          - textbox "继续生成" [ref=e275]
+          - textbox "生成摘要" [ref=e276]
+          - textbox "深入探讨" [ref=e277]
+        - generic [ref=e278]: 修改按钮对应的提示词，留空使用默认
+      - generic [ref=e279]:
+        - generic [ref=e280]: 工具调用（实验中）
+        - combobox [disabled] [ref=e281] [cursor=pointer]:
+          - option "0 - 关闭" [disabled] [selected]
+        - generic [ref=e282]: 当前网页端未执行外部工具调用，入口已锁定为关闭，避免误触发循环或额外费用。
+  - main [ref=e31]:
+    - generic [ref=e32]:
+      - generic [ref=e33] [cursor=pointer]:
+        - img [ref=e34]
+        - generic [ref=e37]: 世界故事
+        - generic [ref=e38]: ▾
+      - generic:
+        - generic [ref=e39]:
+          - button "世界观" [ref=e40] [cursor=pointer]
+          - button "主角" [ref=e41] [cursor=pointer]
+          - button "NPC图鉴" [ref=e42] [cursor=pointer]
+          - button "状态" [ref=e43] [cursor=pointer]
+          - button "规则/提示" [ref=e44] [cursor=pointer]
+        - generic [ref=e45]:
+          - paragraph [ref=e46]: 先写这个世界的基本背景、地点、时代、氛围和限制。越具体，AI 越容易稳定开局。
+          - generic [ref=e47]:
+            - generic [ref=e48]: 开局名称
+            - textbox "雨夜旧城 / 星港醒来 / 学院报到" [ref=e49]: 测试
+          - generic [ref=e50]:
+            - generic [ref=e51]: 世界背景
+            - textbox "这个世界的背景设定、当前场景…" [ref=e52]: 测试世界
+          - generic [ref=e53]:
+            - generic [ref=e54]: 地点清单
+            - textbox "一行一个地点" [ref=e55]
+          - generic [ref=e56]:
+            - generic [ref=e57]: 故事基调
+            - generic [ref=e58]:
+              - button "悬疑" [ref=e111] [cursor=pointer]
+              - button "温柔" [ref=e112] [cursor=pointer]
+              - button "冒险" [ref=e113] [cursor=pointer]
+              - button "日常" [ref=e114] [cursor=pointer]
+              - button "紧张" [ref=e115] [cursor=pointer]
+              - button "奇幻" [ref=e116] [cursor=pointer]
+              - button "科幻" [ref=e117] [cursor=pointer]
+          - generic [ref=e66]:
+            - generic [ref=e67]: 备注
+            - textbox "其他补充…" [ref=e68]
+    - generic [ref=e69]:
+      - generic [ref=e118]:
+        - generic [ref=e119]: You
+        - generic [ref=e120]: hi
+      - generic [ref=e121]:
+        - generic [ref=e122]: AI
+        - generic [ref=e123]:
+          - group [ref=e124]:
+            - generic "思考过程" [ref=e125] [cursor=pointer]
+            - generic [ref=e126]: 我们被要求根据角色卡和世界设定进行互动。角色卡是“测”，身份是“测试者”，世界设定是“测试世界”。用户输入“hi”，这是简单的打招呼。我们需要以角色身份回复，并在末尾输出@@SCENE块。由于是初次互动，我们需要建立初始场景。按照规则，我们需要在回复里基于刚刚写出的正文更新状态。但这是开场，我们可以写一个简单的开场白，然后构造初始状态。世界设定很简短，我们可以发挥，但保持简单，毕竟测试世界。可以描述测在一个测试房间醒来，或者类似。然后输出状态块。注意格式要求：精神评分、身体细节至少2条、走向4条等。我们将创建一个初始场景：测站在一个空旷的白色房间里，感觉有点困惑。然后输出状态。
+          - generic [ref=e127]:
+            - text: 测站在一片纯白空间中，四周没有墙壁也没有天花板，脚下却是坚实的平面。他低头看了看自己的双手——一切都显得格外真实，却又透着某种人为的干净感。空气里没有任何气味，温度不冷不热，就像某个尚未填写参数的空白场景。
+            - text: “一个测试世界。”他自言自语，声音被空间吞没，没有回声。
+            - text: 话音刚落，眼前浮现出一行半透明的文字，悬浮在半空：
+            - text: \[初始化完成。请执行测试。\]
+            - text: 测眯起眼睛，试图触碰那行字，手指却径直穿了过去。看来这个世界确实如字面意思，是个“测试”。
+          - generic [ref=e128]:
+            - generic [ref=e129]:
+              - generic [ref=e130]: 主角
+              - generic [ref=e131]: 主角
+              - generic [ref=e132]: 8/10
+            - generic [ref=e133]:
+              - generic [ref=e134]:
+                - generic [ref=e135]: 精神
+                - generic [ref=e136]: 因环境极度简洁而轻微困惑，但保持好奇
+              - generic [ref=e137]:
+                - generic [ref=e138]: 身体
+                - generic [ref=e139]: 无明显疲劳，衣着整洁（简单灰衣）
+              - generic [ref=e140]:
+                - generic [ref=e141]: 目标
+                - generic [ref=e142]: 弄清楚这个测试世界如何运作
+              - generic [ref=e143]:
+                - generic [ref=e144]: 姿态
+                - generic [ref=e145]: 站立于纯白空间中央，右手抬起刚穿过浮空文字
+            - generic [ref=e147]: 呼吸平稳，胸腔起伏轻微
+            - generic [ref=e148]: “既然是测试，总该有个起点——那就先找出规则。”
+          - generic [ref=e149]:
+            - generic [ref=e150]: 剧情走向
+            - generic [ref=e151]:
+              - button "A 大声说出指令，看能否唤出菜单或帮助 — 可能获得提示，也可能触发错误" [ref=e152] [cursor=pointer]:
+                - generic [ref=e153]: A
+                - generic [ref=e154]: 大声说出指令，看能否唤出菜单或帮助 — 可能获得提示，也可能触发错误
+              - button "B 朝任一方向行走，探索空间是否无限 — 可能发现边界或物体，也可能陷入迷失感" [ref=e155] [cursor=pointer]:
+                - generic [ref=e156]: B
+                - generic [ref=e157]: 朝任一方向行走，探索空间是否无限 — 可能发现边界或物体，也可能陷入迷失感
+              - button "C 原地坐下，闭眼内观，尝试感知身体数据 — 可能发现隐藏状态栏，也可能无获" [ref=e158] [cursor=pointer]:
+                - generic [ref=e159]: C
+                - generic [ref=e160]: 原地坐下，闭眼内观，尝试感知身体数据 — 可能发现隐藏状态栏，也可能无获
+              - button "D 尝试回忆自己如何进入这里 — 可能触发记忆闪回，但也可能引发轻微焦虑" [ref=e161] [cursor=pointer]:
+                - generic [ref=e162]: D
+                - generic [ref=e163]: 尝试回忆自己如何进入这里 — 可能触发记忆闪回，但也可能引发轻微焦虑
+          - generic [ref=e164]: 测觉醒于一个空白世界，面前出现一行“初始化完成”的文字，他伸手触碰未果。
+          - generic [ref=e165]: "Tokens: 1,581 入 + 585 出 = 2,166 总 (含 166 思考)"
+          - generic [ref=e166]:
+            - button "重新生成" [ref=e167] [cursor=pointer]:
+              - img [ref=e168]
+              - text: 重新生成
+            - button "继续生成" [ref=e171] [cursor=pointer]:
+              - img [ref=e172]
+              - text: 继续生成
+            - button "生成摘要" [ref=e174] [cursor=pointer]:
+              - img [ref=e175]
+              - text: 生成摘要
+            - button "深入探讨" [ref=e178] [cursor=pointer]:
+              - img [ref=e179]
+              - text: 深入探讨
+  - contentinfo [ref=e84]:
+    - generic [ref=e85]:
+      - button "新对话" [ref=e86] [cursor=pointer]
+      - button "清空本聊" [ref=e87] [cursor=pointer]
+      - button "撤回一轮" [ref=e88] [cursor=pointer]
+      - button "复制回复" [ref=e89] [cursor=pointer]
+      - button "精确" [ref=e90] [cursor=pointer]
+      - button "导出本聊" [ref=e91] [cursor=pointer]
+      - button "生成提示词" [ref=e92] [cursor=pointer]
+      - generic "世界故事模式已开启": 世界故事 ON
+    - generic [ref=e93]:
+      - textbox "输入剧情行动或选择 A/B/C/D…" [ref=e94]
+      - button "发送消息" [ref=e95] [cursor=pointer]:
+        - img [ref=e96]

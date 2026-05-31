@@ -1,0 +1,392 @@
+- generic [ref=e12]:
+  - banner [ref=e13]:
+    - button "历史会话" [ref=e14] [cursor=pointer]:
+      - img [ref=e15]
+    - generic [ref=e16] [cursor=pointer]:
+      - generic [ref=e17]: test1-standard
+      - generic [ref=e18]:
+        - generic [ref=e19]: DeepSeek
+        - generic [ref=e20]: deepseek-v4-pro
+        - generic [ref=e21]: 12 条消息 · ~159 字符
+    - button "背景" [ref=e22] [cursor=pointer]:
+      - img [ref=e23]
+    - button "设置" [ref=e27] [cursor=pointer]:
+      - img [ref=e28]
+  - option "OpenAI" [selected]
+  - option "xAI / Grok"
+  - option "DeepSeek"
+  - option "OpenRouter"
+  - option "Groq"
+  - option "Moonshot (Kimi)"
+  - option "智谱 (GLM)"
+  - option "SiliconFlow"
+  - option "低 — 简洁"
+  - option "中 — 清楚" [selected]
+  - option "高 — 细腻"
+  - option "超高 — 丰富"
+  - option "0 - 关闭" [disabled] [selected]
+  - main [ref=e31]:
+    - generic [ref=e32]:
+      - generic [ref=e33] [cursor=pointer]:
+        - img [ref=e34]
+        - generic [ref=e37]: 世界故事
+        - generic [ref=e38]: ▾
+      - generic:
+        - generic [ref=e39]:
+          - button "世界观" [ref=e40] [cursor=pointer]
+          - button "主角" [ref=e41] [cursor=pointer]
+          - button "NPC图鉴" [ref=e42] [cursor=pointer]
+          - button "状态" [ref=e43] [cursor=pointer]
+          - button "规则/提示" [ref=e44] [cursor=pointer]
+        - generic [ref=e45]:
+          - paragraph [ref=e46]: 先写这个世界的基本背景、地点、时代、氛围和限制。越具体，AI 越容易稳定开局。
+          - generic [ref=e47]:
+            - generic [ref=e48]: 开局名称
+            - textbox "雨夜旧城 / 星港醒来 / 学院报到" [ref=e49]: 测试
+          - generic [ref=e50]:
+            - generic [ref=e51]: 世界背景
+            - textbox "这个世界的背景设定、当前场景…" [ref=e52]: 世界
+          - generic [ref=e53]:
+            - generic [ref=e54]: 地点清单
+            - textbox "一行一个地点" [ref=e55]
+          - generic [ref=e56]:
+            - generic [ref=e57]: 故事基调
+            - generic [ref=e58]:
+              - button "悬疑" [ref=e59] [cursor=pointer]
+              - button "温柔" [ref=e60] [cursor=pointer]
+              - button "冒险" [ref=e61] [cursor=pointer]
+              - button "日常" [ref=e62] [cursor=pointer]
+              - button "紧张" [ref=e63] [cursor=pointer]
+              - button "奇幻" [ref=e64] [cursor=pointer]
+              - button "科幻" [ref=e65] [cursor=pointer]
+          - generic [ref=e66]:
+            - generic [ref=e67]: 备注
+            - textbox "其他补充…" [ref=e68]
+    - generic [ref=e69]:
+      - generic [ref=e303]:
+        - generic [ref=e304]: You
+        - generic [ref=e305]: test1-standard
+      - generic [ref=e306]:
+        - generic [ref=e307]: AI
+        - generic [ref=e308]:
+          - generic [ref=e309]: 正文继续。
+          - generic [ref=e310]:
+            - generic [ref=e311]:
+              - generic [ref=e312]: 主角
+              - generic [ref=e313]: 主角
+            - generic [ref=e315]:
+              - generic [ref=e316]: 精神
+              - generic [ref=e317]: 紧张
+          - generic [ref=e318]:
+            - generic [ref=e319]: 剧情走向
+            - generic:
+              - button "A 前进" [disabled]:
+                - generic: A
+                - generic: 前进
+              - button "B 返回" [disabled]:
+                - generic: B
+                - generic: 返回
+              - button "C 休息" [disabled]:
+                - generic: C
+                - generic: 休息
+              - button "D 呼叫" [disabled]:
+                - generic: D
+                - generic: 呼叫
+          - generic [ref=e320]: "Tokens: 5 入 + 5 出 = 10 总"
+          - generic [ref=e321]:
+            - button "重新生成" [ref=e322] [cursor=pointer]:
+              - img [ref=e323]
+              - text: 重新生成
+            - button "继续生成" [ref=e326] [cursor=pointer]:
+              - img [ref=e327]
+              - text: 继续生成
+            - button "生成摘要" [ref=e329] [cursor=pointer]:
+              - img [ref=e330]
+              - text: 生成摘要
+            - button "深入探讨" [ref=e333] [cursor=pointer]:
+              - img [ref=e334]
+              - text: 深入探讨
+      - generic [ref=e337]:
+        - generic [ref=e338]: You
+        - generic [ref=e339]: test2-no-end
+      - generic [ref=e340]:
+        - generic [ref=e341]: AI
+        - generic [ref=e342]:
+          - generic [ref=e343]: 正文继续。
+          - generic [ref=e344]:
+            - generic [ref=e345]:
+              - generic [ref=e346]: 测试者
+              - generic [ref=e347]: 主角
+            - generic [ref=e348]:
+              - generic [ref=e349]:
+                - generic [ref=e350]: 精神
+                - generic [ref=e351]: 暂未明确
+              - generic [ref=e352]:
+                - generic [ref=e353]: 身体
+                - generic [ref=e354]: 暂未明确
+              - generic [ref=e355]:
+                - generic [ref=e356]: 目标
+                - generic [ref=e357]: 暂未明确
+              - generic [ref=e358]:
+                - generic [ref=e359]: 姿态
+                - generic [ref=e360]: 暂未明确
+          - generic [ref=e361]:
+            - generic [ref=e362]: 剧情走向
+            - generic:
+              - button "A 继续深入调查，主动寻找更多线索和突破口" [disabled]:
+                - generic: A
+                - generic: 继续深入调查，主动寻找更多线索和突破口
+              - button "B 暂时退一步观察局势变化，寻找更安全的切入点" [disabled]:
+                - generic: B
+                - generic: 暂时退一步观察局势变化，寻找更安全的切入点
+              - button "C 与关键人物接触，试探对方真实意图和掌握的信息" [disabled]:
+                - generic: C
+                - generic: 与关键人物接触，试探对方真实意图和掌握的信息
+              - button "D 改变行动节奏，采取意料之外的行动来试探隐藏风险" [disabled]:
+                - generic: D
+                - generic: 改变行动节奏，采取意料之外的行动来试探隐藏风险
+          - generic [ref=e363]: "Tokens: 5 入 + 5 出 = 10 总"
+          - generic [ref=e364]:
+            - button "重新生成" [ref=e365] [cursor=pointer]:
+              - img [ref=e366]
+              - text: 重新生成
+            - button "继续生成" [ref=e369] [cursor=pointer]:
+              - img [ref=e370]
+              - text: 继续生成
+            - button "生成摘要" [ref=e372] [cursor=pointer]:
+              - img [ref=e373]
+              - text: 生成摘要
+            - button "深入探讨" [ref=e376] [cursor=pointer]:
+              - img [ref=e377]
+              - text: 深入探讨
+      - generic [ref=e380]:
+        - generic [ref=e381]: You
+        - generic [ref=e382]: test3-chinese-card
+      - generic [ref=e383]:
+        - generic [ref=e384]: AI
+        - generic [ref=e385]:
+          - generic [ref=e386]: 正文继续。
+          - generic [ref=e387]:
+            - generic [ref=e388]:
+              - generic [ref=e389]: 测试者
+              - generic [ref=e390]: 主角
+            - generic [ref=e391]:
+              - generic [ref=e392]:
+                - generic [ref=e393]: 精神
+                - generic [ref=e394]: 暂未明确
+              - generic [ref=e395]:
+                - generic [ref=e396]: 身体
+                - generic [ref=e397]: 暂未明确
+              - generic [ref=e398]:
+                - generic [ref=e399]: 目标
+                - generic [ref=e400]: 暂未明确
+              - generic [ref=e401]:
+                - generic [ref=e402]: 姿态
+                - generic [ref=e403]: 暂未明确
+          - generic [ref=e404]:
+            - generic [ref=e405]: 剧情走向
+            - generic:
+              - button "A 继续深入调查，主动寻找更多线索和突破口" [disabled]:
+                - generic: A
+                - generic: 继续深入调查，主动寻找更多线索和突破口
+              - button "B 暂时退一步观察局势变化，寻找更安全的切入点" [disabled]:
+                - generic: B
+                - generic: 暂时退一步观察局势变化，寻找更安全的切入点
+              - button "C 与关键人物接触，试探对方真实意图和掌握的信息" [disabled]:
+                - generic: C
+                - generic: 与关键人物接触，试探对方真实意图和掌握的信息
+              - button "D 改变行动节奏，采取意料之外的行动来试探隐藏风险" [disabled]:
+                - generic: D
+                - generic: 改变行动节奏，采取意料之外的行动来试探隐藏风险
+          - generic [ref=e406]: "Tokens: 5 入 + 5 出 = 10 总"
+          - generic [ref=e407]:
+            - button "重新生成" [ref=e408] [cursor=pointer]:
+              - img [ref=e409]
+              - text: 重新生成
+            - button "继续生成" [ref=e412] [cursor=pointer]:
+              - img [ref=e413]
+              - text: 继续生成
+            - button "生成摘要" [ref=e415] [cursor=pointer]:
+              - img [ref=e416]
+              - text: 生成摘要
+            - button "深入探讨" [ref=e419] [cursor=pointer]:
+              - img [ref=e420]
+              - text: 深入探讨
+      - generic [ref=e423]:
+        - generic [ref=e424]: You
+        - generic [ref=e425]: test4-normal
+      - generic [ref=e426]:
+        - generic [ref=e427]: AI
+        - generic [ref=e428]:
+          - generic [ref=e429]: 他看着墙上的 A/B/C/D 四个编号陷入沉思，然后继续向前走去。
+          - generic [ref=e430]:
+            - generic [ref=e431]:
+              - generic [ref=e432]: 测试者
+              - generic [ref=e433]: 主角
+            - generic [ref=e434]:
+              - generic [ref=e435]:
+                - generic [ref=e436]: 精神
+                - generic [ref=e437]: 暂未明确
+              - generic [ref=e438]:
+                - generic [ref=e439]: 身体
+                - generic [ref=e440]: 暂未明确
+              - generic [ref=e441]:
+                - generic [ref=e442]: 目标
+                - generic [ref=e443]: 暂未明确
+              - generic [ref=e444]:
+                - generic [ref=e445]: 姿态
+                - generic [ref=e446]: 暂未明确
+          - generic [ref=e447]:
+            - generic [ref=e448]: 剧情走向
+            - generic:
+              - button "A 继续深入调查，主动寻找更多线索和突破口" [disabled]:
+                - generic: A
+                - generic: 继续深入调查，主动寻找更多线索和突破口
+              - button "B 暂时退一步观察局势变化，寻找更安全的切入点" [disabled]:
+                - generic: B
+                - generic: 暂时退一步观察局势变化，寻找更安全的切入点
+              - button "C 与关键人物接触，试探对方真实意图和掌握的信息" [disabled]:
+                - generic: C
+                - generic: 与关键人物接触，试探对方真实意图和掌握的信息
+              - button "D 改变行动节奏，采取意料之外的行动来试探隐藏风险" [disabled]:
+                - generic: D
+                - generic: 改变行动节奏，采取意料之外的行动来试探隐藏风险
+          - generic [ref=e449]: "Tokens: 5 入 + 5 出 = 10 总"
+          - generic [ref=e450]:
+            - button "重新生成" [ref=e451] [cursor=pointer]:
+              - img [ref=e452]
+              - text: 重新生成
+            - button "继续生成" [ref=e455] [cursor=pointer]:
+              - img [ref=e456]
+              - text: 继续生成
+            - button "生成摘要" [ref=e458] [cursor=pointer]:
+              - img [ref=e459]
+              - text: 生成摘要
+            - button "深入探讨" [ref=e462] [cursor=pointer]:
+              - img [ref=e463]
+              - text: 深入探讨
+      - generic [ref=e466]:
+        - generic [ref=e467]: You
+        - generic [ref=e468]: test5-trailing
+      - generic [ref=e469]:
+        - generic [ref=e470]: AI
+        - generic [ref=e471]:
+          - generic [ref=e472]:
+            - text: 正文继续。
+            - text: A. 进房间
+            - text: B. 观察
+            - text: C. 呼唤
+            - text: D. 离开
+          - generic [ref=e473]:
+            - generic [ref=e474]:
+              - generic [ref=e475]: 测试者
+              - generic [ref=e476]: 主角
+            - generic [ref=e477]:
+              - generic [ref=e478]:
+                - generic [ref=e479]: 精神
+                - generic [ref=e480]: 暂未明确
+              - generic [ref=e481]:
+                - generic [ref=e482]: 身体
+                - generic [ref=e483]: 暂未明确
+              - generic [ref=e484]:
+                - generic [ref=e485]: 目标
+                - generic [ref=e486]: 暂未明确
+              - generic [ref=e487]:
+                - generic [ref=e488]: 姿态
+                - generic [ref=e489]: 暂未明确
+          - generic [ref=e490]:
+            - generic [ref=e491]: 剧情走向
+            - generic:
+              - button "A 继续深入调查，主动寻找更多线索和突破口" [disabled]:
+                - generic: A
+                - generic: 继续深入调查，主动寻找更多线索和突破口
+              - button "B 暂时退一步观察局势变化，寻找更安全的切入点" [disabled]:
+                - generic: B
+                - generic: 暂时退一步观察局势变化，寻找更安全的切入点
+              - button "C 与关键人物接触，试探对方真实意图和掌握的信息" [disabled]:
+                - generic: C
+                - generic: 与关键人物接触，试探对方真实意图和掌握的信息
+              - button "D 改变行动节奏，采取意料之外的行动来试探隐藏风险" [disabled]:
+                - generic: D
+                - generic: 改变行动节奏，采取意料之外的行动来试探隐藏风险
+          - generic [ref=e492]: "Tokens: 5 入 + 5 出 = 10 总"
+          - generic [ref=e493]:
+            - button "重新生成" [ref=e494] [cursor=pointer]:
+              - img [ref=e495]
+              - text: 重新生成
+            - button "继续生成" [ref=e498] [cursor=pointer]:
+              - img [ref=e499]
+              - text: 继续生成
+            - button "生成摘要" [ref=e501] [cursor=pointer]:
+              - img [ref=e502]
+              - text: 生成摘要
+            - button "深入探讨" [ref=e505] [cursor=pointer]:
+              - img [ref=e506]
+              - text: 深入探讨
+      - generic [ref=e509]:
+        - generic [ref=e510]: You
+        - generic [ref=e511]: test5
+      - generic [ref=e512]:
+        - generic [ref=e513]: AI
+        - generic [ref=e514]:
+          - generic [ref=e515]: 正文继续。
+          - generic [ref=e516]:
+            - generic [ref=e517]:
+              - generic [ref=e518]: 测试者
+              - generic [ref=e519]: 主角
+            - generic [ref=e520]:
+              - generic [ref=e521]:
+                - generic [ref=e522]: 精神
+                - generic [ref=e523]: 暂未明确
+              - generic [ref=e524]:
+                - generic [ref=e525]: 身体
+                - generic [ref=e526]: 暂未明确
+              - generic [ref=e527]:
+                - generic [ref=e528]: 目标
+                - generic [ref=e529]: 暂未明确
+              - generic [ref=e530]:
+                - generic [ref=e531]: 姿态
+                - generic [ref=e532]: 暂未明确
+          - generic [ref=e533]:
+            - generic [ref=e534]: 剧情走向
+            - generic [ref=e535]:
+              - button "A 继续深入调查，主动寻找更多线索和突破口" [ref=e536] [cursor=pointer]:
+                - generic [ref=e537]: A
+                - generic [ref=e538]: 继续深入调查，主动寻找更多线索和突破口
+              - button "B 暂时退一步观察局势变化，寻找更安全的切入点" [ref=e539] [cursor=pointer]:
+                - generic [ref=e540]: B
+                - generic [ref=e541]: 暂时退一步观察局势变化，寻找更安全的切入点
+              - button "C 与关键人物接触，试探对方真实意图和掌握的信息" [ref=e542] [cursor=pointer]:
+                - generic [ref=e543]: C
+                - generic [ref=e544]: 与关键人物接触，试探对方真实意图和掌握的信息
+              - button "D 改变行动节奏，采取意料之外的行动来试探隐藏风险" [ref=e545] [cursor=pointer]:
+                - generic [ref=e546]: D
+                - generic [ref=e547]: 改变行动节奏，采取意料之外的行动来试探隐藏风险
+          - generic [ref=e548]: "Tokens: 5 入 + 5 出 = 10 总"
+          - generic [ref=e549]:
+            - button "重新生成" [ref=e550] [cursor=pointer]:
+              - img [ref=e551]
+              - text: 重新生成
+            - button "继续生成" [ref=e554] [cursor=pointer]:
+              - img [ref=e555]
+              - text: 继续生成
+            - button "生成摘要" [ref=e557] [cursor=pointer]:
+              - img [ref=e558]
+              - text: 生成摘要
+            - button "深入探讨" [ref=e561] [cursor=pointer]:
+              - img [ref=e562]
+              - text: 深入探讨
+  - contentinfo [ref=e289]:
+    - generic [ref=e290]:
+      - button "新对话" [ref=e291] [cursor=pointer]
+      - button "清空本聊" [ref=e292] [cursor=pointer]
+      - button "撤回一轮" [ref=e293] [cursor=pointer]
+      - button "复制回复" [ref=e294] [cursor=pointer]
+      - button "精确" [ref=e295] [cursor=pointer]
+      - button "导出本聊" [ref=e296] [cursor=pointer]
+      - button "生成提示词" [ref=e297] [cursor=pointer]
+      - generic "世界故事模式已开启": 世界故事 ON
+    - generic [ref=e298]:
+      - textbox "输入剧情行动或选择 A/B/C/D…" [ref=e299]
+      - button "发送消息" [active] [ref=e300] [cursor=pointer]:
+        - img [ref=e301]

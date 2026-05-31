@@ -1,0 +1,13 @@
+[    1076ms] ReferenceError: getToolCallSettings is not defined
+    at http://localhost:3457/omnichat.html:4494:1
+    at http://localhost:3457/omnichat.html:4505:3
+[    1094ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://localhost:3457/omnichat.html:0
+[    1109ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3457/favicon.ico:0
+[   29173ms] ReferenceError: getToolCallSettings is not defined
+    at http://localhost:3457/omnichat.html:4494:1
+    at http://localhost:3457/omnichat.html:4505:3
+[   29181ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://localhost:3457/omnichat.html:0
+[   80533ms] ReferenceError: getToolCallSettings is not defined
+    at http://localhost:3457/omnichat.html:4494:1
+    at http://localhost:3457/omnichat.html:4505:3
+[   80539ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://localhost:3457/omnichat.html:0

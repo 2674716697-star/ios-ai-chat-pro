@@ -1,0 +1,65 @@
+- generic [ref=e12]:
+  - banner [ref=e13]:
+    - button "历史会话" [ref=e14] [cursor=pointer]:
+      - img [ref=e15]
+    - generic [ref=e16] [cursor=pointer]:
+      - generic [ref=e17]: Hello! This is a smoke t…
+      - generic [ref=e18]:
+        - generic [ref=e19]: DeepSeek
+        - generic [ref=e20]: deepseek-v4-pro
+        - generic [ref=e21]: 2 条消息 · ~71 字符
+    - button "背景" [ref=e22] [cursor=pointer]:
+      - img [ref=e23]
+    - button "设置" [ref=e27] [cursor=pointer]:
+      - img [ref=e28]
+  - option "OpenAI" [selected]
+  - option "xAI / Grok"
+  - option "DeepSeek"
+  - option "OpenRouter"
+  - option "Groq"
+  - option "Moonshot (Kimi)"
+  - option "智谱 (GLM)"
+  - option "SiliconFlow"
+  - option "低 — 简洁"
+  - option "中 — 清楚" [selected]
+  - option "高 — 细腻"
+  - option "超高 — 丰富"
+  - option "0 - 关闭" [disabled] [selected]
+  - main [ref=e31]:
+    - generic [ref=e32]:
+      - generic [ref=e33]:
+        - generic [ref=e34]: You
+        - generic [ref=e35]: Hello! This is a smoke test message. Reply with just "OK" to confirm.
+      - generic [ref=e36]:
+        - generic [ref=e37]: AI
+        - generic [ref=e38]:
+          - group [ref=e39]:
+            - generic "思考过程" [ref=e40] [cursor=pointer]
+            - generic [ref=e41]: "We are asked to do a smoke test: \"Hello! This is a smoke test message. Reply with just 'OK' to confirm.\" I need to reply with exactly \"OK\" and nothing else."
+          - generic [ref=e42]: OK
+          - generic [ref=e43]: "Tokens: 57 入 + 43 出 = 100 总 (含 41 思考)"
+          - generic [ref=e44]:
+            - button "重新生成" [ref=e45] [cursor=pointer]:
+              - img [ref=e46]
+              - text: 重新生成
+            - button "继续生成" [ref=e49] [cursor=pointer]:
+              - img [ref=e50]
+              - text: 继续生成
+            - button "生成摘要" [ref=e52] [cursor=pointer]:
+              - img [ref=e53]
+              - text: 生成摘要
+            - button "深入探讨" [ref=e56] [cursor=pointer]:
+              - img [ref=e57]
+              - text: 深入探讨
+  - contentinfo [ref=e60]:
+    - generic [ref=e61]:
+      - button "新对话" [ref=e62] [cursor=pointer]
+      - button "清空本聊" [ref=e63] [cursor=pointer]
+      - button "撤回一轮" [ref=e64] [cursor=pointer]
+      - button "复制回复" [ref=e65] [cursor=pointer]
+      - button "精确" [ref=e66] [cursor=pointer]
+      - button "导出本聊" [ref=e67] [cursor=pointer]
+    - generic [ref=e68]:
+      - textbox "输入消息…" [active] [ref=e69]
+      - button "发送消息" [ref=e70] [cursor=pointer]:
+        - img [ref=e71]

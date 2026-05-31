@@ -3794,14 +3794,8 @@ html.has-custom-bg .user .message-bubble {
 }
 
 /* ---- Story Editor Overlay ---- */
-/* Story editor: hide bottom bar globally, strong specificity */
-html.story-editor-open .bottom-bar { display: none !important; }
+.story-editor-open .bottom-bar { display: none; }
 .story-editor-open .scene-panel { display: none; }
-
-/* Story editor overlay: ensure it covers everything */
-.story-editor-overlay {
-  z-index: 9999 !important;
-}
 
 .story-editor-overlay {
   position: fixed; inset: 0; z-index: 100;
@@ -3886,78 +3880,46 @@ html.story-editor-open .bottom-bar { display: none !important; }
 .story-editor-body .scene-tab-desc {
   font-size: 11.5px; line-height: 1.6;
 }
-/* NPC cards in editor — kill flip layout, use flat edit form */
-.story-editor-body .npc-card,
-.story-editor-body .npc-card-inner,
-.story-editor-body .npc-card-front,
-.story-editor-body .npc-card-back {
-  position: static !important;
-  transform: none !important;
-  height: auto !important;
-  min-height: unset !important;
-  overflow: visible !important;
-  display: block !important;
-}
-.story-editor-body .npc-card-front { display: none !important; }
-.story-editor-body .npc-card-back { display: block !important; }
+/* NPC cards in editor */
 .story-editor-body .npc-card {
-  margin-bottom: 14px;
-  padding: 14px;
+  position: static !important;
+  margin-bottom: 12px;
+  padding: 12px;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02);
 }
-.story-editor-body .npc-card-header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 10px;
+.story-editor-body .npc-card .npc-card-front {
+  position: static !important;
 }
 .story-editor-body .npc-card .npc-card-name {
   font-size: 13px; font-weight: 600;
+  margin-bottom: 8px;
   color: var(--scene-gold-bright);
-  flex: 1;
 }
 .story-editor-body .npc-edit-field {
-  display: block;
   width: 100%; box-sizing: border-box;
-  margin-bottom: 10px;
-  font-size: 14px;
-  padding: 10px 12px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  padding: 8px 10px;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(0,0,0,0.20);
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.15);
   color: var(--text-primary);
   resize: vertical;
-  min-height: 44px;
-  font-family: var(--font-sans);
 }
-.story-editor-body textarea.npc-edit-field,
 .story-editor-body .npc-edit-field[data-field="notes"] {
-  min-height: 110px;
+  min-height: 72px;
 }
 .story-editor-body .npc-delete-btn {
-  font-size: 11px; padding: 4px 10px;
-  flex-shrink: 0;
+  float: right; margin-top: -32px;
+  position: relative; z-index: 1;
+  font-size: 10px; padding: 3px 8px;
 }
 .story-editor-body #btnAddNpc {
-  margin-top: 8px;
+  margin-top: 4px;
   width: 100%;
-  min-height: 46px;
-  font-size: 14px;
 }
-.story-editor-body .npc-card-img,
-.story-editor-body .npc-card-avatar { display: none; }
-.story-editor-body .npc-card-role,
-.story-editor-body .npc-card-status { font-size: 11px; margin-bottom: 4px; }
-.story-editor-body .npc-back-name {
-  font-size: 13px; font-weight: 600;
-  color: var(--scene-gold-bright);
-  margin-bottom: 10px;
-}
-.story-editor-body .npc-img-btn {
-  font-size: 10px; padding: 4px 8px;
-  margin-bottom: 8px; margin-right: 6px;
-}
-.story-editor-body .npc-img-btn + .npc-img-btn { margin-right: 0; }
 .story-editor-body .scene-chip { font-size: 12px; padding: 5px 12px; }
 .story-editor-body .scene-chips { gap: 6px; margin: 4px 0 8px; }
 
@@ -3969,76 +3931,17 @@ html.story-editor-open .bottom-bar { display: none !important; }
   padding-bottom: calc(var(--bottom-bar-h, 150px) + var(--safe-bottom, 0px));
 }
 
-/* Mobile: editor fullscreen + NPC flat form with large inputs */
+/* Mobile: editor fullscreen */
 @media (max-width: 600px) {
-  html.story-editor-open .bottom-bar { display: none !important; }
-
-  .story-editor-overlay {
-    position: fixed !important; inset: 0 !important;
-    z-index: 9999 !important; height: 100dvh !important;
-  }
   .story-editor-sheet {
-    width: 100% !important; height: 100dvh !important;
-    max-height: 100dvh !important; margin: 0 !important;
-    border-radius: 0 !important; display: flex !important;
-    flex-direction: column !important; overflow: hidden !important;
+    margin: 0; border-radius: 0;
+    height: 100dvh; max-height: 100dvh;
   }
   .story-editor-header { padding: 12px 14px; }
-  .story-editor-body {
-    flex: 1 1 auto !important; min-height: 0 !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    touch-action: pan-y !important;
-    padding: 12px 14px !important;
-    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important;
-  }
+  .story-editor-body { padding: 12px 14px; }
   .story-editor-footer { padding: 10px 14px; }
   .story-editor-body .scene-tabs {
-    margin: -12px -14px 10px; padding: 8px 14px;
-  }
-
-  /* NPC grid: column layout, no internal scroll, no flip */
-  .story-editor-body #sceneNpcGrid,
-  .story-editor-body .scene-npc-grid {
-    display: flex !important; flex-direction: column !important;
-    gap: 12px !important; height: auto !important;
-    max-height: none !important; overflow: visible !important;
-  }
-  .story-editor-body .npc-card {
-    position: static !important; width: 100% !important;
-    max-width: none !important; height: auto !important;
-    min-height: unset !important; overflow: visible !important;
-    transform: none !important; margin: 0 0 12px 0 !important;
-  }
-  .story-editor-body .npc-card-inner,
-  .story-editor-body .npc-card-front,
-  .story-editor-body .npc-card-back {
-    position: static !important; width: 100% !important;
-    height: auto !important; min-height: unset !important;
-    overflow: visible !important; transform: none !important;
-    display: block !important;
-  }
-  .story-editor-body .npc-card-front { display: none !important; }
-  .story-editor-body .npc-card-back {
-    padding: 12px !important; border-radius: 14px !important;
-  }
-
-  .story-editor-body .npc-edit-field {
-    width: 100% !important; min-height: 44px !important;
-    font-size: 14px !important; line-height: 1.4 !important;
-    padding: 10px 12px !important; margin-bottom: 10px !important;
-  }
-  .story-editor-body textarea.npc-edit-field {
-    min-height: 120px !important; resize: vertical !important;
-  }
-  .story-editor-body .npc-delete-btn {
-    position: static !important; float: none !important;
-    margin: 0 !important; flex-shrink: 0 !important;
-  }
-
-  .story-editor-body #btnAddNpc {
-    position: static !important; width: 100% !important;
-    min-height: 46px !important; margin-top: 12px !important;
-    z-index: auto !important;
+    margin: -12px -14px 10px;
+    padding: 8px 14px;
   }
 }

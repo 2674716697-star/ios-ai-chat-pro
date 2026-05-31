@@ -1,0 +1,4 @@
+[      31ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://localhost:8080/omnichat.html?v=fix5:0
+[   98893ms] [WARNING] [OmniChat] Scene mode reply has no @@SCENE block. @ http://localhost:8080/omnichat.html?v=fix5:3911
+[   98893ms] [WARNING] [OmniChat] Story response missing: mental/心理, body/身体, sceneSnapshot, directions @ http://localhost:8080/omnichat.html?v=fix5:3933
+[   98893ms] [WARNING] [OmniChat] Scene directions fallback applied (0 → 4). @ http://localhost:8080/omnichat.html?v=fix5:3963

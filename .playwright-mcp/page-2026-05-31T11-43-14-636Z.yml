@@ -1,0 +1,53 @@
+- generic [ref=e12]:
+  - banner [ref=e13]:
+    - button "历史会话" [ref=e14] [cursor=pointer]:
+      - img [ref=e15]
+    - generic [ref=e16] [cursor=pointer]:
+      - generic [ref=e17]: 新对话
+      - generic [ref=e18]:
+        - generic [ref=e19]: DeepSeek
+        - generic [ref=e20]: deepseek-v4-pro
+        - generic [ref=e21]: 0 条消息 · ~0 字符
+    - button "背景" [ref=e22] [cursor=pointer]:
+      - img [ref=e23]
+    - button "设置" [ref=e27] [cursor=pointer]:
+      - img [ref=e28]
+  - option "OpenAI" [selected]
+  - option "xAI / Grok"
+  - option "DeepSeek"
+  - option "OpenRouter"
+  - option "Groq"
+  - option "Moonshot (Kimi)"
+  - option "智谱 (GLM)"
+  - option "SiliconFlow"
+  - option "低 — 简洁"
+  - option "中 — 清楚" [selected]
+  - option "高 — 细腻"
+  - option "超高 — 丰富"
+  - option "0 - 关闭" [disabled] [selected]
+  - main [ref=e31]:
+    - generic [ref=e199]:
+      - img [ref=e201]
+      - heading "OmniChat" [level=3] [ref=e203]
+      - paragraph [ref=e204]: 支持 OpenAI、xAI / Grok、DeepSeek、OpenRouter 等多服务商聊天
+      - generic [ref=e205]:
+        - generic [ref=e206]: 1. DeepSeek API Key 已就绪
+        - generic [ref=e207]: 2. 模型已选择：deepseek-v4-pro
+      - generic [ref=e208]:
+        - button "调整设置" [ref=e209] [cursor=pointer]
+        - button "查看历史" [ref=e210] [cursor=pointer]
+      - paragraph [ref=e211]: 配置已完成，直接在下方输入消息开始对话
+      - paragraph [ref=e212]: API Key 只保存在当前浏览器 localStorage。请勿在公共设备上使用。
+  - contentinfo [ref=e185]:
+    - generic [ref=e186]:
+      - button "新对话" [ref=e187] [cursor=pointer]
+      - button "清空本聊" [ref=e188] [cursor=pointer]
+      - button "撤回一轮" [ref=e189] [cursor=pointer]
+      - button "复制回复" [active] [ref=e190] [cursor=pointer]
+      - button "精确" [ref=e191] [cursor=pointer]
+      - button "导出本聊" [ref=e192] [cursor=pointer]
+    - generic [ref=e194]:
+      - textbox "输入消息…" [ref=e213]
+      - button "发送消息" [ref=e196] [cursor=pointer]:
+        - img [ref=e197]
+  - generic [ref=e331]: 没有可复制的 AI 回复

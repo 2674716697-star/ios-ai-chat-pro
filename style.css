@@ -31,8 +31,8 @@
   --glass-bg: rgba(28, 28, 30, 0.72);
   --glass-blur: saturate(180%) blur(20px);
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.28);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.35);
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 20px;
@@ -447,7 +447,7 @@ html.is-splashing .bottom-bar::after {
   flex-direction: column;
   transform: translateX(0);
   transition: transform var(--transition-slow);
-  box-shadow: 8px 0 32px rgba(0,0,0,0.5);
+  box-shadow: 8px 0 32px rgba(0,0,0,0.28);
 }
 
 .drawer:not(.open) {
@@ -1007,7 +1007,7 @@ html.is-splashing .bottom-bar::after {
 }
 
 .bg-preset:active {
-  transform: scale(0.9);
+  transform: scale(0.96);
 }
 
 .bg-preset.active {
@@ -1159,7 +1159,7 @@ html.is-splashing .bottom-bar::after {
     linear-gradient(160deg, rgba(22, 14, 32, 0.90), rgba(12, 8, 16, 0.94));
   overflow: hidden;
   box-shadow:
-    0 14px 40px rgba(0, 0, 0, 0.40),
+    0 10px 30px rgba(0, 0, 0, 0.30),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
   animation: sceneIn 300ms var(--spring);
   display: flex;
@@ -1858,7 +1858,7 @@ html.is-splashing .bottom-bar::after {
   border: 1px solid rgba(220, 92, 145, 0.2);
   border-bottom: none;
   box-shadow:
-    0 -18px 48px rgba(0, 0, 0, 0.38),
+    0 -12px 32px rgba(0, 0, 0, 0.28),
     0 0 0 1px rgba(220, 92, 145, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.10);
   padding: 6px 14px;
@@ -1987,10 +1987,10 @@ html.is-splashing .bottom-bar::after {
 }
 
 .btn-send:active {
-  transform: scale(0.90);
+  transform: scale(0.96);
   box-shadow:
-    0 2px 8px rgba(180, 77, 124, 0.20),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    0 2px 8px rgba(180, 77, 124, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }
 
 .btn-stop {
@@ -2003,10 +2003,10 @@ html.is-splashing .bottom-bar::after {
 }
 
 .btn-stop:active {
-  transform: scale(0.90);
+  transform: scale(0.96);
   box-shadow:
-    0 2px 8px rgba(255, 69, 58, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 2px 8px rgba(255, 69, 58, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 /* --- Toast --- */
@@ -2399,8 +2399,8 @@ html.is-splashing .bottom-bar::after {
   border: 1px solid rgba(220, 92, 145, 0.14);
   border-radius: var(--scene-radius);
   box-shadow:
-    0 12px 36px rgba(0, 0, 0, 0.40),
-    0 0 24px rgba(220, 92, 145, 0.04),
+    0 10px 30px rgba(0, 0, 0, 0.30),
+    0 0 18px rgba(220, 92, 145, 0.04),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
   font-size: 15px;
   line-height: 1.75;
@@ -2957,7 +2957,7 @@ html.is-splashing .bottom-bar::after {
   font-family: inherit;
   white-space: nowrap;
 }
-.scene-chip:active { transform: scale(0.95); }
+.scene-chip:active { transform: scale(0.98); }
 .scene-chip.active {
   background: rgba(220,92,145,0.18);
   border-color: rgba(220,92,145,0.4);

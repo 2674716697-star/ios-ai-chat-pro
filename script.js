@@ -2013,8 +2013,80 @@ function getSceneBodyDetails(block) {
   }
 
   // =========================================================================
-  // STORY EDITOR — independent overlay for world story configuration
+  // STORY EDITOR — draft transaction system
+  // state.ui.storyDraft stores a deep clone while editing; only committed
+  // on explicit save. Cancel discards the draft and restores original data.
   // =========================================================================
+
+  function _deepCloneStory(conv) {
+    if (!conv) return null;
+    return JSON.parse(JSON.stringify({
+      sceneWorld: conv.sceneWorld || {},
+      sceneCharacter: conv.sceneCharacter || {},
+      sceneNpcs: conv.sceneNpcs || [],
+      sceneStatus: conv.sceneStatus || {},
+      sceneState: conv.sceneState || {},
+      storyMode: conv.storyMode ? {
+        world: conv.storyMode.world || {},
+        character: conv.storyMode.character || {},
+        npcs: conv.storyMode.npcs || [],
+        status: conv.storyMode.status || {},
+        sceneState: conv.storyMode.sceneState || {},
+      } : null,
+    }));
+  }
+
+  function _commitDraftToConv(draft, conv) {
+    if (!draft || !conv) return;
+    conv.sceneWorld = JSON.parse(JSON.stringify(draft.sceneWorld));
+    conv.sceneCharacter = JSON.parse(JSON.stringify(draft.sceneCharacter));
+    conv.sceneNpcs = JSON.parse(JSON.stringify(draft.sceneNpcs));
+    conv.sceneStatus = JSON.parse(JSON.stringify(draft.sceneStatus));
+    conv.sceneState = JSON.parse(JSON.stringify(draft.sceneState));
+    if (conv.storyMode && draft.storyMode) {
+      conv.storyMode.world = JSON.parse(JSON.stringify(draft.storyMode.world));
+      conv.storyMode.character = JSON.parse(JSON.stringify(draft.storyMode.character));
+      conv.storyMode.npcs = JSON.parse(JSON.stringify(draft.storyMode.npcs));
+      conv.storyMode.status = JSON.parse(JSON.stringify(draft.storyMode.status));
+      conv.storyMode.sceneState = JSON.parse(JSON.stringify(draft.storyMode.sceneState));
+    }
+    syncStoryModeToLegacy(conv);
+  }
+
+  function _setDirtyFlag(dirty) {
+    state.ui._storyDraftDirty = dirty;
+    var statusEl = document.getElementById('storyEditorStatus');
+    if (statusEl) {
+      statusEl.textContent = dirty ? '● 有未保存修改' : '已保存';
+      statusEl.style.color = dirty ? 'var(--warning, #FFD60A)' : 'var(--text-tertiary)';
+    }
+    // Update summary strip
+    var summaryEl = document.getElementById('storyEditorSummary');
+    if (summaryEl && state.ui.storyDraft) {
+      var d = state.ui.storyDraft;
+      var w = d.sceneWorld;
+      var ch = d.sceneCharacter;
+      var rules = d.sceneWorld.rules || d.sceneStatus.constraints || '';
+      summaryEl.textContent =
+        '世界观：' + (w.openingName || w.setting ? '已填' : '未填') +
+        ' · 主角：' + (ch.name ? '已填' : '未填') +
+        ' · NPC：' + (d.sceneNpcs && d.sceneNpcs.length || 0) +
+        ' · 规则：' + (rules ? '已填' : '未填');
+    }
+  }
+
+  function _storyEditorInputHandler() {
+    _setDirtyFlag(true);
+  }
+
+  function _storyEditorFocusHandler(e) {
+    var el = e.target;
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+      setTimeout(function() {
+        el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }, 300);
+    }
+  }
 
   function openStoryEditor() {
     var overlay = document.getElementById('storyEditorOverlay');
@@ -2022,11 +2094,20 @@ function getSceneBodyDetails(block) {
     var sourceBody = document.getElementById('scenePanelBody');
     if (!overlay || !editorBody || !sourceBody) return;
 
-    // Move the actual scenePanelBody DOM into the editor (no clone, no duplicate IDs)
+    var conv = getCurrentConv();
+    if (!conv) return;
+
+    // Deep clone current story data as draft
+    state.ui.storyDraft = _deepCloneStory(conv);
+
+    // Move scenePanelBody into editor
     editorBody.appendChild(sourceBody);
     sourceBody.style.display = '';
 
-    // Re-render chips inside editor (they bind to their own container)
+    // Apply draft data to editor DOM fields
+    _syncDraftToEditorDOM(state.ui.storyDraft);
+
+    // Re-render chips and NPCs inside editor
     if (typeof renderMoodChips === 'function') renderMoodChips();
     if (typeof renderSpeciesChips === 'function') renderSpeciesChips();
     if (typeof renderRoleChips === 'function') renderRoleChips();
@@ -2034,21 +2115,97 @@ function getSceneBodyDetails(block) {
     if (typeof renderGenreChips === 'function') renderGenreChips();
     if (typeof renderNpcGrid === 'function') renderNpcGrid();
 
-    // Update header title to include opening name if set
+    // Wire editor inputs to draft (not conv)
+    _wireEditorListeners(editorBody);
+    state.ui._storyDraftDirty = false;
+
+    // Header
     var titleEl = document.getElementById('storyEditorTitle');
     if (titleEl) {
-      var conv = getCurrentConv();
-      var name = (conv && conv.sceneWorld && conv.sceneWorld.openingName) || '';
-      titleEl.textContent = name ? '世界故事 · ' + name : '世界故事编辑器';
+      var name = (conv.sceneWorld && conv.sceneWorld.openingName) || '';
+      titleEl.textContent = name ? '世界故事 · ' + name : '世界故事 · 未命名开局';
     }
+    _setDirtyFlag(false);
 
     // Show overlay
     overlay.style.display = 'flex';
     state.ui.storyEditorOpen = true;
     document.documentElement.classList.add('story-editor-open');
-    // Prevent background scrolling
     document.body.style.overflow = 'hidden';
     updateBottomBarHeight();
+  }
+
+  function _syncDraftToEditorDOM(draft) {
+    if (!draft) return;
+    var body = document.getElementById('storyEditorBody');
+    if (!body) return;
+    var fields = {
+      sceneOpeningName: draft.sceneWorld.openingName || '',
+      sceneSetting: draft.sceneWorld.setting || '',
+      sceneLocations: draft.sceneWorld.locations || '',
+      sceneRules: draft.sceneWorld.rules || '',
+      sceneMood: draft.sceneWorld.mood || '',
+      sceneWorldNotes: draft.sceneWorld.notes || '',
+      sceneCharName: draft.sceneCharacter.name || '',
+      sceneCharAge: draft.sceneCharacter.age || '',
+      sceneCharRole: draft.sceneCharacter.role || '',
+      sceneCharSpecies: draft.sceneCharacter.species || '',
+      sceneCharAppearance: draft.sceneCharacter.appearance || '',
+      sceneCharTraits: draft.sceneCharacter.traits || '',
+      sceneCharStats: draft.sceneCharacter.stats || '',
+      sceneCharGoal: draft.sceneCharacter.currentGoal || '',
+      sceneHealth: draft.sceneStatus.health || '',
+      sceneStamina: draft.sceneStatus.stamina || '',
+      sceneComposure: draft.sceneStatus.composure || '',
+      sceneFocus: draft.sceneStatus.focus || '',
+      sceneObjective: draft.sceneStatus.currentObjective || '',
+      sceneConstraints: draft.sceneStatus.constraints || '',
+    };
+    for (var id in fields) {
+      var el = body.querySelector('#' + id);
+      if (el) el.value = fields[id];
+    }
+  }
+
+  function _collectEditorDOMToDraft() {
+    var draft = state.ui.storyDraft;
+    var body = document.getElementById('storyEditorBody');
+    if (!draft || !body) return;
+    var getVal = function(id) { var el = body.querySelector('#' + id); return el ? el.value : ''; };
+    draft.sceneWorld.openingName = getVal('sceneOpeningName');
+    draft.sceneWorld.setting = getVal('sceneSetting');
+    draft.sceneWorld.locations = getVal('sceneLocations');
+    draft.sceneWorld.rules = getVal('sceneRules');
+    draft.sceneWorld.mood = getVal('sceneMood');
+    draft.sceneWorld.notes = getVal('sceneWorldNotes');
+    draft.sceneCharacter.name = getVal('sceneCharName');
+    draft.sceneCharacter.age = getVal('sceneCharAge');
+    draft.sceneCharacter.role = getVal('sceneCharRole');
+    draft.sceneCharacter.species = getVal('sceneCharSpecies');
+    draft.sceneCharacter.appearance = getVal('sceneCharAppearance');
+    draft.sceneCharacter.traits = getVal('sceneCharTraits');
+    draft.sceneCharacter.stats = getVal('sceneCharStats');
+    draft.sceneCharacter.currentGoal = getVal('sceneCharGoal');
+    draft.sceneStatus.health = getVal('sceneHealth');
+    draft.sceneStatus.stamina = getVal('sceneStamina');
+    draft.sceneStatus.composure = getVal('sceneComposure');
+    draft.sceneStatus.focus = getVal('sceneFocus');
+    draft.sceneStatus.currentObjective = getVal('sceneObjective');
+    draft.sceneStatus.constraints = getVal('sceneConstraints');
+  }
+
+  function _wireEditorListeners(editorBody) {
+    if (!editorBody) return;
+    // Mark dirty on any input/change in editor fields
+    var inputs = editorBody.querySelectorAll('input, textarea, select');
+    for (var i = 0; i < inputs.length; i++) {
+      inputs[i].removeEventListener('input', _storyEditorInputHandler);
+      inputs[i].removeEventListener('change', _storyEditorInputHandler);
+      inputs[i].addEventListener('input', _storyEditorInputHandler);
+      inputs[i].addEventListener('change', _storyEditorInputHandler);
+      inputs[i].removeEventListener('focus', _storyEditorFocusHandler);
+      inputs[i].addEventListener('focus', _storyEditorFocusHandler);
+    }
   }
 
   function closeStoryEditor(saveChanges) {
@@ -2056,33 +2213,76 @@ function getSceneBodyDetails(block) {
     var editorBody = document.getElementById('storyEditorBody');
     var sourceBody = document.getElementById('scenePanelBody');
     var scenePanel = document.getElementById('scenePanel');
+    var conv = getCurrentConv();
     if (!overlay) return;
 
-    if (saveChanges !== false) {
-      // Trigger save on all inputs in editor to persist changes
-      var allInputs = editorBody.querySelectorAll('input, textarea, select');
-      for (var ei = 0; ei < allInputs.length; ei++) {
-        allInputs[ei].dispatchEvent(new Event('input', { bubbles: true }));
-        allInputs[ei].dispatchEvent(new Event('change', { bubbles: true }));
+    if (conv && state.ui.storyDraft) {
+      if (saveChanges === true) {
+        // Collect editor values and NPC data from DOM, then commit draft to conv
+        _collectEditorDOMToDraft();
+        _collectEditorNpcsToDraft();
+        _commitDraftToConv(state.ui.storyDraft, conv);
+        updateTimestamp(conv);
+        debouncedSave();
+      } else {
+        // Cancel: restore the ORIGINAL snapshot back into conv
+        // (undoes any direct mutations from NPC handlers during editing)
+        _commitDraftToConv(state.ui.storyDraft, conv);
       }
     }
 
-    // Move scenePanelBody back to its original location
-    if (sourceBody && scenePanel && scenePanel.contains(editorBody)) {
-      // sourceBody is inside editorBody — move back to scenePanel
-      if (sourceBody.parentNode === editorBody) {
-        scenePanel.insertBefore(sourceBody, scenePanel.querySelector('.scene-panel-header').nextSibling);
-      }
-      // Re-collapse after editor close
+    // Move body back
+    if (sourceBody && scenePanel && editorBody && sourceBody.parentNode === editorBody) {
+      scenePanel.insertBefore(sourceBody, scenePanel.querySelector('.scene-panel-header').nextSibling);
       scenePanel.classList.add('collapsed');
     }
 
+    // Clean up editor listeners
+    if (editorBody) {
+      var inputs = editorBody.querySelectorAll('input, textarea, select');
+      for (var i = 0; i < inputs.length; i++) {
+        inputs[i].removeEventListener('input', _storyEditorInputHandler);
+        inputs[i].removeEventListener('change', _storyEditorInputHandler);
+        inputs[i].removeEventListener('focus', _storyEditorFocusHandler);
+      }
+    }
+
+    state.ui.storyDraft = null;
+    state.ui._storyDraftDirty = false;
     overlay.style.display = 'none';
     state.ui.storyEditorOpen = false;
     document.documentElement.classList.remove('story-editor-open');
     document.body.style.overflow = '';
     updateBottomBarHeight();
     updateScenePanelUI();
+  }
+
+  function _collectEditorNpcsToDraft() {
+    var draft = state.ui.storyDraft;
+    var body = document.getElementById('storyEditorBody');
+    if (!draft || !body) return;
+    // Read NPC data from editor DOM fields
+    var npcCards = body.querySelectorAll('.npc-card');
+    var npcs = [];
+    for (var ci = 0; ci < npcCards.length; ci++) {
+      var card = npcCards[ci];
+      var nameEl = card.querySelector('[data-field="name"]');
+      var roleEl = card.querySelector('[data-field="role"]');
+      var statusEl = card.querySelector('[data-field="status"]');
+      var notesEl = card.querySelector('[data-field="notes"]');
+      var npcId = card.dataset.npcId || '';
+      npcs.push({
+        id: npcId || ('npc_' + Date.now() + '_' + ci),
+        name: nameEl ? nameEl.value : '',
+        role: roleEl ? roleEl.value : '',
+        relation: roleEl ? roleEl.value : '',
+        status: statusEl ? statusEl.value : '',
+        notes: notesEl ? notesEl.value : '',
+        image: '',
+      });
+    }
+    draft.sceneNpcs = npcs;
+    if (draft.storyMode) draft.storyMode.npcs = JSON.parse(JSON.stringify(npcs));
   }
 
   // =========================================================================
@@ -5200,23 +5400,27 @@ function handleMessageAction(action, msgIndex) {
       dom.sceneCapsule.style.cursor = 'pointer';
     }
 
-    // Story editor buttons: close=save+close, cancel=discard, start=save+close+startWorld
+    // Story editor buttons: close=save+close, cancel=discard, save=save+close, start=save+startWorld
     var storyEditorClose = document.getElementById('storyEditorClose');
     var storyEditorCancel = document.getElementById('storyEditorCancel');
+    var storyEditorSave = document.getElementById('storyEditorSave');
     var storyEditorStart = document.getElementById('storyEditorStart');
     var storyEditorOverlay = document.getElementById('storyEditorOverlay');
     if (storyEditorClose) storyEditorClose.addEventListener('click', function() { closeStoryEditor(true); });
     if (storyEditorCancel) storyEditorCancel.addEventListener('click', function() { closeStoryEditor(false); });
+    if (storyEditorSave) storyEditorSave.addEventListener('click', function() { closeStoryEditor(true); });
     if (storyEditorStart) {
       storyEditorStart.addEventListener('click', function() {
         closeStoryEditor(true);
         if (typeof startWorldMode === 'function') startWorldMode();
       });
     }
-    // Click overlay background to close (save)
+    // Overlay background click: ignore (don't close), avoid accidental data loss
     if (storyEditorOverlay) {
       storyEditorOverlay.addEventListener('click', function(e) {
-        if (e.target === storyEditorOverlay) closeStoryEditor(true);
+        if (e.target === storyEditorOverlay) {
+          closeStoryEditor(true);
+        }
       });
     }
 

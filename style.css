@@ -3824,6 +3824,16 @@ html.has-custom-bg .user .message-bubble {
 .story-editor-title {
   font-size: 15px; font-weight: 600; color: var(--text-primary);
 }
+.story-editor-status {
+  font-size: 10.5px; color: var(--text-tertiary); margin-top: 2px;
+}
+.story-editor-summary {
+  padding: 6px 18px;
+  font-size: 10.5px; color: var(--text-tertiary);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.01);
+  flex-shrink: 0;
+}
 .story-editor-body {
   flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
   padding: 16px 18px;

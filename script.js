@@ -3105,7 +3105,7 @@ function handleMessageAction(action, msgIndex) {
       updateTopBar();
       // Full render needed: sceneSnapshot may have been updated in finally block
       // and the diff-based renderMessages would skip re-rendering the bubble.
-      preserveScrollPosition(function (messages) { fullRenderMessages(messages); });
+      preserveScrollPosition(function () { fullRenderMessages(conv.messages); });
       debouncedSave();
     }
   }

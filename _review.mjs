@@ -130,6 +130,13 @@ check('C/D template not marked as optional', !/<可选>/.test(js));
 check('scene directions fallback for missing output', /buildSceneFallbackDirections/.test(js));
 check('fallback only in storyEnabled context', /if\s*\(\s*!assistantMsg\._sceneFallbackAttempted\s*&&\s*\(dirsParsed/.test(js));
 check('fallback guard prevents loops', /_sceneFallbackAttempted\s*=\s*true/.test(js));
+check('repairStoryModeFlags exists', /function\s+repairStoryModeFlags/.test(js));
+check('migrateStoryMode calls repairStoryModeFlags', /function\s+migrateStoryMode[\s\S]*repairStoryModeFlags/.test(js));
+check('normalizeConversation calls repairStoryModeFlags', /function\s+normalizeConversation[\s\S]*repairStoryModeFlags/.test(js));
+check('syncLegacyToStoryMode handles enabled/started flags', /sm\.enabled\s*=\s*sm\.enabled\s*\|\|/.test(js) && /sm\.started\s*=\s*sm\.started\s*\|\|/.test(js));
+check('sendMessage calls repairStoryModeFlags before storyEnabled check', /syncLegacyToStoryMode\(conv\)[\s\S]*repairStoryModeFlags/.test(js));
+check('repair infers started from sceneWorld/character/npcs', /hasWorld\s*\|\|\s*hasChar\s*\|\|\s*hasNpcs/.test(js));
+check('repair infers started from message sceneSnapshot', /sceneSnapshot[\s\S]*inferredStarted\s*=\s*true/.test(js));
 
 // =========================================================================
 // 8. BUILD VERSION

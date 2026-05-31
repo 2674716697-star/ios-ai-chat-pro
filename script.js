@@ -968,16 +968,75 @@ function createSceneWorld(seed) {
   }
 
   function migrateStoryMode(conv) {
-    if (conv.storyMode && conv.storyMode.enabled !== undefined) return; // already migrated
-    conv.storyMode = createStoryMode({
-      enabled: !!(conv.sceneMode || conv.worldMode),
-      started: !!conv.worldMode,
-      world: conv.sceneWorld,
-      character: conv.sceneCharacter,
-      status: conv.sceneStatus,
-      npcs: conv.sceneNpcs,
-      sceneState: conv.sceneState,
-    });
+    // Always run repair, even if storyMode.enabled is already set.
+    // Old conversations may have storyMode with enabled=false but
+    // legacy worldMode/sceneMode=true — repairStoryModeFlags fixes that.
+    repairStoryModeFlags(conv);
+  }
+
+  // Robust story-mode flag inference from legacy fields and message history.
+  // Idempotent — safe to call on already-migrated conversations.
+  function repairStoryModeFlags(conv) {
+    if (!conv) return;
+
+    // Ensure storyMode object exists
+    conv.storyMode = createStoryMode(conv.storyMode);
+
+    // Ensure legacy scene fields exist
+    conv.sceneWorld = createSceneWorld(conv.sceneWorld);
+    conv.sceneCharacter = createSceneCharacter(conv.sceneCharacter);
+    conv.sceneStatus = createSceneStatus(conv.sceneStatus);
+    conv.sceneNpcs = normalizeSceneNpcs(conv.sceneNpcs);
+    conv.sceneState = createSceneState(conv.sceneState);
+
+    // --- Infer storyStarted from legacy + content ---
+    var hw = conv.sceneWorld;
+    var hc = conv.sceneCharacter;
+    var hasWorld = !!(hw.openingName || hw.era || hw.location || hw.atmosphere || hw.tech || hw.rules);
+    var hasChar = !!(hc.name || hc.age || hc.role || hc.traits || hc.background);
+    var hasNpcs = conv.sceneNpcs && conv.sceneNpcs.length > 0;
+    var hasScene = !!(conv.sceneState.directions || conv.sceneState.plot || conv.sceneState.mental || conv.sceneState.physical);
+
+    var inferredStarted =
+      !!conv.worldMode ||
+      !!conv.storyMode.started ||
+      (!!conv.storyMode.enabled && (hasWorld || hasChar || hasNpcs)) ||
+      hasScene;
+
+    // Check messages for story evidence
+    if (!inferredStarted && Array.isArray(conv.messages)) {
+      for (var mi = 0; mi < conv.messages.length; mi++) {
+        var m = conv.messages[mi];
+        if (m.role === 'assistant' && m.sceneSnapshot && m.sceneSnapshot.directions) {
+          inferredStarted = true; break;
+        }
+        if (m.role === 'assistant' && m.content && (/@@SCENE/.test(m.content) || /走向/.test(m.content))) {
+          inferredStarted = true; break;
+        }
+        if (m.role === 'user' && looksLikeWorldCharacterCard(m._requestContent || m.content)) {
+          inferredStarted = true; break;
+        }
+      }
+    }
+
+    // --- Infer storyEnabled ---
+    var inferredEnabled =
+      inferredStarted ||
+      !!conv.sceneMode ||
+      !!conv.storyMode.enabled;
+
+    // --- Apply ---
+    conv.storyMode.enabled = inferredEnabled;
+    conv.storyMode.started = inferredStarted;
+
+    // Bidirectional sync: storyMode ↔ legacy
+    conv.storyMode.world = conv.sceneWorld;
+    conv.storyMode.character = conv.sceneCharacter;
+    conv.storyMode.status = conv.sceneStatus;
+    conv.storyMode.npcs = conv.sceneNpcs;
+    conv.storyMode.sceneState = conv.sceneState;
+
+    syncStoryModeToLegacy(conv);
   }
 
   // Detect old first user message containing a full world character card
@@ -1015,6 +1074,9 @@ function createSceneWorld(seed) {
     if (!conv) return conv;
     var oldVersion = conv.schemaVersion || 0;
     if (!Array.isArray(conv.messages)) conv.messages = [];
+    // Repair story mode flags from legacy fields before normalizing messages.
+    // This ensures normalizeMessage can use isStoryStarted correctly.
+    repairStoryModeFlags(conv);
     for (var i = 0; i < conv.messages.length; i++) {
       conv.messages[i] = normalizeMessage(conv.messages[i], conv);
     }
@@ -1038,6 +1100,9 @@ function createSceneWorld(seed) {
     if (!conv) return;
     if (!conv.storyMode) conv.storyMode = createStoryMode();
     var sm = conv.storyMode;
+    // Also sync flags — don't lose old truthy values
+    sm.enabled = sm.enabled || !!(conv.sceneMode || conv.worldMode);
+    sm.started = sm.started || !!conv.worldMode;
     sm.world = createSceneWorld(conv.sceneWorld);
     sm.character = createSceneCharacter(conv.sceneCharacter);
     sm.status = createSceneStatus(conv.sceneStatus);
@@ -2837,6 +2902,8 @@ function handleMessageAction(action, msgIndex) {
 
     // Sync legacy scene fields → storyMode before prompt injection
     syncLegacyToStoryMode(conv);
+    // Re-evaluate story flags from message history and legacy data
+    repairStoryModeFlags(conv);
 
     // Build messages array with caching support
     const supportsCaching = conv.enableCaching && isAnthropicModel(model);

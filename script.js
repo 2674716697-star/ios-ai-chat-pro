@@ -4522,8 +4522,8 @@ if (dom.btnGenHints) dom.btnGenHints.addEventListener('click', () => generateSce
   // Expose for debugging / external use
   window.__omnichat = {
     state,
-    getToolCallSettings,
-    runToolLoop,
+    getToolCallSettings: typeof getToolCallSettings !== 'undefined' ? getToolCallSettings : null,
+    runToolLoop: typeof runToolLoop !== 'undefined' ? runToolLoop : null,
     stopCurrentRequest,
     isAbortRequested,
     showToast,

@@ -3946,6 +3946,12 @@ html.has-custom-bg .user .message-bubble {
   display: none !important;
 }
 
+.scene-panel.collapsed {
+  height: auto !important;
+  min-height: 0 !important;
+  flex: 0 0 auto !important;
+}
+
 /* Mobile: editor fullscreen */
 @media (max-width: 600px) {
   .story-editor-sheet {

@@ -2069,7 +2069,16 @@ function getSceneBodyDetails(block) {
 
     // Move scenePanelBody into editor
     editorBody.appendChild(sourceBody);
+    // Reset all inline collapse styles so editor renders fully
     sourceBody.style.display = '';
+    sourceBody.style.height = '';
+    sourceBody.style.maxHeight = '';
+    sourceBody.style.minHeight = '';
+    sourceBody.style.paddingTop = '';
+    sourceBody.style.paddingBottom = '';
+    sourceBody.style.overflow = '';
+    var editorActions = scenePanel.querySelector('.scene-panel-actions');
+    if (editorActions) editorActions.style.display = '';
 
     // Re-render chips and NPCs inside editor
     if (typeof renderMoodChips === 'function') renderMoodChips();
@@ -2137,6 +2146,17 @@ function getSceneBodyDetails(block) {
     if (sourceBody && scenePanel && sourceBody.parentNode === editorBody) {
       scenePanel.insertBefore(sourceBody, scenePanel.querySelector('.scene-panel-header').nextSibling);
       scenePanel.classList.add('collapsed');
+
+      // Force inline collapse to rule out CSS specificity issues
+      sourceBody.style.display = 'none';
+      sourceBody.style.height = '0';
+      sourceBody.style.maxHeight = '0';
+      sourceBody.style.minHeight = '0';
+      sourceBody.style.paddingTop = '0';
+      sourceBody.style.paddingBottom = '0';
+      sourceBody.style.overflow = 'hidden';
+      var actions = scenePanel.querySelector('.scene-panel-actions');
+      if (actions) actions.style.display = 'none';
     }
 
     // Restore persistence
@@ -2152,6 +2172,19 @@ function getSceneBodyDetails(block) {
     document.body.style.overflow = '';
     updateBottomBarHeight();
     updateScenePanelUI();
+
+    // Protect collapsed state from updateScenePanelUI re-expansion
+    if (scenePanel && scenePanel.classList.contains('collapsed') && sourceBody) {
+      sourceBody.style.display = 'none';
+      sourceBody.style.height = '0';
+      sourceBody.style.maxHeight = '0';
+      sourceBody.style.minHeight = '0';
+      sourceBody.style.paddingTop = '0';
+      sourceBody.style.paddingBottom = '0';
+      sourceBody.style.overflow = 'hidden';
+      var postActions = scenePanel.querySelector('.scene-panel-actions');
+      if (postActions) postActions.style.display = 'none';
+    }
   }
 
   function _setEditorDirty(dirty) {
@@ -4964,6 +4997,33 @@ function handleMessageAction(action, msgIndex) {
     // Scene panel
     dom.scenePanelToggle.addEventListener('click', () => {
       dom.scenePanel.classList.toggle('collapsed');
+      var body = document.getElementById('scenePanelBody');
+      var actions = dom.scenePanel.querySelector('.scene-panel-actions');
+      if (dom.scenePanel.classList.contains('collapsed')) {
+        // Collapse: force hide body and actions
+        if (body) {
+          body.style.display = 'none';
+          body.style.height = '0';
+          body.style.maxHeight = '0';
+          body.style.minHeight = '0';
+          body.style.paddingTop = '0';
+          body.style.paddingBottom = '0';
+          body.style.overflow = 'hidden';
+        }
+        if (actions) actions.style.display = 'none';
+      } else {
+        // Expand: clear inline styles
+        if (body) {
+          body.style.display = '';
+          body.style.height = '';
+          body.style.maxHeight = '';
+          body.style.minHeight = '';
+          body.style.paddingTop = '';
+          body.style.paddingBottom = '';
+          body.style.overflow = '';
+        }
+        if (actions) actions.style.display = '';
+      }
     });
     if (dom.sceneMental) dom.sceneMental.addEventListener('input', () => {
       const conv = getCurrentConv();
